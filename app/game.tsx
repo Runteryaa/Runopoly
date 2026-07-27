@@ -230,11 +230,17 @@ export default function GameBoard() {
                     const style = getTileStyle(i);
                     // Find players on this tile
                     const playersOnTile = gamePlayers.filter(p => p.position === i);
+                    const isCorner = i === 0 || i === 10 || i === 20 || i === 30;
                     
                     return (
-                        <View key={prop.id} style={style} className="border border-zinc-700/50 bg-zinc-800 p-1 items-center justify-between">
-                            <View style={{ backgroundColor: prop.color }} className="w-full h-4 rounded-sm" />
-                            <Text className="text-white text-[10px] text-center font-bold numberOfLines={2}">{prop.name}</Text>
+                        <View key={prop.id} style={style} className={`border border-zinc-700/50 p-1 items-center justify-between ${isCorner ? 'bg-zinc-700' : 'bg-zinc-800'}`}>
+                            {!isCorner && <View style={{ backgroundColor: prop.color }} className="w-full h-4 rounded-sm" />}
+                            
+                            {isCorner ? (
+                                <Text className={`text-xs font-black uppercase text-center mt-2 ${i === 0 ? 'text-emerald-400' : i === 10 ? 'text-orange-400' : i === 30 ? 'text-red-400' : 'text-blue-400'}`}>{prop.name}</Text>
+                            ) : (
+                                <Text className="text-white text-[10px] text-center font-bold numberOfLines={2}">{prop.name}</Text>
+                            )}
                             
                             <View className="flex-row gap-1 flex-wrap justify-center w-full px-1">
                                 {playersOnTile.map(p => (
@@ -244,18 +250,20 @@ export default function GameBoard() {
                                 ))}
                             </View>
 
-                            <View className="flex-row gap-[1px] absolute top-5 left-1 right-1 justify-center">
-                                {Array.from({ length: prop.houses || 0 }).map((_, idx) => (
-                                    <View key={idx} className="w-2 h-2 bg-emerald-500 rounded-sm border border-black" />
-                                ))}
-                                {prop.hotels === 1 && (
-                                    <View className="w-2 h-2 bg-red-500 rounded-sm border border-black" />
-                                )}
-                            </View>
+                            {!isCorner && (
+                                <View className="flex-row gap-[1px] absolute top-5 left-1 right-1 justify-center">
+                                    {Array.from({ length: prop.houses || 0 }).map((_, idx) => (
+                                        <View key={idx} className="w-2 h-2 bg-emerald-500 rounded-sm border border-black" />
+                                    ))}
+                                    {prop.hotels === 1 && (
+                                        <View className="w-2 h-2 bg-red-500 rounded-sm border border-black" />
+                                    )}
+                                </View>
+                            )}
 
-                            <Text className="text-zinc-400 text-[8px] font-bold pb-1">${prop.price}</Text>
+                            {!isCorner && <Text className="text-zinc-400 text-[8px] font-bold pb-1">${prop.price}</Text>}
 
-                            {prop.ownerId && (
+                            {prop.ownerId && !isCorner && (
                                 <View style={{ backgroundColor: gamePlayers.find(p => p.id === prop.ownerId)?.color }} className="w-full h-1 absolute bottom-0" />
                             )}
                         </View>

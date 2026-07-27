@@ -69,13 +69,23 @@ export const useGameStore = create<GameState>((set) => ({
   gamePlayers: [],
   activeTurnId: '',
   rules: { goSalary: 200, jailFine: 50, startingMoney: 1500, maxDebt: 500 },
-  properties: Array.from({ length: 40 }).map((_, i) => ({
-    id: `tile_${i}`,
-    name: `Property ${i}`,
-    price: 100 + (i * 10),
-    rent: 10 + i,
-    color: ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'][i % 5]
-  })),
+  properties: Array.from({ length: 40 }).map((_, i) => {
+    let name = `Property ${i}`;
+    let price = 100 + (i * 10);
+    
+    if (i === 0) { name = "GO"; price = 0; }
+    else if (i === 10) { name = "JAIL"; price = 0; }
+    else if (i === 20) { name = "PARKING"; price = 0; }
+    else if (i === 30) { name = "GO TO JAIL"; price = 0; }
+    
+    return {
+        id: `tile_${i}`,
+        name,
+        price,
+        rent: price > 0 ? 10 + i : 0,
+        color: ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'][i % 5]
+    };
+  }),
   cards: [],
   setPlayerName: (name) => set({ playerName: name }),
   setLobbyCode: (code) => set({ lobbyCode: code }),
