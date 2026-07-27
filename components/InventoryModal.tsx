@@ -82,6 +82,26 @@ export default function InventoryModal({ visible, onClose }: InventoryModalProps
                                                         alert('This property is fully upgraded.');
                                                         return;
                                                     }
+
+                                                    // Monopoly Rule 1: Own all properties of the same color
+                                                    const allProps = useGameStore.getState().properties;
+                                                    const sameColorProps = allProps.filter(p => p.color === prop.color && p.price > 0);
+                                                    const ownsAll = sameColorProps.every(p => p.ownerId === myPlayer.id);
+                                                    
+                                                    if (!ownsAll) {
+                                                        alert('You must own all properties of this color group to build!');
+                                                        return;
+                                                    }
+
+                                                    // Monopoly Rule 2: Build Evenly
+                                                    const getUpgradeLevel = (p: any) => (p.hotels || 0) * 5 + (p.houses || 0);
+                                                    const currentLevel = getUpgradeLevel(prop);
+                                                    const minLevelInGroup = Math.min(...sameColorProps.map(getUpgradeLevel));
+
+                                                    if (currentLevel > minLevelInGroup) {
+                                                        alert('You must build evenly! Upgrade other properties in this color group first.');
+                                                        return;
+                                                    }
                                                     
                                                     let h = currentHouses, ht = currentHotels;
                                                     if (h === 4) { h = 0; ht = 1; } else { h++; }

@@ -112,7 +112,7 @@ export const useGameStore = create<GameState>((set) => ({
         name,
         price,
         rent: price > 0 ? 10 + i : 0,
-        color: ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'][i % 5]
+        color: ['#8b5cf6', '#3b82f6', '#ec4899', '#f97316', '#ef4444', '#eab308', '#10b981', '#1e3a8a'][Math.floor(i / (40 / 8)) % 8]
     };
   }),
   cards: [],
@@ -193,7 +193,7 @@ export const useGameStore = create<GameState>((set) => ({
                 name,
                 price,
                 rent: price > 0 ? 10 + i : 0,
-                color: ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'][i % 5]
+                color: ['#8b5cf6', '#3b82f6', '#ec4899', '#f97316', '#ef4444', '#eab308', '#10b981', '#1e3a8a'][Math.floor(i / (boardSize / 8)) % 8]
             };
         });
     }
