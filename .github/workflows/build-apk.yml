@@ -21,12 +21,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
 
       - name: ☕ Setup Java JDK
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
+          cache: 'gradle'
 
       - name: 📦 Install Dependencies
         run: npm install
@@ -36,7 +38,7 @@ jobs:
           npx expo prebuild --platform android
           cd android
           chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon
+          ./gradlew assembleRelease --no-daemon --build-cache
 
       - name: 📤 Upload APK Artifact
         uses: actions/upload-artifact@v4
