@@ -7,24 +7,26 @@ import IncomingTradeModal from '../components/IncomingTradeModal';
 import InventoryModal from '../components/InventoryModal';
 
 export default function GameBoard() {
-  const { properties, gamePlayers, lobbyCode, updatePlayerPosition, playerName, activeTurnId, setActiveTurnId, rules } = useGameStore();
+  const { properties, gamePlayers, lobbyCode, updatePlayerPosition, playerName, activeTurnName, setActiveTurnName, rules } = useGameStore();
   const [lastRoll, setLastRoll] = useState<number | null>(null);
+  const [hasRolled, setHasRolled] = useState(false);
   const [tradeModalVisible, setTradeModalVisible] = useState(false);
   const [inventoryVisible, setInventoryVisible] = useState(false);
   const [incomingTrade, setIncomingTrade] = useState<TradeData | null>(null);
 
   const myPlayer = gamePlayers.find(p => p.name === playerName);
-  const activePlayer = gamePlayers.find(p => p.id === activeTurnId);
-  const isMyTurn = myPlayer?.id === activeTurnId;
+  const activePlayer = gamePlayers.find(p => p.name === activeTurnName);
+  const isMyTurn = myPlayer?.name === activeTurnName;
 
   useEffect(() => {
     socket.on('player_moved', ({ playerId, steps }) => {
       updatePlayerPosition(playerId, steps);
     });
     
-    socket.on('turn_changed', (nextPlayerId) => {
-      setActiveTurnId(nextPlayerId);
+    socket.on('turn_changed', (nextPlayerName) => {
+      setActiveTurnName(nextPlayerName);
       setLastRoll(null);
+      setHasRolled(false);
     });
 
     socket.on('property_bought', ({ propertyId, ownerId, price }) => {
@@ -89,7 +91,7 @@ export default function GameBoard() {
             gamePlayers: remoteState.gamePlayers,
             properties: remoteState.properties,
             cards: remoteState.cards,
-            activeTurnId: remoteState.activeTurnId,
+            activeTurnName: remoteState.activeTurnName,
             rules: remoteState.rules,
             lobbyCode: remoteState.lobbyCode
         });
@@ -135,6 +137,7 @@ export default function GameBoard() {
             'You are in Jail. What do you want to do?',
             [
                 { text: 'Wait', style: 'cancel', onPress: () => {
+                    setHasRolled(true);
                     socket.emit('roll_dice', { lobbyCode, playerId: myPlayer.id, steps: 0 }); // Skip turn
                 }},
                 { text: `Pay $${rules.jailFine} & Roll`, onPress: () => {
@@ -145,6 +148,7 @@ export default function GameBoard() {
                     const dice2 = Math.floor(Math.random() * 6) + 1;
                     const totalSteps = dice1 + dice2;
                     setLastRoll(totalSteps);
+                    setHasRolled(true);
                     socket.emit('roll_dice', { lobbyCode, playerId: myPlayer.id, steps: totalSteps });
                 }}
             ]
@@ -156,6 +160,7 @@ export default function GameBoard() {
     const dice2 = Math.floor(Math.random() * 6) + 1;
     const totalSteps = dice1 + dice2;
     setLastRoll(totalSteps);
+    setHasRolled(true);
     socket.emit('roll_dice', { lobbyCode, playerId: myPlayer.id, steps: totalSteps });
 
     const passedGo = myPlayer.position + totalSteps >= totalTiles;
@@ -252,12 +257,21 @@ export default function GameBoard() {
                     )}
 
                     {isMyTurn ? (
-                      <TouchableOpacity 
-                        className="bg-emerald-500 px-6 py-4 rounded-2xl shadow-lg shadow-emerald-500/30"
-                        onPress={handleRollDice}
-                      >
-                        <Text className="text-white font-black text-lg">ROLL DICE</Text>
-                      </TouchableOpacity>
+                      hasRolled ? (
+                          <TouchableOpacity 
+                            className="bg-red-500 px-6 py-4 rounded-2xl shadow-lg shadow-red-500/30"
+                            onPress={() => socket.emit('end_turn', { lobbyCode })}
+                          >
+                            <Text className="text-white font-black text-lg">END TURN</Text>
+                          </TouchableOpacity>
+                      ) : (
+                          <TouchableOpacity 
+                            className="bg-emerald-500 px-6 py-4 rounded-2xl shadow-lg shadow-emerald-500/30"
+                            onPress={handleRollDice}
+                          >
+                            <Text className="text-white font-black text-lg">ROLL DICE</Text>
+                          </TouchableOpacity>
+                      )
                     ) : (
                       <View className="bg-zinc-800 px-6 py-4 rounded-2xl border border-zinc-700">
                         <Text className="text-zinc-400 font-black text-sm">Waiting for {activePlayer?.name}...</Text>

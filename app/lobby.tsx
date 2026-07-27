@@ -71,10 +71,10 @@ export default function Lobby() {
         }
     });
 
-    socket.on('game_started', ({ firstTurnId, isReconnect }) => {
+    socket.on('game_started', ({ firstTurnName, isReconnect }) => {
         if (!isReconnect) {
             useGameStore.getState().setGamePlayers(playersRef.current);
-            useGameStore.getState().setActiveTurnId(firstTurnId);
+            useGameStore.getState().setActiveTurnName(firstTurnName);
         }
         useGameStore.getState().setLobbyCode(roomCode);
         router.push('/game');

@@ -69,14 +69,14 @@ interface GameState {
   playerName: string;
   lobbyCode: string;
   gamePlayers: any[];
-  activeTurnId: string;
+  activeTurnName: string;
   properties: Property[];
   cards: Card[];
   rules: GameRules;
   setPlayerName: (name: string) => void;
   setLobbyCode: (code: string) => void;
   setGamePlayers: (players: any[]) => void;
-  setActiveTurnId: (id: string) => void;
+  setActiveTurnName: (name: string) => void;
   updatePlayerPosition: (id: string, steps: number, absolute?: boolean) => void;
   buyProperty: (propertyId: string, ownerId: string, price: number) => void;
   payRent: (fromId: string, toId: string, amount: number) => void;
@@ -96,7 +96,7 @@ export const useGameStore = create<GameState>((set) => ({
   playerName: '',
   lobbyCode: '',
   gamePlayers: [],
-  activeTurnId: '',
+  activeTurnName: '',
   rules: { goSalary: 200, jailFine: 50, startingMoney: 1500, maxDebt: 500, boardSize: 40, theme: 'Classic' },
   properties: Array.from({ length: 40 }).map((_, i) => {
     let name = THEMES.Classic[i % THEMES.Classic.length];
@@ -118,7 +118,7 @@ export const useGameStore = create<GameState>((set) => ({
   cards: [],
   setPlayerName: (name) => set({ playerName: name }),
   setLobbyCode: (code) => set({ lobbyCode: code }),
-  setActiveTurnId: (id) => set({ activeTurnId: id }),
+  setActiveTurnName: (name) => set({ activeTurnName: name }),
   setGamePlayers: (players) => set((state) => ({ 
     gamePlayers: players.map((p, i) => ({ 
       ...p, 
