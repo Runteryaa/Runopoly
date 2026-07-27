@@ -61,7 +61,46 @@ export default function InventoryModal({ visible, onClose }: InventoryModalProps
                                 <View key={prop.id} className="bg-zinc-900 p-4 rounded-xl mb-3 border border-zinc-700 flex-row justify-between items-center">
                                     <View className="flex-row items-center gap-3">
                                         <View style={{ backgroundColor: prop.color }} className="w-4 h-4 rounded-full border border-zinc-600" />
-                                        <Text className="text-white font-bold text-lg">{prop.name}</Text>
+                                        <View>
+                                            <Text className="text-white font-bold text-lg">{prop.name}</Text>
+                                            <Text className="text-zinc-500 text-[10px] font-bold">
+                                                Houses: {prop.houses || 0} • Hotels: {prop.hotels || 0}
+                                            </Text>
+                                        </View>
+                                        {viewedPlayer.id === myPlayer.id && (
+                                            <TouchableOpacity 
+                                                onPress={() => {
+                                                    const cost = 50;
+                                                    const currentHouses = prop.houses || 0;
+                                                    const currentHotels = prop.hotels || 0;
+                                                    
+                                                    if (myPlayer.money < cost) {
+                                                        alert('You need $50 to build a house!');
+                                                        return;
+                                                    }
+                                                    if (currentHotels >= 1) {
+                                                        alert('This property is fully upgraded.');
+                                                        return;
+                                                    }
+                                                    
+                                                    let h = currentHouses, ht = currentHotels;
+                                                    if (h === 4) { h = 0; ht = 1; } else { h++; }
+                                                    
+                                                    import('../utils/socket').then(m => {
+                                                        m.socket.emit('upgrade_property', { 
+                                                            lobbyCode: useGameStore.getState().lobbyCode, 
+                                                            propertyId: prop.id, 
+                                                            houses: h, 
+                                                            hotels: ht, 
+                                                            cost 
+                                                        });
+                                                    });
+                                                }}
+                                                className="bg-emerald-500/20 px-3 py-1 rounded-full ml-2 border border-emerald-500/50"
+                                            >
+                                                <Text className="text-emerald-400 font-bold text-xs uppercase">Build ($50)</Text>
+                                            </TouchableOpacity>
+                                        )}
                                     </View>
                                     <View className="items-end">
                                         <Text className="text-zinc-500 font-bold text-[10px] uppercase">Rent Yield</Text>

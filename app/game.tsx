@@ -35,6 +35,10 @@ export default function GameBoard() {
       useGameStore.getState().payRent(fromPlayerId, toPlayerId, amount);
     });
 
+    socket.on('property_upgraded', ({ propertyId, houses, hotels, cost }) => {
+      useGameStore.getState().upgradeProperty(propertyId, houses, hotels, cost);
+    });
+
     socket.on('passed_go', (playerId) => {
       useGameStore.getState().passedGo(playerId);
     });
@@ -156,13 +160,14 @@ export default function GameBoard() {
                 ]
             );
         } else if (landedProperty.ownerId && landedProperty.ownerId !== myPlayer.id) {
-            Alert.alert('Rent Due', `You landed on ${landedProperty.name}. You must pay $${landedProperty.rent} to the owner!`);
-            socket.emit('pay_rent', { lobbyCode, fromPlayerId: myPlayer.id, toPlayerId: landedProperty.ownerId, amount: landedProperty.rent });
+            const rentToPay = landedProperty.rent * (1 + (landedProperty.houses || 0) + (landedProperty.hotels || 0) * 5);
+            Alert.alert('Rent Due', `You landed on ${landedProperty.name}. You must pay $${rentToPay} to the owner!`);
+            socket.emit('pay_rent', { lobbyCode, fromPlayerId: myPlayer.id, toPlayerId: landedProperty.ownerId, amount: rentToPay });
         }
     }, 800);
   };
 
-  const tileSize = 60;
+  const tileSize = 50;
   const boardSize = tileSize * 11;
 
   const getTileStyle = (index: number) => {
@@ -237,6 +242,15 @@ export default function GameBoard() {
                                       <Text className="text-[6px] text-white font-black">{p.name.substring(0, 2).toUpperCase()}</Text>
                                     </View>
                                 ))}
+                            </View>
+
+                            <View className="flex-row gap-[1px] absolute top-5 left-1 right-1 justify-center">
+                                {Array.from({ length: prop.houses || 0 }).map((_, idx) => (
+                                    <View key={idx} className="w-2 h-2 bg-emerald-500 rounded-sm border border-black" />
+                                ))}
+                                {prop.hotels === 1 && (
+                                    <View className="w-2 h-2 bg-red-500 rounded-sm border border-black" />
+                                )}
                             </View>
 
                             <Text className="text-zinc-400 text-[8px] font-bold pb-1">${prop.price}</Text>

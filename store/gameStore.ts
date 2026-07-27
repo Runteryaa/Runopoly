@@ -7,6 +7,8 @@ export interface Property {
   rent: number;
   color: string;
   ownerId?: string | null;
+  houses?: number;
+  hotels?: number;
 }
 
 export interface Card {
@@ -58,6 +60,7 @@ interface GameState {
   setAllCards: (cards: Card[]) => void;
   setRules: (rules: Partial<GameRules>) => void;
   executeTrade: (trade: TradeData) => void;
+  upgradeProperty: (propertyId: string, houses: number, hotels: number, cost: number) => void;
 }
 
 export const useGameStore = create<GameState>((set) => ({
@@ -134,5 +137,13 @@ export const useGameStore = create<GameState>((set) => ({
         if (trade.requestProperties.includes(p.id)) return { ...p, ownerId: trade.fromId };
         return p;
     })
-  }))
+  })),
+  upgradeProperty: (propertyId, houses, hotels, cost) => set((state) => {
+    const prop = state.properties.find(p => p.id === propertyId);
+    if (!prop || !prop.ownerId) return state;
+    return {
+        properties: state.properties.map(p => p.id === propertyId ? { ...p, houses, hotels } : p),
+        gamePlayers: state.gamePlayers.map(p => p.id === prop.ownerId ? { ...p, money: p.money - cost } : p)
+    };
+  })
 }));
