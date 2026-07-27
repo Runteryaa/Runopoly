@@ -16,6 +16,13 @@ export default function Lobby() {
   useEffect(() => {
     socket.connect();
     
+    const timeout = setTimeout(() => {
+        if (!socket.connected) {
+            Alert.alert('Connection Failed', 'Could not connect to the server. Please check your internet or server status.');
+            router.back();
+        }
+    }, 5000);
+    
     const myUser = { id: Math.random().toString(), name: playerName, ready: true, isHost };
     playersRef.current = [myUser];
     setPlayers(playersRef.current);
@@ -68,6 +75,7 @@ export default function Lobby() {
     });
 
     return () => {
+        clearTimeout(timeout);
         socket.off('lobby_state');
         socket.off('player_joined');
         socket.off('game_started');
