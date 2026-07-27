@@ -47,6 +47,13 @@ export default function Lobby() {
         setIsHost(serverIsHost);
     });
 
+    socket.on('host_transferred', (newHostName) => {
+        if (playerName === newHostName) {
+            setIsHost(true);
+            Alert.alert('Host Transfer', 'The previous host left. You are now the host!');
+        }
+    });
+
     socket.on('server_error', (msg) => {
         Alert.alert('Error', msg);
         router.back();
@@ -87,6 +94,7 @@ export default function Lobby() {
         socket.off('game_started');
         socket.off('sync_config');
         socket.off('reconnected');
+        socket.off('host_transferred');
         socket.off('server_error');
         socket.off('kicked_from_lobby');
         socket.disconnect();

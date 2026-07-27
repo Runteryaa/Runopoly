@@ -95,6 +95,16 @@ export default function GameBoard() {
         });
     });
 
+    socket.on('host_transferred', (newHostName) => {
+        const { gamePlayers, playerName } = useGameStore.getState();
+        useGameStore.setState({
+            gamePlayers: gamePlayers.map(p => ({ ...p, isHost: p.name === newHostName }))
+        });
+        if (playerName === newHostName) {
+            Alert.alert('Host Transfer', 'The previous host disconnected. You are now the host!');
+        }
+    });
+
     if (!myPlayer || typeof myPlayer.position === 'undefined') {
         socket.emit('request_game_state', { lobbyCode });
     }
@@ -112,6 +122,7 @@ export default function GameBoard() {
       socket.off('trade_responded');
       socket.off('peer_request_game_state');
       socket.off('peer_sync_game_state');
+      socket.off('host_transferred');
     };
   }, []);
 
