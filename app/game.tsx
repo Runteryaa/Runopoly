@@ -74,6 +74,31 @@ export default function GameBoard() {
         }
     });
 
+    socket.on('peer_request_game_state', (requesterSocketId) => {
+        const me = useGameStore.getState().gamePlayers.find(p => p.name === useGameStore.getState().playerName);
+        if (me && me.isHost) {
+            socket.emit('send_game_state', { 
+                toSocketId: requesterSocketId, 
+                state: useGameStore.getState() 
+            });
+        }
+    });
+
+    socket.on('peer_sync_game_state', (remoteState) => {
+        useGameStore.setState({
+            gamePlayers: remoteState.gamePlayers,
+            properties: remoteState.properties,
+            cards: remoteState.cards,
+            activeTurnId: remoteState.activeTurnId,
+            rules: remoteState.rules,
+            lobbyCode: remoteState.lobbyCode
+        });
+    });
+
+    if (!myPlayer || typeof myPlayer.position === 'undefined') {
+        socket.emit('request_game_state', { lobbyCode });
+    }
+
     return () => {
       socket.off('player_moved');
       socket.off('turn_changed');
@@ -85,6 +110,8 @@ export default function GameBoard() {
       socket.off('left_jail');
       socket.off('trade_proposed');
       socket.off('trade_responded');
+      socket.off('peer_request_game_state');
+      socket.off('peer_sync_game_state');
     };
   }, []);
 

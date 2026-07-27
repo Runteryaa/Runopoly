@@ -7,7 +7,7 @@ import { useGameStore } from '../store/gameStore';
 export default function Lobby() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const isHost = params.isHost === 'true';
+  const [isHost, setIsHost] = useState(params.isHost === 'true');
   const { playerName, rules, properties, cards, setRules, setAllProperties, setAllCards } = useGameStore();
   const [roomCode] = useState((params.code as string) || Math.random().toString(36).substring(2, 6).toUpperCase());
   const [players, setPlayers] = useState<any[]>([]);
@@ -43,6 +43,10 @@ export default function Lobby() {
         if (config.cards) setAllCards(config.cards);
     });
 
+    socket.on('reconnected', ({ user, isHost: serverIsHost, isStarted }) => {
+        setIsHost(serverIsHost);
+    });
+
     socket.on('server_error', (msg) => {
         Alert.alert('Error', msg);
         router.back();
@@ -60,10 +64,12 @@ export default function Lobby() {
         }
     });
 
-    socket.on('game_started', ({ firstTurnId }) => {
-        useGameStore.getState().setGamePlayers(playersRef.current);
+    socket.on('game_started', ({ firstTurnId, isReconnect }) => {
+        if (!isReconnect) {
+            useGameStore.getState().setGamePlayers(playersRef.current);
+            useGameStore.getState().setActiveTurnId(firstTurnId);
+        }
         useGameStore.getState().setLobbyCode(roomCode);
-        useGameStore.getState().setActiveTurnId(firstTurnId);
         router.push('/game');
     });
 
@@ -80,6 +86,7 @@ export default function Lobby() {
         socket.off('player_joined');
         socket.off('game_started');
         socket.off('sync_config');
+        socket.off('reconnected');
         socket.off('server_error');
         socket.off('kicked_from_lobby');
         socket.disconnect();
