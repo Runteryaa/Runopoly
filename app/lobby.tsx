@@ -43,7 +43,7 @@ export default function Lobby() {
         if (config.cards) setAllCards(config.cards);
     });
 
-    socket.on('error', (msg) => {
+    socket.on('server_error', (msg) => {
         Alert.alert('Error', msg);
         router.back();
     });
@@ -80,7 +80,7 @@ export default function Lobby() {
         socket.off('player_joined');
         socket.off('game_started');
         socket.off('sync_config');
-        socket.off('error');
+        socket.off('server_error');
         socket.off('kicked_from_lobby');
         socket.disconnect();
     };
