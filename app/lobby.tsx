@@ -135,7 +135,11 @@ export default function Lobby() {
         {isHost ? (
             <TouchableOpacity 
               className="w-full bg-emerald-500 py-4 rounded-2xl items-center shadow-lg shadow-emerald-500/30"
-              onPress={() => socket.emit('start_game', roomCode)}
+              onPress={() => {
+                  const state = useGameStore.getState();
+                  socket.emit('update_config', { lobbyCode: roomCode, config: { rules: state.rules, properties: state.properties, cards: state.cards } });
+                  socket.emit('start_game', roomCode);
+              }}
             >
                 <Text className="text-white font-bold text-lg">Start Game</Text>
             </TouchableOpacity>

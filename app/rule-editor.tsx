@@ -77,6 +77,37 @@ export default function RuleEditor() {
             <Text className="text-zinc-500 text-xs mt-2">Maximum allowed negative balance before bankruptcy.</Text>
         </View>
 
+        <View className="mb-6">
+            <Text className="text-zinc-400 font-bold uppercase tracking-widest mb-2">Theme</Text>
+            <View className="flex-row gap-2 flex-wrap mt-2">
+                {['Classic', 'Istanbul', 'Köln', 'America'].map(t => (
+                    <TouchableOpacity 
+                        key={t}
+                        onPress={() => setRules({ theme: t })}
+                        className={`px-4 py-2 rounded-lg border ${rules.theme === t ? 'bg-emerald-500 border-emerald-500' : 'bg-zinc-800 border-zinc-700'}`}
+                    >
+                        <Text className={`font-bold ${rules.theme === t ? 'text-white' : 'text-zinc-400'}`}>{t}</Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
+        </View>
+
+        <View className="mb-6">
+            <Text className="text-zinc-400 font-bold uppercase tracking-widest mb-2">Board Size</Text>
+            <View className="flex-row gap-2 flex-wrap mt-2">
+                {[24, 32, 40].map(s => (
+                    <TouchableOpacity 
+                        key={s}
+                        onPress={() => setRules({ boardSize: s })}
+                        className={`px-4 py-2 rounded-lg border ${rules.boardSize === s ? 'bg-emerald-500 border-emerald-500' : 'bg-zinc-800 border-zinc-700'}`}
+                    >
+                        <Text className={`font-bold ${rules.boardSize === s ? 'text-white' : 'text-zinc-400'}`}>{s === 24 ? 'Small (24)' : s === 32 ? 'Medium (32)' : 'Classic (40)'}</Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
+            <Text className="text-zinc-500 text-xs mt-2">Changes the number of tiles on the board.</Text>
+        </View>
+
         <TouchableOpacity 
           className="w-full bg-emerald-500 py-4 rounded-xl items-center shadow-lg shadow-emerald-500/30 mt-4 mb-10"
           onPress={handleSave}

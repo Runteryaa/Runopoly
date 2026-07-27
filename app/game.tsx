@@ -120,8 +120,8 @@ export default function GameBoard() {
     setLastRoll(totalSteps);
     socket.emit('roll_dice', { lobbyCode, playerId: myPlayer.id, steps: totalSteps });
 
-    const passedGo = myPlayer.position + totalSteps >= 40;
-    const newPosition = (myPlayer.position + totalSteps) % 40;
+    const passedGo = myPlayer.position + totalSteps >= totalTiles;
+    const newPosition = (myPlayer.position + totalSteps) % totalTiles;
 
     if (passedGo && newPosition !== 0) {
         socket.emit('pass_go', { lobbyCode, playerId: myPlayer.id });
@@ -130,7 +130,7 @@ export default function GameBoard() {
     const landedProperty = properties[newPosition];
 
     setTimeout(() => {
-        if (newPosition === 30) {
+        if (newPosition === s * 3) {
             Alert.alert('Arrested!', `Go directly to Jail! Do not pass GO, do not collect $${rules.goSalary}.`);
             socket.emit('go_to_jail', { lobbyCode, playerId: myPlayer.id });
             return;
@@ -148,7 +148,7 @@ export default function GameBoard() {
             return;
         }
 
-        if (!landedProperty.ownerId && landedProperty.price > 0 && newPosition !== 0 && newPosition !== 10) {
+        if (!landedProperty.ownerId && landedProperty.price > 0 && newPosition !== 0 && newPosition !== s) {
             Alert.alert(
                 'Buy Property',
                 `Do you want to buy ${landedProperty.name} for $${landedProperty.price}?`,
@@ -168,14 +168,16 @@ export default function GameBoard() {
   };
 
   const tileSize = 50;
-  const boardSize = tileSize * 11;
+  const totalTiles = properties.length;
+  const s = totalTiles / 4;
+  const boardSize = tileSize * (s + 1);
 
   const getTileStyle = (index: number) => {
     let top = 0; let left = 0;
-    if (index < 11) { top = boardSize - tileSize; left = boardSize - (index + 1) * tileSize; }
-    else if (index < 20) { top = boardSize - (index - 10 + 1) * tileSize; left = 0; }
-    else if (index < 31) { top = 0; left = (index - 20) * tileSize; }
-    else { top = (index - 30) * tileSize; left = boardSize - tileSize; }
+    if (index < s) { top = boardSize - tileSize; left = boardSize - (index + 1) * tileSize; }
+    else if (index < s * 2) { top = boardSize - (index - s + 1) * tileSize; left = 0; }
+    else if (index < s * 3) { top = 0; left = (index - s * 2) * tileSize; }
+    else { top = (index - s * 3) * tileSize; left = boardSize - tileSize; }
     return { position: 'absolute' as const, top, left, width: tileSize, height: tileSize };
   };
 
@@ -230,14 +232,14 @@ export default function GameBoard() {
                     const style = getTileStyle(i);
                     // Find players on this tile
                     const playersOnTile = gamePlayers.filter(p => p.position === i);
-                    const isCorner = i === 0 || i === 10 || i === 20 || i === 30;
+                    const isCorner = i === 0 || i === s || i === s * 2 || i === s * 3;
                     
                     return (
                         <View key={prop.id} style={style} className={`border border-zinc-700/50 p-1 items-center justify-between ${isCorner ? 'bg-zinc-700' : 'bg-zinc-800'}`}>
                             {!isCorner && <View style={{ backgroundColor: prop.color }} className="w-full h-4 rounded-sm" />}
                             
                             {isCorner ? (
-                                <Text className={`text-xs font-black uppercase text-center mt-2 ${i === 0 ? 'text-emerald-400' : i === 10 ? 'text-orange-400' : i === 30 ? 'text-red-400' : 'text-blue-400'}`}>{prop.name}</Text>
+                                <Text className={`text-xs font-black uppercase text-center mt-2 ${i === 0 ? 'text-emerald-400' : i === s ? 'text-orange-400' : i === s * 3 ? 'text-red-400' : 'text-blue-400'}`}>{prop.name}</Text>
                             ) : (
                                 <Text className="text-white text-[10px] text-center font-bold numberOfLines={2}">{prop.name}</Text>
                             )}

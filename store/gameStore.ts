@@ -24,7 +24,36 @@ export interface GameRules {
   jailFine: number;
   startingMoney: number;
   maxDebt: number;
+  boardSize: number;
+  theme: string;
 }
+
+export const THEMES: Record<string, string[]> = {
+  Classic: [
+    "Mediterranean", "Baltic", "Reading", "Oriental", "Vermont", "Connecticut", "St. Charles", "Electric",
+    "States", "Virginia", "Penn", "St. James", "Tennessee", "New York", "Kentucky", "Indiana", "Illinois",
+    "B. & O.", "Atlantic", "Ventnor", "Water", "Marvin", "Pacific", "North Carolina", "Pennsylvania", "Short Line",
+    "Park", "Boardwalk", "Luxury", "Tax"
+  ],
+  Istanbul: [
+    "Kasımpaşa", "Dolapdere", "Sultanahmet", "Sirkeci", "Beyazıt", "Eminönü", "Karaköy", "Kabataş",
+    "Beşiktaş", "Ortaköy", "Bebek", "Tarabya", "Sarıyer", "Üsküdar", "Kadıköy", "Moda", "Bostancı",
+    "Maltepe", "Pendik", "Kartal", "Tuzla", "Şile", "Ağva", "Polonezköy", "Beykoz", "Çengelköy",
+    "Kuzguncuk", "Acıbadem", "Bağdat Cad.", "Fenerbahçe", "Caddebostan", "Suadiye", "Erenköy", "Göztepe", "Nişantaşı", "Etiler"
+  ],
+  Köln: [
+    "Kalk", "Mülheim", "Porz", "Deutz", "Südstadt", "Nippes", "Ehrenfeld", "Lindenthal", "Sülz",
+    "Zollstock", "Rodenkirchen", "Chorweiler", "Longerich", "Weidenpesch", "Riehl", "Niehl",
+    "Müngersdorf", "Braunsfeld", "Junkersdorf", "Weiden", "Lövenich", "Widdersdorf", "Bocklemünd",
+    "Ossendorf", "Bickendorf", "Vogelsang", "Klettenberg", "Zündorf", "Wahn", "Urbach", "Grengel", "Eil", "Finkenberg", "Ensen"
+  ],
+  America: [
+    "Bronx", "Brooklyn", "Queens", "Manhattan", "Staten Island", "Harlem", "Chelsea", "SoHo",
+    "Tribeca", "Wall Street", "Broadway", "Times Square", "Central Park", "Hollywood", "Beverly Hills",
+    "Santa Monica", "Venice", "Malibu", "Compton", "Downtown LA", "Silicon Valley", "Palo Alto",
+    "San Francisco", "Golden Gate", "Las Vegas", "Miami Beach", "South Beach", "Chicago", "Boston", "Texas", "Dallas", "Houston", "Austin"
+  ]
+};
 
 export interface TradeData {
   id: string;
@@ -68,9 +97,9 @@ export const useGameStore = create<GameState>((set) => ({
   lobbyCode: '',
   gamePlayers: [],
   activeTurnId: '',
-  rules: { goSalary: 200, jailFine: 50, startingMoney: 1500, maxDebt: 500 },
+  rules: { goSalary: 200, jailFine: 50, startingMoney: 1500, maxDebt: 500, boardSize: 40, theme: 'Classic' },
   properties: Array.from({ length: 40 }).map((_, i) => {
-    let name = `Property ${i}`;
+    let name = THEMES.Classic[i % THEMES.Classic.length];
     let price = 100 + (i * 10);
     
     if (i === 0) { name = "GO"; price = 0; }
@@ -101,7 +130,7 @@ export const useGameStore = create<GameState>((set) => ({
   })),
   updatePlayerPosition: (id, steps, absolute = false) => set((state) => ({
     gamePlayers: state.gamePlayers.map(p => 
-      p.id === id ? { ...p, position: absolute ? steps : (p.position + steps) % 40 } : p
+      p.id === id ? { ...p, position: absolute ? steps : (p.position + steps) % (state.rules.boardSize || 40) } : p
     )
   })),
   buyProperty: (propertyId, ownerId, price) => set((state) => ({
@@ -127,7 +156,7 @@ export const useGameStore = create<GameState>((set) => ({
     })
   })),
   setJailStatus: (id, inJail) => set((state) => ({
-    gamePlayers: state.gamePlayers.map(p => p.id === id ? { ...p, inJail, position: inJail ? 10 : p.position } : p)
+    gamePlayers: state.gamePlayers.map(p => p.id === id ? { ...p, inJail, position: inJail ? (state.rules.boardSize / 4) : p.position } : p)
   })),
   setProperty: (id, newProp) => set((state) => ({
     properties: state.properties.map(p => p.id === id ? { ...p, ...newProp } : p)
@@ -135,7 +164,41 @@ export const useGameStore = create<GameState>((set) => ({
   setAllProperties: (properties) => set({ properties }),
   addCard: (card) => set((state) => ({ cards: [...state.cards, card] })),
   setAllCards: (cards) => set({ cards }),
-  setRules: (newRules) => set((state) => ({ rules: { ...state.rules, ...newRules } })),
+  setRules: (newRules) => set((state) => {
+    const updatedRules = { ...state.rules, ...newRules };
+    let newProperties = state.properties;
+    
+    if (newRules.boardSize || newRules.theme) {
+        const theme = updatedRules.theme || state.rules.theme;
+        const boardSize = updatedRules.boardSize || state.rules.boardSize;
+        const themeNames = THEMES[theme] || THEMES.Classic;
+        
+        let nameIndex = 0;
+        const s = boardSize / 4;
+        newProperties = Array.from({ length: boardSize }).map((_, i) => {
+            let name = "";
+            let price = 100 + (i * 10);
+            
+            if (i === 0) { name = "GO"; price = 0; }
+            else if (i === s) { name = "JAIL"; price = 0; }
+            else if (i === s * 2) { name = "PARKING"; price = 0; }
+            else if (i === s * 3) { name = "GO TO JAIL"; price = 0; }
+            else {
+                name = themeNames[nameIndex % themeNames.length];
+                nameIndex++;
+            }
+            
+            return {
+                id: `tile_${i}`,
+                name,
+                price,
+                rent: price > 0 ? 10 + i : 0,
+                color: ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'][i % 5]
+            };
+        });
+    }
+    return { rules: updatedRules, properties: newProperties };
+  }),
   executeTrade: (trade) => set((state) => ({
     gamePlayers: state.gamePlayers.map(p => {
         if (p.id === trade.fromId) return { ...p, money: p.money - trade.offerMoney + trade.requestMoney };
