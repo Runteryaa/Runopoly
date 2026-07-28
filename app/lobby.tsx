@@ -14,6 +14,7 @@ export default function Lobby() {
   const playersRef = useRef<any[]>([]);
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [localRules, setLocalRules] = useState(rules);
+  const [isPublic, setIsPublic] = useState(true);
 
   useEffect(() => {
       setLocalRules(rules);
@@ -37,7 +38,8 @@ export default function Lobby() {
         socket.emit('create_lobby', { 
             lobbyCode: roomCode, 
             user: myUser, 
-            config: { rules, properties, cards } 
+            config: { rules, properties, cards },
+            isPublic
         });
     } else {
         socket.emit('join_lobby', { lobbyCode: roomCode, user: myUser });
@@ -194,10 +196,24 @@ export default function Lobby() {
 
       <View className="items-center mt-8 mb-8">
         <Text className="text-zinc-400 text-sm font-bold uppercase tracking-widest mb-2">Room Code</Text>
-        <View className="bg-zinc-800 px-8 py-4 rounded-2xl border border-zinc-700/50 shadow-sm">
+        <View className="bg-zinc-800 px-8 py-4 rounded-2xl border border-zinc-700/50 shadow-sm mb-3">
             <Text className="text-emerald-400 text-4xl font-black tracking-widest">{roomCode}</Text>
         </View>
-        <Text className="text-zinc-500 text-xs mt-3">Share this code with your friends</Text>
+        <Text className="text-zinc-500 text-xs text-center px-6">Share this code with your friends to let them join</Text>
+        
+        {isHost && (
+            <View className="flex-row items-center gap-3 mt-4 bg-zinc-800/50 px-4 py-2 rounded-xl border border-zinc-700/30">
+                <Text className="text-zinc-300 font-bold">Public Lobby</Text>
+                <Switch 
+                    value={isPublic} 
+                    onValueChange={(v) => {
+                        setIsPublic(v);
+                        socket.emit('set_public_lobby', { lobbyCode: roomCode, isPublic: v });
+                    }}
+                    trackColor={{ false: '#3f3f46', true: '#3b82f6' }}
+                />
+            </View>
+        )}
       </View>
 
       <Text className="px-6 text-zinc-500 font-bold mb-4 uppercase tracking-widest">Players ({players.length}/4)</Text>

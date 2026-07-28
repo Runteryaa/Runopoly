@@ -21,6 +21,7 @@ export default function GameBoard() {
   const [rentPaymentTarget, setRentPaymentTarget] = useState<any>(null);
   const [incomingRentOffer, setIncomingRentOffer] = useState<any>(null);
   const [activeAuction, setActiveAuction] = useState<any>(null);
+  const [playersModalVisible, setPlayersModalVisible] = useState(false);
 
   const myPlayer = gamePlayers.find(p => p.name === playerName);
   const activePlayer = gamePlayers.find(p => p.name === activeTurnName);
@@ -65,6 +66,22 @@ export default function GameBoard() {
     socket.on('left_jail', (playerId) => {
       useGameStore.getState().setJailStatus(playerId, false);
       useGameStore.getState().updatePlayerStats(playerId, { jailTurns: 0, doublesCount: 0 });
+    });
+
+    socket.on('player_kicked_ingame', (playerId) => {
+      const state = useGameStore.getState();
+      const kickedPlayer = state.gamePlayers.find(p => p.id === playerId);
+      if (kickedPlayer) {
+          Alert.alert('Player Kicked', `${kickedPlayer.name} has been kicked by the host.`);
+          // Remove player from store and reset their properties
+          useGameStore.setState({
+              gamePlayers: state.gamePlayers.filter(p => p.id !== playerId),
+              properties: state.properties.map(p => p.ownerId === playerId ? { ...p, ownerId: null, houses: 0, hotels: 0 } : p)
+          });
+          if (state.playerName === kickedPlayer.name) {
+              socket.disconnect();
+          }
+      }
     });
 
     socket.on('player_stats_updated', ({ playerId, updates }) => {
@@ -175,6 +192,7 @@ export default function GameBoard() {
       socket.off('peer_request_game_state');
       socket.off('peer_sync_game_state');
       socket.off('host_transferred');
+      socket.off('player_kicked_ingame');
     };
   }, []);
 
@@ -219,7 +237,8 @@ export default function GameBoard() {
         Alert.alert(
             mustPay ? 'Time is up!' : 'Busted!',
             mustPay ? `You must pay $${rules.jailFine} to leave Jail this turn!` : 'You are in Jail. What do you want to do?',
-            options
+            options,
+            { cancelable: false }
         );
         return;
     }
@@ -235,13 +254,13 @@ export default function GameBoard() {
         socket.emit('update_player_stats', { lobbyCode, playerId: myPlayer.id, updates: { doublesCount: newDoublesCount } });
         
         if (newDoublesCount === 3) {
-            Alert.alert('Speeding!', 'You rolled doubles 3 times in a row! Go directly to Jail!');
+            Alert.alert('Speeding!', 'You rolled doubles 3 times in a row! Go directly to Jail!', [{ text: 'OK' }], { cancelable: false });
             socket.emit('go_to_jail', { lobbyCode, playerId: myPlayer.id });
             setHasRolled(true);
             return;
         } else {
             setHasRolled(false); // Can roll again
-            Alert.alert('Doubles!', `You rolled ${dice1} and ${dice2}! You get to roll again after your move.`);
+            Alert.alert('Doubles!', `You rolled ${dice1} and ${dice2}! You get to roll again after your move.`, [{ text: 'Awesome' }], { cancelable: false });
         }
     } else {
         setHasRolled(true);
@@ -268,7 +287,7 @@ export default function GameBoard() {
         setTimeout(() => setLandingMessage(null), 3000);
 
         if (newPosition === s * 3) {
-            Alert.alert('Arrested!', `Go directly to Jail! Do not pass GO, do not collect $${rules.goSalary}.`);
+            Alert.alert('Arrested!', `Go directly to Jail! Do not pass GO, do not collect $${rules.goSalary}.`, [{ text: 'OK' }], { cancelable: false });
             socket.emit('go_to_jail', { lobbyCode, playerId: myPlayer!.id });
             setHasRolled(true); // End their turn basically (cannot roll again even if they had doubles)
             return;
@@ -278,10 +297,11 @@ export default function GameBoard() {
             const { cards } = useGameStore.getState();
             if (cards.length > 0) {
                 const randomCard = cards[Math.floor(Math.random() * cards.length)];
-                Alert.alert('Chance Card!', randomCard.text);
-                socket.emit('execute_card', { lobbyCode, playerId: myPlayer!.id, card: randomCard });
+                Alert.alert('Chance Card!', randomCard.text, [{ text: 'OK', onPress: () => {
+                    socket.emit('execute_card', { lobbyCode, playerId: myPlayer!.id, card: randomCard });
+                }}], { cancelable: false });
             } else {
-                Alert.alert('Chance!', 'Nothing happened. No cards in deck.');
+                Alert.alert('Chance!', 'Nothing happened. No cards in deck.', [{ text: 'OK' }], { cancelable: false });
             }
             return;
         }
@@ -291,13 +311,14 @@ export default function GameBoard() {
                 'Buy Property',
                 `Do you want to buy ${landedProperty.name} for $${landedProperty.price}?`,
                 [
-                    { text: 'No, auction it', style: 'cancel', onPress: () => {
+                    { text: 'No, auction it', onPress: () => {
                         socket.emit('start_auction', { lobbyCode, propertyId: landedProperty.id, excludedPlayerId: myPlayer!.id });
                     }},
                     { text: 'Buy', onPress: () => {
                         socket.emit('buy_property', { lobbyCode, propertyId: landedProperty.id, ownerId: myPlayer!.id, price: landedProperty.price });
                     }}
-                ]
+                ],
+                { cancelable: false }
             );
         } else if (landedProperty.ownerId && landedProperty.ownerId !== myPlayer!.id) {
             const rentToPay = landedProperty.rent * (1 + (landedProperty.houses || 0) + (landedProperty.hotels || 0) * 5);
@@ -338,8 +359,48 @@ export default function GameBoard() {
             <TouchableOpacity onPress={() => setTradeModalVisible(true)} className="bg-zinc-800 px-4 py-1 rounded border border-zinc-700 mt-2">
                 <Text className="text-zinc-300 font-bold text-xs uppercase">Trade</Text>
             </TouchableOpacity>
+            <TouchableOpacity onPress={() => setPlayersModalVisible(true)} className="bg-zinc-800 px-4 py-1 rounded border border-zinc-700 mt-1">
+                <Text className="text-zinc-300 font-bold text-xs uppercase">Players</Text>
+            </TouchableOpacity>
          </View>
       </View>
+
+      {/* Players Modal */}
+      {playersModalVisible && (
+        <View className="absolute z-50 w-full h-full bg-black/50 justify-center items-center p-4">
+            <View className="bg-zinc-900 w-full rounded-3xl border border-zinc-800 p-6">
+                <Text className="text-white font-black text-2xl mb-4">Players</Text>
+                {gamePlayers.map(p => (
+                    <View key={p.id} className="flex-row justify-between items-center bg-zinc-800 p-3 rounded-xl mb-2">
+                        <View className="flex-row items-center gap-2">
+                            <View style={{ backgroundColor: p.color }} className="w-4 h-4 rounded-full" />
+                            <Text className="text-white font-bold">{p.name}</Text>
+                        </View>
+                        <View className="flex-row gap-2">
+                            {myPlayer?.isHost && p.id !== myPlayer.id && (
+                                <TouchableOpacity 
+                                    onPress={() => {
+                                        Alert.alert('Kick Player', `Are you sure you want to kick ${p.name}?`, [
+                                            { text: 'Cancel', style: 'cancel' },
+                                            { text: 'Kick', style: 'destructive', onPress: () => {
+                                                socket.emit('kick_player', { lobbyCode, playerId: p.id });
+                                            }}
+                                        ]);
+                                    }}
+                                    className="bg-red-500/20 px-3 py-1 rounded-full"
+                                >
+                                    <Text className="text-red-500 font-bold text-xs uppercase">Kick</Text>
+                                </TouchableOpacity>
+                            )}
+                        </View>
+                    </View>
+                ))}
+                <TouchableOpacity onPress={() => setPlayersModalVisible(false)} className="bg-zinc-700 py-3 rounded-xl mt-4 items-center">
+                    <Text className="text-white font-bold">Close</Text>
+                </TouchableOpacity>
+            </View>
+        </View>
+      )}
 
       <TradeModal visible={tradeModalVisible} onClose={() => setTradeModalVisible(false)} />
       <IncomingTradeModal trade={incomingTrade} onClose={() => setIncomingTrade(null)} />
@@ -399,8 +460,18 @@ export default function GameBoard() {
                           </TouchableOpacity>
                       )
                     ) : (
-                      <View className="bg-zinc-800 px-6 py-4 rounded-2xl border border-zinc-700">
-                        <Text className="text-zinc-400 font-black text-sm">Waiting for {activePlayer?.name}...</Text>
+                      <View className="items-center">
+                          <View className="bg-zinc-800 px-6 py-4 rounded-2xl border border-zinc-700">
+                            <Text className="text-zinc-400 font-black text-sm">Waiting for {activePlayer?.name}...</Text>
+                          </View>
+                          {myPlayer?.isHost && (
+                              <TouchableOpacity 
+                                onPress={() => socket.emit('end_turn', { lobbyCode })}
+                                className="mt-4 bg-orange-500/20 border border-orange-500/50 px-4 py-2 rounded-xl"
+                              >
+                                  <Text className="text-orange-400 font-bold text-xs uppercase tracking-widest">Force End Turn</Text>
+                              </TouchableOpacity>
+                          )}
                       </View>
                     )}
                 </View>
