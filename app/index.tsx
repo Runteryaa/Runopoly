@@ -10,19 +10,7 @@ export default function Home() {
   const [tempName, setTempName] = useState('');
 
   useEffect(() => {
-      socket.connect();
-      socket.on('random_lobby_found', (lobbyCode) => {
-          router.push({ pathname: '/lobby', params: { code: lobbyCode, isHost: 'false' } });
-      });
-      socket.on('server_error', (msg) => {
-          if (msg === 'No available public lobbies found.') {
-              Alert.alert('No Lobbies', msg);
-          }
-      });
-      return () => {
-          socket.off('random_lobby_found');
-          socket.off('server_error');
-      }
+      // Setup default socket connect if needed
   }, []);
 
   if (!playerName) {
@@ -75,16 +63,7 @@ export default function Home() {
           className="w-full bg-zinc-800 border border-zinc-700 py-4 rounded-2xl items-center"
           onPress={() => router.push('/join')}
         >
-          <Text className="text-white font-bold text-lg">Join Private Lobby</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          className="w-full bg-blue-500/20 border border-blue-500/50 py-4 rounded-2xl items-center"
-          onPress={() => {
-              socket.emit('join_random_lobby', { user: { name: playerName } });
-          }}
-        >
-          <Text className="text-blue-400 font-bold text-lg">Join Random Lobby</Text>
+          <Text className="text-white font-bold text-lg">Join Game</Text>
         </TouchableOpacity>
         
         <TouchableOpacity 
