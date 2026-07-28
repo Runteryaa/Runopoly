@@ -4,18 +4,47 @@ import { useState, useEffect } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { socket } from '../utils/socket';
 
+const APP_VERSION = '1.0.1';
+
 export default function Home() {
   const router = useRouter();
   const { playerName, setPlayerName } = useGameStore();
   const [tempName, setTempName] = useState('');
+  const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   useEffect(() => {
-      // Setup default socket connect if needed
+      socket.connect();
+      socket.on('server_info', (info) => {
+          setServerVersion(info.version);
+      });
+      return () => {
+          socket.off('server_info');
+      }
   }, []);
+
+  const needsUpdate = serverVersion && serverVersion !== APP_VERSION && serverVersion > APP_VERSION;
+
+  if (needsUpdate) {
+    return (
+      <View className="flex-1 items-center justify-center bg-zinc-900 p-6">
+        <View className="items-center mb-8">
+          <Text className="text-6xl mb-4">⚠️</Text>
+          <Text className="text-3xl font-black text-white text-center">Update Required</Text>
+          <Text className="text-zinc-400 mt-4 text-center text-lg">
+            Your game version ({APP_VERSION}) is older than the server version ({serverVersion}). 
+            Please update your game to continue playing.
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
   if (!playerName) {
     return (
       <View className="flex-1 items-center justify-center bg-zinc-900 p-6">
+        <View className="absolute top-12 right-6">
+            <Text className="text-zinc-600 font-bold text-xs uppercase">v{APP_VERSION}</Text>
+        </View>
         <View className="items-center mb-12">
           <Text className="text-5xl font-black text-white tracking-tighter">
             RUN<Text className="text-emerald-500">OPOLY</Text>
@@ -44,6 +73,9 @@ export default function Home() {
 
   return (
     <View className="flex-1 items-center justify-center bg-zinc-900 p-6">
+      <View className="absolute top-12 right-6">
+          <Text className="text-zinc-600 font-bold text-xs uppercase">v{APP_VERSION}</Text>
+      </View>
       <View className="items-center mb-12">
         <Text className="text-5xl font-black text-white tracking-tighter">
           RUN<Text className="text-emerald-500">OPOLY</Text>
