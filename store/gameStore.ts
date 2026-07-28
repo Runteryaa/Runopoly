@@ -26,6 +26,8 @@ export interface GameRules {
   maxDebt: number;
   boardSize: number;
   theme: string;
+  incomeTax: number;
+  speedDie: boolean;
 }
 
 export const THEMES: Record<string, string[]> = {
@@ -90,6 +92,7 @@ interface GameState {
   setRules: (rules: Partial<GameRules>) => void;
   executeTrade: (trade: TradeData) => void;
   upgradeProperty: (propertyId: string, houses: number, hotels: number, cost: number) => void;
+  updatePlayerStats: (id: string, updates: any) => void;
 }
 
 export const useGameStore = create<GameState>((set) => ({
@@ -97,7 +100,7 @@ export const useGameStore = create<GameState>((set) => ({
   lobbyCode: '',
   gamePlayers: [],
   activeTurnName: '',
-  rules: { goSalary: 200, jailFine: 50, startingMoney: 1500, maxDebt: 500, boardSize: 40, theme: 'Classic' },
+  rules: { goSalary: 200, jailFine: 50, startingMoney: 1500, maxDebt: 500, boardSize: 40, theme: 'Classic', incomeTax: 200, speedDie: false },
   properties: Array.from({ length: 40 }).map((_, i) => {
     let name = THEMES.Classic[i % THEMES.Classic.length];
     let price = 100 + (i * 10);
@@ -125,6 +128,8 @@ export const useGameStore = create<GameState>((set) => ({
       position: 0, 
       money: state.rules.startingMoney, 
       inJail: false,
+      jailTurns: 0,
+      doublesCount: 0,
       color: ['#ef4444', '#3b82f6', '#10b981', '#f59e0b'][i % 4] 
     })) 
   })),
@@ -218,5 +223,8 @@ export const useGameStore = create<GameState>((set) => ({
         properties: state.properties.map(p => p.id === propertyId ? { ...p, houses, hotels } : p),
         gamePlayers: state.gamePlayers.map(p => p.id === prop.ownerId ? { ...p, money: p.money - cost } : p)
     };
-  })
+  }),
+  updatePlayerStats: (id, updates) => set((state) => ({
+    gamePlayers: state.gamePlayers.map(p => p.id === id ? { ...p, ...updates } : p)
+  }))
 }));

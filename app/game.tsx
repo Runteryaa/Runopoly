@@ -59,10 +59,16 @@ export default function GameBoard() {
 
     socket.on('went_to_jail', (playerId) => {
       useGameStore.getState().setJailStatus(playerId, true);
+      useGameStore.getState().updatePlayerStats(playerId, { jailTurns: 0, doublesCount: 0 });
     });
 
     socket.on('left_jail', (playerId) => {
       useGameStore.getState().setJailStatus(playerId, false);
+      useGameStore.getState().updatePlayerStats(playerId, { jailTurns: 0, doublesCount: 0 });
+    });
+
+    socket.on('player_stats_updated', ({ playerId, updates }) => {
+      useGameStore.getState().updatePlayerStats(playerId, updates);
     });
 
     socket.on('trade_proposed', (trade: TradeData) => {
@@ -176,42 +182,83 @@ export default function GameBoard() {
     if (!isMyTurn || !myPlayer) return;
 
     if (myPlayer.inJail) {
-        Alert.alert(
-            'Busted!',
-            'You are in Jail. What do you want to do?',
-            [
-                { text: 'Wait', style: 'cancel', onPress: () => {
-                    setHasRolled(true);
-                    socket.emit('roll_dice', { lobbyCode, playerId: myPlayer.id, steps: 0 }); // Skip turn
-                }},
-                { text: `Pay $${rules.jailFine} & Roll`, onPress: () => {
-                    socket.emit('execute_card', { lobbyCode, playerId: myPlayer.id, card: { id: 'jail_fee', type: 'chance', action: 'pay', amount: rules.jailFine, text: 'Bribe the guards' } });
+        const mustPay = (myPlayer.jailTurns || 0) >= 2;
+        const options: any[] = [];
+
+        if (!mustPay) {
+            options.push({ text: 'Roll for Doubles', onPress: () => {
+                const dice1 = Math.floor(Math.random() * 6) + 1;
+                const dice2 = Math.floor(Math.random() * 6) + 1;
+                const totalSteps = dice1 + dice2;
+                setLastRoll(totalSteps);
+                setHasRolled(true);
+                
+                if (dice1 === dice2) {
+                    Alert.alert('Lucky!', `You rolled doubles (${dice1} & ${dice2}) and escaped Jail!`);
                     socket.emit('leave_jail', { lobbyCode, playerId: myPlayer.id });
-                    
-                    const dice1 = Math.floor(Math.random() * 6) + 1;
-                    const dice2 = Math.floor(Math.random() * 6) + 1;
-                    const totalSteps = dice1 + dice2;
-                    setLastRoll(totalSteps);
-                    setHasRolled(true);
-                    socket.emit('roll_dice', { lobbyCode, playerId: myPlayer.id, steps: totalSteps });
-                }}
-            ]
+                    processMove(totalSteps);
+                } else {
+                    Alert.alert('Unlucky', `You rolled ${dice1} & ${dice2}. Not doubles. You stay in Jail.`);
+                    socket.emit('update_player_stats', { lobbyCode, playerId: myPlayer.id, updates: { jailTurns: (myPlayer.jailTurns || 0) + 1 } });
+                }
+            }});
+        }
+
+        options.push({ text: `Pay $${rules.jailFine} & Roll`, onPress: () => {
+            socket.emit('execute_card', { lobbyCode, playerId: myPlayer.id, card: { id: 'jail_fee', type: 'chance', action: 'pay', amount: rules.jailFine, text: 'Bribe the guards' } });
+            socket.emit('leave_jail', { lobbyCode, playerId: myPlayer.id });
+            
+            const dice1 = Math.floor(Math.random() * 6) + 1;
+            const dice2 = Math.floor(Math.random() * 6) + 1;
+            const totalSteps = dice1 + dice2;
+            setLastRoll(totalSteps);
+            setHasRolled(true); // Don't allow rolling again immediately if they just left jail by paying
+            processMove(totalSteps);
+        }});
+
+        Alert.alert(
+            mustPay ? 'Time is up!' : 'Busted!',
+            mustPay ? `You must pay $${rules.jailFine} to leave Jail this turn!` : 'You are in Jail. What do you want to do?',
+            options
         );
         return;
     }
 
     const dice1 = Math.floor(Math.random() * 6) + 1;
     const dice2 = Math.floor(Math.random() * 6) + 1;
+    const isDouble = dice1 === dice2;
     const totalSteps = dice1 + dice2;
     setLastRoll(totalSteps);
-    setHasRolled(true);
-    socket.emit('roll_dice', { lobbyCode, playerId: myPlayer.id, steps: totalSteps });
 
-    const passedGo = myPlayer.position + totalSteps >= totalTiles;
-    const newPosition = (myPlayer.position + totalSteps) % totalTiles;
+    if (isDouble) {
+        const newDoublesCount = (myPlayer.doublesCount || 0) + 1;
+        socket.emit('update_player_stats', { lobbyCode, playerId: myPlayer.id, updates: { doublesCount: newDoublesCount } });
+        
+        if (newDoublesCount === 3) {
+            Alert.alert('Speeding!', 'You rolled doubles 3 times in a row! Go directly to Jail!');
+            socket.emit('go_to_jail', { lobbyCode, playerId: myPlayer.id });
+            setHasRolled(true);
+            return;
+        } else {
+            setHasRolled(false); // Can roll again
+            Alert.alert('Doubles!', `You rolled ${dice1} and ${dice2}! You get to roll again after your move.`);
+        }
+    } else {
+        setHasRolled(true);
+        socket.emit('update_player_stats', { lobbyCode, playerId: myPlayer.id, updates: { doublesCount: 0 } });
+    }
+
+    processMove(totalSteps);
+  };
+
+  const processMove = (totalSteps: number) => {
+    socket.emit('roll_dice', { lobbyCode, playerId: myPlayer!.id, steps: totalSteps });
+
+    const passedGo = myPlayer!.position + totalSteps >= totalTiles;
+    const newPosition = (myPlayer!.position + totalSteps) % totalTiles;
 
     if (passedGo && newPosition !== 0) {
-        socket.emit('pass_go', { lobbyCode, playerId: myPlayer.id });
+        socket.emit('pass_go', { lobbyCode, playerId: myPlayer!.id });
     }
 
     const landedProperty = properties[newPosition];
@@ -222,7 +269,8 @@ export default function GameBoard() {
 
         if (newPosition === s * 3) {
             Alert.alert('Arrested!', `Go directly to Jail! Do not pass GO, do not collect $${rules.goSalary}.`);
-            socket.emit('go_to_jail', { lobbyCode, playerId: myPlayer.id });
+            socket.emit('go_to_jail', { lobbyCode, playerId: myPlayer!.id });
+            setHasRolled(true); // End their turn basically (cannot roll again even if they had doubles)
             return;
         }
 
@@ -231,7 +279,7 @@ export default function GameBoard() {
             if (cards.length > 0) {
                 const randomCard = cards[Math.floor(Math.random() * cards.length)];
                 Alert.alert('Chance Card!', randomCard.text);
-                socket.emit('execute_card', { lobbyCode, playerId: myPlayer.id, card: randomCard });
+                socket.emit('execute_card', { lobbyCode, playerId: myPlayer!.id, card: randomCard });
             } else {
                 Alert.alert('Chance!', 'Nothing happened. No cards in deck.');
             }
@@ -244,14 +292,14 @@ export default function GameBoard() {
                 `Do you want to buy ${landedProperty.name} for $${landedProperty.price}?`,
                 [
                     { text: 'No, auction it', style: 'cancel', onPress: () => {
-                        socket.emit('start_auction', { lobbyCode, propertyId: landedProperty.id, excludedPlayerId: myPlayer.id });
+                        socket.emit('start_auction', { lobbyCode, propertyId: landedProperty.id, excludedPlayerId: myPlayer!.id });
                     }},
                     { text: 'Buy', onPress: () => {
-                        socket.emit('buy_property', { lobbyCode, propertyId: landedProperty.id, ownerId: myPlayer.id, price: landedProperty.price });
+                        socket.emit('buy_property', { lobbyCode, propertyId: landedProperty.id, ownerId: myPlayer!.id, price: landedProperty.price });
                     }}
                 ]
             );
-        } else if (landedProperty.ownerId && landedProperty.ownerId !== myPlayer.id) {
+        } else if (landedProperty.ownerId && landedProperty.ownerId !== myPlayer!.id) {
             const rentToPay = landedProperty.rent * (1 + (landedProperty.houses || 0) + (landedProperty.hotels || 0) * 5);
             setRentPaymentTarget({
                 property: landedProperty,

@@ -1,6 +1,6 @@
-import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useState, useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, Alert, Modal, TextInput, Switch } from 'react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { socket } from '../utils/socket';
 import { useGameStore } from '../store/gameStore';
 
@@ -12,6 +12,12 @@ export default function Lobby() {
   const [roomCode] = useState((params.code as string) || Math.random().toString(36).substring(2, 6).toUpperCase());
   const [players, setPlayers] = useState<any[]>([]);
   const playersRef = useRef<any[]>([]);
+  const [settingsVisible, setSettingsVisible] = useState(false);
+  const [localRules, setLocalRules] = useState(rules);
+
+  useEffect(() => {
+      setLocalRules(rules);
+  }, [rules]);
 
   useEffect(() => {
     socket.connect();
@@ -105,10 +111,86 @@ export default function Lobby() {
     <View className="flex-1 bg-zinc-900 pt-16">
       <View className="px-6 pb-4 border-b border-zinc-800 flex-row justify-between items-center">
         <Text className="text-white text-2xl font-black">Game Lobby</Text>
-        <TouchableOpacity onPress={() => router.back()} className="bg-zinc-800 px-4 py-2 rounded-lg">
-          <Text className="text-zinc-400 font-bold">Leave</Text>
-        </TouchableOpacity>
+        <View className="flex-row gap-2">
+            {isHost && (
+                <TouchableOpacity onPress={() => setSettingsVisible(true)} className="bg-zinc-800 px-4 py-2 rounded-lg border border-zinc-700">
+                  <Text className="text-zinc-400 font-bold">⚙️ Rules</Text>
+                </TouchableOpacity>
+            )}
+            <TouchableOpacity onPress={() => router.back()} className="bg-red-500/20 px-4 py-2 rounded-lg border border-red-500/30">
+              <Text className="text-red-400 font-bold">Leave</Text>
+            </TouchableOpacity>
+        </View>
       </View>
+
+      <Modal visible={settingsVisible} animationType="slide" transparent>
+          <View className="flex-1 bg-zinc-900/95 justify-center p-4">
+              <View className="bg-zinc-800 rounded-3xl p-6 border border-zinc-700">
+                  <Text className="text-white text-2xl font-black mb-4">Game Rules</Text>
+                  <ScrollView className="max-h-[70vh]">
+                      <View className="mb-4">
+                          <Text className="text-zinc-400 font-bold mb-1">Starting Money ($)</Text>
+                          <TextInput 
+                              className="bg-zinc-900 text-white p-3 rounded-lg border border-zinc-700"
+                              keyboardType="numeric"
+                              value={localRules.startingMoney.toString()}
+                              onChangeText={(t) => setLocalRules({...localRules, startingMoney: parseInt(t) || 0})}
+                          />
+                      </View>
+                      <View className="mb-4">
+                          <Text className="text-zinc-400 font-bold mb-1">GO Salary ($)</Text>
+                          <TextInput 
+                              className="bg-zinc-900 text-white p-3 rounded-lg border border-zinc-700"
+                              keyboardType="numeric"
+                              value={localRules.goSalary.toString()}
+                              onChangeText={(t) => setLocalRules({...localRules, goSalary: parseInt(t) || 0})}
+                          />
+                      </View>
+                      <View className="mb-4">
+                          <Text className="text-zinc-400 font-bold mb-1">Income Tax ($)</Text>
+                          <TextInput 
+                              className="bg-zinc-900 text-white p-3 rounded-lg border border-zinc-700"
+                              keyboardType="numeric"
+                              value={localRules.incomeTax.toString()}
+                              onChangeText={(t) => setLocalRules({...localRules, incomeTax: parseInt(t) || 0})}
+                          />
+                      </View>
+                      <View className="mb-4">
+                          <Text className="text-zinc-400 font-bold mb-1">Jail Fine ($)</Text>
+                          <TextInput 
+                              className="bg-zinc-900 text-white p-3 rounded-lg border border-zinc-700"
+                              keyboardType="numeric"
+                              value={localRules.jailFine.toString()}
+                              onChangeText={(t) => setLocalRules({...localRules, jailFine: parseInt(t) || 0})}
+                          />
+                      </View>
+                      <View className="mb-4 flex-row justify-between items-center bg-zinc-900 p-3 rounded-lg border border-zinc-700">
+                          <Text className="text-zinc-300 font-bold">Speed Die (Faster game)</Text>
+                          <Switch 
+                              value={localRules.speedDie} 
+                              onValueChange={(v) => setLocalRules({...localRules, speedDie: v})}
+                              trackColor={{ false: '#3f3f46', true: '#10b981' }}
+                          />
+                      </View>
+                  </ScrollView>
+                  <View className="flex-row gap-3 mt-4">
+                      <TouchableOpacity onPress={() => setSettingsVisible(false)} className="flex-1 bg-zinc-700 py-3 rounded-xl items-center">
+                          <Text className="text-white font-bold">Cancel</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity 
+                        onPress={() => {
+                            setRules(localRules);
+                            setSettingsVisible(false);
+                            socket.emit('update_config', { lobbyCode: roomCode, config: { rules: localRules, properties: useGameStore.getState().properties, cards: useGameStore.getState().cards } });
+                        }} 
+                        className="flex-1 bg-emerald-500 py-3 rounded-xl items-center"
+                      >
+                          <Text className="text-white font-bold">Save Rules</Text>
+                      </TouchableOpacity>
+                  </View>
+              </View>
+          </View>
+      </Modal>
 
       <View className="items-center mt-8 mb-8">
         <Text className="text-zinc-400 text-sm font-bold uppercase tracking-widest mb-2">Room Code</Text>
