@@ -5,6 +5,9 @@ import { useEffect, useState } from 'react';
 import TradeModal from '../components/TradeModal';
 import IncomingTradeModal from '../components/IncomingTradeModal';
 import InventoryModal from '../components/InventoryModal';
+import RentPaymentModal from '../components/RentPaymentModal';
+import IncomingRentOfferModal from '../components/IncomingRentOfferModal';
+import AuctionModal from '../components/AuctionModal';
 
 export default function GameBoard() {
   const { properties, gamePlayers, lobbyCode, updatePlayerPosition, playerName, activeTurnName, setActiveTurnName, rules } = useGameStore();
@@ -13,6 +16,11 @@ export default function GameBoard() {
   const [tradeModalVisible, setTradeModalVisible] = useState(false);
   const [inventoryVisible, setInventoryVisible] = useState(false);
   const [incomingTrade, setIncomingTrade] = useState<TradeData | null>(null);
+  
+  const [landingMessage, setLandingMessage] = useState<string | null>(null);
+  const [rentPaymentTarget, setRentPaymentTarget] = useState<any>(null);
+  const [incomingRentOffer, setIncomingRentOffer] = useState<any>(null);
+  const [activeAuction, setActiveAuction] = useState<any>(null);
 
   const myPlayer = gamePlayers.find(p => p.name === playerName);
   const activePlayer = gamePlayers.find(p => p.name === activeTurnName);
@@ -73,6 +81,42 @@ export default function GameBoard() {
             if (me && trade.fromId === me.id) {
                 Alert.alert('Trade Rejected', 'The other player declined your trade proposal.');
             }
+        }
+    });
+
+    socket.on('custom_rent_proposed', (offer) => {
+        const me = useGameStore.getState().gamePlayers.find(p => p.name === playerName);
+        if (me && offer.toPlayerId === me.id) {
+            setIncomingRentOffer(offer);
+        }
+    });
+
+    socket.on('custom_rent_responded', (response) => {
+        const me = useGameStore.getState().gamePlayers.find(p => p.name === playerName);
+        if (response.accepted) {
+            useGameStore.getState().payRent(response.fromPlayerId, response.toPlayerId, response.amount);
+            if (me && (response.fromPlayerId === me.id || response.toPlayerId === me.id)) {
+                Alert.alert('Rent Negotiation', `Offer of $${response.amount} was accepted!`);
+            }
+        } else {
+            if (me && response.fromPlayerId === me.id) {
+                Alert.alert('Offer Rejected', `The owner rejected your offer. You must pay the full $${response.amount}!`);
+                socket.emit('pay_rent', { lobbyCode, fromPlayerId: response.fromPlayerId, toPlayerId: response.toPlayerId, amount: response.amount });
+            }
+        }
+    });
+
+    socket.on('auction_started', (data) => setActiveAuction(data));
+    socket.on('auction_bid_placed', (data) => {
+        setActiveAuction((prev: any) => prev ? { ...prev, currentBid: data.bid, highestBidderId: data.bidderId } : null);
+    });
+    socket.on('auction_ended', (data) => {
+        setActiveAuction(null);
+        if (data.winnerId) {
+            useGameStore.getState().buyProperty(data.propertyId, data.winnerId, data.winningBid);
+            Alert.alert('Auction Ended', `Property sold to a bidder for $${data.winningBid}!`);
+        } else {
+            Alert.alert('Auction Ended', 'No one bid on the property.');
         }
     });
 
@@ -173,6 +217,9 @@ export default function GameBoard() {
     const landedProperty = properties[newPosition];
 
     setTimeout(() => {
+        setLandingMessage(`You landed on ${landedProperty.name}!`);
+        setTimeout(() => setLandingMessage(null), 3000);
+
         if (newPosition === s * 3) {
             Alert.alert('Arrested!', `Go directly to Jail! Do not pass GO, do not collect $${rules.goSalary}.`);
             socket.emit('go_to_jail', { lobbyCode, playerId: myPlayer.id });
@@ -196,7 +243,9 @@ export default function GameBoard() {
                 'Buy Property',
                 `Do you want to buy ${landedProperty.name} for $${landedProperty.price}?`,
                 [
-                    { text: 'No, skip', style: 'cancel' },
+                    { text: 'No, auction it', style: 'cancel', onPress: () => {
+                        socket.emit('start_auction', { lobbyCode, propertyId: landedProperty.id, excludedPlayerId: myPlayer.id });
+                    }},
                     { text: 'Buy', onPress: () => {
                         socket.emit('buy_property', { lobbyCode, propertyId: landedProperty.id, ownerId: myPlayer.id, price: landedProperty.price });
                     }}
@@ -204,8 +253,11 @@ export default function GameBoard() {
             );
         } else if (landedProperty.ownerId && landedProperty.ownerId !== myPlayer.id) {
             const rentToPay = landedProperty.rent * (1 + (landedProperty.houses || 0) + (landedProperty.hotels || 0) * 5);
-            Alert.alert('Rent Due', `You landed on ${landedProperty.name}. You must pay $${rentToPay} to the owner!`);
-            socket.emit('pay_rent', { lobbyCode, fromPlayerId: myPlayer.id, toPlayerId: landedProperty.ownerId, amount: rentToPay });
+            setRentPaymentTarget({
+                property: landedProperty,
+                ownerId: landedProperty.ownerId,
+                fullRentAmount: rentToPay
+            });
         }
     }, 800);
   };
@@ -244,6 +296,26 @@ export default function GameBoard() {
       <TradeModal visible={tradeModalVisible} onClose={() => setTradeModalVisible(false)} />
       <IncomingTradeModal trade={incomingTrade} onClose={() => setIncomingTrade(null)} />
       <InventoryModal visible={inventoryVisible} onClose={() => setInventoryVisible(false)} />
+      <RentPaymentModal 
+        visible={!!rentPaymentTarget} 
+        onClose={() => setRentPaymentTarget(null)} 
+        {...rentPaymentTarget} 
+        myPlayerId={myPlayer?.id} 
+        lobbyCode={lobbyCode} 
+      />
+      <IncomingRentOfferModal 
+        visible={!!incomingRentOffer} 
+        offer={incomingRentOffer} 
+        onClose={() => setIncomingRentOffer(null)} 
+        lobbyCode={lobbyCode} 
+      />
+      <AuctionModal 
+        visible={!!activeAuction} 
+        auctionData={activeAuction} 
+        onClose={() => setActiveAuction(null)} 
+        lobbyCode={lobbyCode} 
+        myPlayerId={myPlayer?.id} 
+      />
 
       <ScrollView horizontal bounces={false} className="flex-1 mt-32">
         <ScrollView bounces={false}>
@@ -254,6 +326,12 @@ export default function GameBoard() {
                     
                     {lastRoll && (
                       <Text className="text-white font-bold text-lg mb-4">Rolled: {lastRoll}</Text>
+                    )}
+
+                    {landingMessage && (
+                      <View className="absolute z-20 bg-emerald-500 px-6 py-2 rounded-full mb-28 border border-white/20">
+                          <Text className="text-white font-black text-center">{landingMessage}</Text>
+                      </View>
                     )}
 
                     {isMyTurn ? (
