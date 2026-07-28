@@ -22,6 +22,7 @@ export default function GameBoard() {
   const [incomingRentOffer, setIncomingRentOffer] = useState<any>(null);
   const [activeAuction, setActiveAuction] = useState<any>(null);
   const [playersModalVisible, setPlayersModalVisible] = useState(false);
+  const [turnTimeLeft, setTurnTimeLeft] = useState<number | null>(null);
 
   const myPlayer = gamePlayers.find(p => p.name === playerName);
   const activePlayer = gamePlayers.find(p => p.name === activeTurnName);
@@ -36,6 +37,10 @@ export default function GameBoard() {
       setActiveTurnName(nextPlayerName);
       setLastRoll(null);
       setHasRolled(false);
+    });
+
+    socket.on('turn_timer_tick', (timeLeft) => {
+        setTurnTimeLeft(timeLeft);
     });
 
     socket.on('property_bought', ({ propertyId, ownerId, price }) => {
@@ -193,6 +198,7 @@ export default function GameBoard() {
       socket.off('peer_sync_game_state');
       socket.off('host_transferred');
       socket.off('player_kicked_ingame');
+      socket.off('turn_timer_tick');
     };
   }, []);
 
@@ -350,7 +356,14 @@ export default function GameBoard() {
       <View className="absolute top-16 left-6 z-10 w-full pr-12 flex-row justify-between items-center">
          <View>
             <Text className="text-white text-2xl font-black tracking-widest">RUN<Text className="text-emerald-500">OPOLY</Text></Text>
-            <Text className="text-zinc-400 font-bold text-[10px] uppercase mt-1">Lobby: {lobbyCode} • Turn: {activePlayer?.name}</Text>
+            <View className="flex-row items-center mt-1">
+                <Text className="text-zinc-400 font-bold text-[10px] uppercase">Lobby: {lobbyCode} • Turn: {activePlayer?.name}</Text>
+                {turnTimeLeft !== null && (
+                    <View className="ml-2 bg-red-500/20 px-2 py-0.5 rounded">
+                        <Text className="text-red-400 font-black text-[10px]">{turnTimeLeft}s</Text>
+                    </View>
+                )}
+            </View>
          </View>
          <View className="items-end">
             <TouchableOpacity onPress={() => setInventoryVisible(true)}>

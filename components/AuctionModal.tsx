@@ -1,10 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Modal, TextInput, ScrollView } from 'react-native';
 import { socket } from '../utils/socket';
 import { useGameStore } from '../store/gameStore';
 
 export default function AuctionModal({ visible, auctionData, onClose, lobbyCode, myPlayerId }: any) {
     const [bidAmount, setBidAmount] = useState('');
+    const [timeLeft, setTimeLeft] = useState<number | null>(null);
+
+    useEffect(() => {
+        socket.on('auction_timer_tick', (t) => setTimeLeft(t));
+        return () => {
+            socket.off('auction_timer_tick');
+        }
+    }, []);
 
     if (!auctionData) return null;
 
@@ -57,6 +65,12 @@ export default function AuctionModal({ visible, auctionData, onClose, lobbyCode,
                         <Text className="text-white font-bold">{property?.name}</Text> is up for auction!
                         (Refused by {excludedPlayer?.name})
                     </Text>
+
+                    {timeLeft !== null && (
+                        <View className="bg-red-500/20 py-1 px-4 rounded-full self-center mb-4 border border-red-500/30">
+                            <Text className="text-red-400 font-black text-xs">TIME LEFT: {timeLeft}s</Text>
+                        </View>
+                    )}
 
                     <View className="bg-zinc-900 rounded-xl p-6 border border-zinc-700 mb-6 items-center">
                         <Text className="text-zinc-500 font-bold uppercase text-xs mb-1">Current Highest Bid</Text>

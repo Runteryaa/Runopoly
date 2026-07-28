@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { socket } from '../utils/socket';
 
-const APP_VERSION = '1.0.1';
+const APP_VERSION = '1.0.2';
 
 export default function Home() {
   const router = useRouter();
