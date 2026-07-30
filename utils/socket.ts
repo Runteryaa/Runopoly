@@ -5,5 +5,4 @@ const SOCKET_URL = `https://runwatch.qzz.io`;
 
 export const socket = io(SOCKET_URL, {
   autoConnect: false,
-  transports: ['websocket'],
 });
