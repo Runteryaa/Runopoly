@@ -1,3 +1,4 @@
+import { CustomAlert } from '../utils/alert';
 import { View, Text, TouchableOpacity, TextInput, ScrollView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useGameStore } from '../store/gameStore';
@@ -19,7 +20,7 @@ export default function RuleEditor() {
         startingMoney: parseInt(startingMoney) || 1500,
         maxDebt: parseInt(maxDebt) || 500
     });
-    Alert.alert('Saved', 'Game rules updated successfully!');
+    CustomAlert.alert('Saved', 'Game rules updated successfully!');
     router.back();
   };
 

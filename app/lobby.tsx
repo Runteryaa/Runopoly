@@ -1,3 +1,4 @@
+import { CustomAlert } from '../utils/alert';
 import { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Alert, Modal, TextInput, Switch } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -25,7 +26,7 @@ export default function Lobby() {
     
     const timeout = setTimeout(() => {
         if (!socket.connected) {
-            Alert.alert('Connection Failed', 'Could not connect to the server. Please check your internet or server status.');
+            CustomAlert.alert('Connection Failed', 'Could not connect to the server. Please check your internet or server status.');
             router.back();
         }
     }, 5000);
@@ -58,12 +59,12 @@ export default function Lobby() {
     socket.on('host_transferred', (newHostName) => {
         if (playerName === newHostName) {
             setIsHost(true);
-            Alert.alert('Host Transfer', 'The previous host left. You are now the host!');
+            CustomAlert.alert('Host Transfer', 'The previous host left. You are now the host!');
         }
     });
 
     socket.on('server_error', (msg) => {
-        Alert.alert('Error', msg);
+        CustomAlert.alert('Error', msg);
         router.back();
     });
 
@@ -90,7 +91,7 @@ export default function Lobby() {
 
     socket.on('kicked_from_lobby', (kickedId) => {
         if (myUser.id === kickedId) {
-            Alert.alert('Kicked', 'You have been kicked from the lobby by the host.');
+            CustomAlert.alert('Kicked', 'You have been kicked from the lobby by the host.');
             router.back();
         }
     });

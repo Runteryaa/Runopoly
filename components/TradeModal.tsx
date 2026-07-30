@@ -1,3 +1,4 @@
+import { CustomAlert } from '../utils/alert';
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Modal, TextInput, ScrollView, Alert } from 'react-native';
 import { useGameStore, TradeData } from '../store/gameStore';
@@ -27,7 +28,7 @@ export default function TradeModal({ visible, onClose }: TradeModalProps) {
 
     const handlePropose = () => {
         if (!targetId) {
-            Alert.alert('Error', 'Select a player to trade with.');
+            CustomAlert.alert('Error', 'Select a player to trade with.');
             return;
         }
         const trade: TradeData = {
@@ -41,7 +42,7 @@ export default function TradeModal({ visible, onClose }: TradeModalProps) {
         };
         
         socket.emit('propose_trade', { lobbyCode, trade });
-        Alert.alert('Sent', 'Trade proposal sent!');
+        CustomAlert.alert('Sent', 'Trade proposal sent!');
         onClose();
     };
 

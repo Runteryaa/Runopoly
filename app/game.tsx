@@ -1,3 +1,4 @@
+import { CustomAlert } from '../utils/alert';
 import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useGameStore, TradeData } from '../store/gameStore';
 import { socket } from '../utils/socket';
@@ -77,7 +78,7 @@ export default function GameBoard() {
       const state = useGameStore.getState();
       const kickedPlayer = state.gamePlayers.find(p => p.id === playerId);
       if (kickedPlayer) {
-          Alert.alert('Player Kicked', `${kickedPlayer.name} has been kicked by the host.`);
+          CustomAlert.alert('Player Kicked', `${kickedPlayer.name} has been kicked by the host.`);
           // Remove player from store and reset their properties
           useGameStore.setState({
               gamePlayers: state.gamePlayers.filter(p => p.id !== playerId),
@@ -103,11 +104,11 @@ export default function GameBoard() {
     socket.on('trade_responded', ({ trade, accepted }) => {
         if (accepted) {
             useGameStore.getState().executeTrade(trade);
-            Alert.alert('Trade Accepted', 'The trade was successfully completed!');
+            CustomAlert.alert('Trade Accepted', 'The trade was successfully completed!');
         } else {
             const me = useGameStore.getState().gamePlayers.find(p => p.name === playerName);
             if (me && trade.fromId === me.id) {
-                Alert.alert('Trade Rejected', 'The other player declined your trade proposal.');
+                CustomAlert.alert('Trade Rejected', 'The other player declined your trade proposal.');
             }
         }
     });
@@ -124,11 +125,11 @@ export default function GameBoard() {
         if (response.accepted) {
             useGameStore.getState().payRent(response.fromPlayerId, response.toPlayerId, response.amount);
             if (me && (response.fromPlayerId === me.id || response.toPlayerId === me.id)) {
-                Alert.alert('Rent Negotiation', `Offer of $${response.amount} was accepted!`);
+                CustomAlert.alert('Rent Negotiation', `Offer of $${response.amount} was accepted!`);
             }
         } else {
             if (me && response.fromPlayerId === me.id) {
-                Alert.alert('Offer Rejected', `The owner rejected your offer. You must pay the full $${response.amount}!`);
+                CustomAlert.alert('Offer Rejected', `The owner rejected your offer. You must pay the full $${response.amount}!`);
                 socket.emit('pay_rent', { lobbyCode, fromPlayerId: response.fromPlayerId, toPlayerId: response.toPlayerId, amount: response.amount });
             }
         }
@@ -142,9 +143,9 @@ export default function GameBoard() {
         setActiveAuction(null);
         if (data.winnerId) {
             useGameStore.getState().buyProperty(data.propertyId, data.winnerId, data.winningBid);
-            Alert.alert('Auction Ended', `Property sold to a bidder for $${data.winningBid}!`);
+            CustomAlert.alert('Auction Ended', `Property sold to a bidder for $${data.winningBid}!`);
         } else {
-            Alert.alert('Auction Ended', 'No one bid on the property.');
+            CustomAlert.alert('Auction Ended', 'No one bid on the property.');
         }
     });
 
@@ -175,7 +176,7 @@ export default function GameBoard() {
             gamePlayers: gamePlayers.map(p => ({ ...p, isHost: p.name === newHostName }))
         });
         if (playerName === newHostName) {
-            Alert.alert('Host Transfer', 'The previous host disconnected. You are now the host!');
+            CustomAlert.alert('Host Transfer', 'The previous host disconnected. You are now the host!');
         }
     });
 
@@ -218,11 +219,11 @@ export default function GameBoard() {
                 setHasRolled(true);
                 
                 if (dice1 === dice2) {
-                    Alert.alert('Lucky!', `You rolled doubles (${dice1} & ${dice2}) and escaped Jail!`);
+                    CustomAlert.alert('Lucky!', `You rolled doubles (${dice1} & ${dice2}) and escaped Jail!`);
                     socket.emit('leave_jail', { lobbyCode, playerId: myPlayer.id });
                     processMove(totalSteps);
                 } else {
-                    Alert.alert('Unlucky', `You rolled ${dice1} & ${dice2}. Not doubles. You stay in Jail.`);
+                    CustomAlert.alert('Unlucky', `You rolled ${dice1} & ${dice2}. Not doubles. You stay in Jail.`);
                     socket.emit('update_player_stats', { lobbyCode, playerId: myPlayer.id, updates: { jailTurns: (myPlayer.jailTurns || 0) + 1 } });
                 }
             }});
@@ -240,7 +241,7 @@ export default function GameBoard() {
             processMove(totalSteps);
         }});
 
-        Alert.alert(
+        CustomAlert.alert(
             mustPay ? 'Time is up!' : 'Busted!',
             mustPay ? `You must pay $${rules.jailFine} to leave Jail this turn!` : 'You are in Jail. What do you want to do?',
             options,
@@ -260,13 +261,13 @@ export default function GameBoard() {
         socket.emit('update_player_stats', { lobbyCode, playerId: myPlayer.id, updates: { doublesCount: newDoublesCount } });
         
         if (newDoublesCount === 3) {
-            Alert.alert('Speeding!', 'You rolled doubles 3 times in a row! Go directly to Jail!', [{ text: 'OK' }], { cancelable: false });
+            CustomAlert.alert('Speeding!', 'You rolled doubles 3 times in a row! Go directly to Jail!', [{ text: 'OK' }], { cancelable: false });
             socket.emit('go_to_jail', { lobbyCode, playerId: myPlayer.id });
             setHasRolled(true);
             return;
         } else {
             setHasRolled(false); // Can roll again
-            Alert.alert('Doubles!', `You rolled ${dice1} and ${dice2}! You get to roll again after your move.`, [{ text: 'Awesome' }], { cancelable: false });
+            CustomAlert.alert('Doubles!', `You rolled ${dice1} and ${dice2}! You get to roll again after your move.`, [{ text: 'Awesome' }], { cancelable: false });
         }
     } else {
         setHasRolled(true);
@@ -293,7 +294,7 @@ export default function GameBoard() {
         setTimeout(() => setLandingMessage(null), 3000);
 
         if (newPosition === s * 3) {
-            Alert.alert('Arrested!', `Go directly to Jail! Do not pass GO, do not collect $${rules.goSalary}.`, [{ text: 'OK' }], { cancelable: false });
+            CustomAlert.alert('Arrested!', `Go directly to Jail! Do not pass GO, do not collect $${rules.goSalary}.`, [{ text: 'OK' }], { cancelable: false });
             socket.emit('go_to_jail', { lobbyCode, playerId: myPlayer!.id });
             setHasRolled(true); // End their turn basically (cannot roll again even if they had doubles)
             return;
@@ -303,17 +304,17 @@ export default function GameBoard() {
             const { cards } = useGameStore.getState();
             if (cards.length > 0) {
                 const randomCard = cards[Math.floor(Math.random() * cards.length)];
-                Alert.alert('Chance Card!', randomCard.text, [{ text: 'OK', onPress: () => {
+                CustomAlert.alert('Chance Card!', randomCard.text, [{ text: 'OK', onPress: () => {
                     socket.emit('execute_card', { lobbyCode, playerId: myPlayer!.id, card: randomCard });
                 }}], { cancelable: false });
             } else {
-                Alert.alert('Chance!', 'Nothing happened. No cards in deck.', [{ text: 'OK' }], { cancelable: false });
+                CustomAlert.alert('Chance!', 'Nothing happened. No cards in deck.', [{ text: 'OK' }], { cancelable: false });
             }
             return;
         }
 
         if (!landedProperty.ownerId && landedProperty.price > 0 && newPosition !== 0 && newPosition !== s) {
-            Alert.alert(
+            CustomAlert.alert(
                 'Buy Property',
                 `Do you want to buy ${landedProperty.name} for $${landedProperty.price}?`,
                 [
@@ -393,7 +394,7 @@ export default function GameBoard() {
                             {myPlayer?.isHost && p.id !== myPlayer.id && (
                                 <TouchableOpacity 
                                     onPress={() => {
-                                        Alert.alert('Kick Player', `Are you sure you want to kick ${p.name}?`, [
+                                        CustomAlert.alert('Kick Player', `Are you sure you want to kick ${p.name}?`, [
                                             { text: 'Cancel', style: 'cancel' },
                                             { text: 'Kick', style: 'destructive', onPress: () => {
                                                 socket.emit('kick_player', { lobbyCode, playerId: p.id });

@@ -1,3 +1,4 @@
+import { CustomAlert } from '../utils/alert';
 import { View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useState, useEffect } from 'react';
@@ -16,7 +17,7 @@ export default function JoinGame() {
       });
       socket.on('server_error', (msg) => {
           if (msg === 'No available public lobbies found.') {
-              Alert.alert('No Lobbies', msg);
+              CustomAlert.alert('No Lobbies', msg);
           }
       });
       return () => {
