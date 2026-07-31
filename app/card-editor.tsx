@@ -8,15 +8,19 @@ export default function CardEditor() {
   const { cards, addCard } = useGameStore();
   const [text, setText] = useState('');
   const [amount, setAmount] = useState('50');
+  const [type, setType] = useState<'chance' | 'community'>('chance');
+  const [action, setAction] = useState<'pay' | 'receive' | 'move'>('receive');
+  const [behavior, setBehavior] = useState<'instant' | 'keepable'>('instant');
 
   const handleAddCard = () => {
     if (!text.trim()) return;
     const newCard: Card = {
       id: Math.random().toString(),
-      type: 'chance',
-      action: 'receive',
+      type,
+      action,
       text,
-      amount: parseInt(amount) || 0
+      amount: parseInt(amount) || 0,
+      behavior
     };
     addCard(newCard);
     setText('');
@@ -34,6 +38,40 @@ export default function CardEditor() {
         
         <View className="bg-zinc-800 p-5 rounded-2xl mb-8 border border-zinc-700/50 shadow-sm">
             <Text className="text-white font-black text-xl mb-6">Create New Card</Text>
+            
+            <Text className="text-zinc-400 mb-1.5 text-xs font-bold uppercase tracking-wider">Type</Text>
+            <View className="flex-row gap-2 mb-4">
+              <TouchableOpacity onPress={() => setType('chance')} className={`flex-1 py-2 rounded-lg items-center ${type === 'chance' ? 'bg-orange-500' : 'bg-zinc-700'}`}>
+                <Text className="text-white font-bold">Chance</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setType('community')} className={`flex-1 py-2 rounded-lg items-center ${type === 'community' ? 'bg-blue-500' : 'bg-zinc-700'}`}>
+                <Text className="text-white font-bold">Community</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text className="text-zinc-400 mb-1.5 text-xs font-bold uppercase tracking-wider">Behavior</Text>
+            <View className="flex-row gap-2 mb-4">
+              <TouchableOpacity onPress={() => setBehavior('instant')} className={`flex-1 py-2 rounded-lg items-center ${behavior === 'instant' ? 'bg-red-500' : 'bg-zinc-700'}`}>
+                <Text className="text-white font-bold">Instant</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setBehavior('keepable')} className={`flex-1 py-2 rounded-lg items-center ${behavior === 'keepable' ? 'bg-purple-500' : 'bg-zinc-700'}`}>
+                <Text className="text-white font-bold">Keepable</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text className="text-zinc-400 mb-1.5 text-xs font-bold uppercase tracking-wider">Action</Text>
+            <View className="flex-row gap-2 mb-4">
+              <TouchableOpacity onPress={() => setAction('receive')} className={`flex-1 py-2 rounded-lg items-center ${action === 'receive' ? 'bg-emerald-500' : 'bg-zinc-700'}`}>
+                <Text className="text-white font-bold">Receive</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setAction('pay')} className={`flex-1 py-2 rounded-lg items-center ${action === 'pay' ? 'bg-red-500' : 'bg-zinc-700'}`}>
+                <Text className="text-white font-bold">Pay</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setAction('move')} className={`flex-1 py-2 rounded-lg items-center ${action === 'move' ? 'bg-indigo-500' : 'bg-zinc-700'}`}>
+                <Text className="text-white font-bold">Move</Text>
+              </TouchableOpacity>
+            </View>
+
             <Text className="text-zinc-400 mb-1.5 text-xs font-bold uppercase tracking-wider">Card Text</Text>
             <TextInput 
               className="bg-zinc-900 text-white p-4 rounded-xl mb-4 border border-zinc-700 font-medium text-base"
@@ -42,9 +80,9 @@ export default function CardEditor() {
               placeholder="e.g. Bank error in your favor"
               placeholderTextColor="#52525b"
             />
-            <Text className="text-zinc-400 mb-1.5 text-xs font-bold uppercase tracking-wider">Amount (Receive)</Text>
+            <Text className="text-zinc-400 mb-1.5 text-xs font-bold uppercase tracking-wider">Amount / Tile Index</Text>
             <TextInput 
-              className="bg-zinc-900 text-emerald-400 p-4 rounded-xl mb-6 border border-zinc-700 font-bold text-base"
+              className="bg-zinc-900 text-white p-4 rounded-xl mb-6 border border-zinc-700 font-bold text-base"
               value={amount}
               keyboardType="numeric"
               onChangeText={setAmount}
@@ -59,10 +97,15 @@ export default function CardEditor() {
           <View key={card.id} className="bg-zinc-800 p-4 rounded-2xl mb-4 border border-zinc-700/30 flex-row items-center justify-between">
             <View className="flex-1 pr-4">
                 <Text className="text-white font-bold text-base mb-1">{card.text}</Text>
-                <Text className="text-emerald-400 font-bold">+{card.amount}</Text>
+                <Text className="text-zinc-400 font-bold">{card.action}: {card.amount}</Text>
             </View>
-            <View className="bg-orange-500/20 px-3 py-1 rounded-full">
-                <Text className="text-orange-500 font-bold text-xs uppercase tracking-wider">{card.type}</Text>
+            <View className="items-end gap-1">
+              <View className={`px-3 py-1 rounded-full ${card.type === 'chance' ? 'bg-orange-500/20' : 'bg-blue-500/20'}`}>
+                  <Text className={`font-bold text-xs uppercase tracking-wider ${card.type === 'chance' ? 'text-orange-500' : 'text-blue-500'}`}>{card.type}</Text>
+              </View>
+              <View className={`px-3 py-1 rounded-full ${card.behavior === 'instant' ? 'bg-red-500/20' : 'bg-purple-500/20'}`}>
+                  <Text className={`font-bold text-xs uppercase tracking-wider ${card.behavior === 'instant' ? 'text-red-500' : 'text-purple-500'}`}>{card.behavior}</Text>
+              </View>
             </View>
           </View>
         ))}

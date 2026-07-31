@@ -8,7 +8,7 @@ interface InventoryModalProps {
 }
 
 export default function InventoryModal({ visible, onClose }: InventoryModalProps) {
-    const { gamePlayers, playerName, properties } = useGameStore();
+    const { gamePlayers, playerName, properties, removeCardFromInventory, executeCard, lobbyCode } = useGameStore();
     const myPlayer = gamePlayers.find(p => p.name === playerName);
     
     const [selectedPlayerId, setSelectedPlayerId] = useState<string>('');
@@ -23,6 +23,7 @@ export default function InventoryModal({ visible, onClose }: InventoryModalProps
 
     const viewedPlayer = gamePlayers.find(p => p.id === selectedPlayerId) || myPlayer;
     const viewedProperties = properties.filter(p => p.ownerId === viewedPlayer.id);
+    const viewedCards = viewedPlayer.inventoryCards || [];
 
     return (
         <Modal visible={visible} animationType="fade" transparent>
@@ -126,6 +127,63 @@ export default function InventoryModal({ visible, onClose }: InventoryModalProps
                                         <Text className="text-zinc-500 font-bold text-[10px] uppercase">Rent Yield</Text>
                                         <Text className="text-emerald-400 font-black">${prop.rent}</Text>
                                     </View>
+                                </View>
+                            ))
+                        )}
+                    </ScrollView>
+
+                    <Text className="text-zinc-400 font-bold uppercase tracking-widest text-xs mb-3 mt-4">{viewedPlayer.name}'s Cards ({viewedCards.length})</Text>
+                    <ScrollView className="w-full max-h-[150px]">
+                        {viewedCards.length === 0 ? (
+                            <Text className="text-zinc-500 italic text-center py-4">No cards in inventory.</Text>
+                        ) : (
+                            viewedCards.map((card: any) => (
+                                <View key={card.id} className={`p-4 rounded-xl mb-3 border flex-row justify-between items-center ${viewedPlayer.id === myPlayer.id ? (card.type === 'chance' ? 'bg-orange-500/10 border-orange-500/30' : 'bg-blue-500/10 border-blue-500/30') : 'bg-zinc-900 border-zinc-700'}`}>
+                                    {viewedPlayer.id === myPlayer.id ? (
+                                        <>
+                                            <View className="flex-1 pr-4">
+                                                <View className="flex-row items-center gap-2 mb-1">
+                                                    <Text className={`font-black text-xs uppercase tracking-widest ${card.type === 'chance' ? 'text-orange-500' : 'text-blue-500'}`}>{card.type}</Text>
+                                                    <View className="bg-white/10 px-2 py-0.5 rounded text-[10px]">
+                                                        <Text className="text-white/50 font-bold text-[10px] uppercase">{card.behavior || 'instant'}</Text>
+                                                    </View>
+                                                </View>
+                                                <Text className="text-white font-bold text-sm leading-tight">{card.text}</Text>
+                                            </View>
+                                            <View className="flex-col gap-2">
+                                                <TouchableOpacity 
+                                                    onPress={() => {
+                                                        import('../utils/socket').then(m => {
+                                                            m.socket.emit('execute_card', { lobbyCode, playerId: myPlayer.id, card: { ...card, action: 'show' } });
+                                                        });
+                                                    }}
+                                                    className="bg-zinc-700/50 px-3 py-1.5 rounded-lg border border-zinc-600/50 items-center"
+                                                >
+                                                    <Text className="text-white font-bold text-xs">Show</Text>
+                                                </TouchableOpacity>
+                                                <TouchableOpacity 
+                                                    onPress={() => {
+                                                        import('../utils/socket').then(m => {
+                                                            // Execute the actual card action
+                                                            m.socket.emit('execute_card', { lobbyCode, playerId: myPlayer.id, card });
+                                                            // Remove from inventory
+                                                            m.socket.emit('update_player_stats', { lobbyCode, playerId: myPlayer.id, updates: { inventoryCards: viewedCards.filter((c: any) => c.id !== card.id) } });
+                                                        });
+                                                    }}
+                                                    className="bg-emerald-500 px-3 py-1.5 rounded-lg items-center"
+                                                >
+                                                    <Text className="text-white font-bold text-xs shadow-sm shadow-emerald-500/20">Use</Text>
+                                                </TouchableOpacity>
+                                            </View>
+                                        </>
+                                    ) : (
+                                        <View className="flex-1 flex-row items-center gap-3">
+                                            <View className="w-8 h-8 rounded-lg bg-zinc-800 border border-zinc-700 items-center justify-center">
+                                                <Text className="text-zinc-500 font-bold">?</Text>
+                                            </View>
+                                            <Text className="text-zinc-400 font-bold italic">Secret Card</Text>
+                                        </View>
+                                    )}
                                 </View>
                             ))
                         )}

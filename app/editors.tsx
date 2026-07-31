@@ -14,15 +14,6 @@ export default function EditorsMenu() {
       </View>
 
       <View className="w-full space-y-4 gap-4">
-        <TouchableOpacity 
-          className="w-full bg-zinc-800 border border-zinc-700 p-6 rounded-2xl flex-row items-center justify-between"
-          onPress={() => router.push('/board-editor')}
-        >
-          <View>
-              <Text className="text-white font-bold text-xl mb-1">Board Editor</Text>
-              <Text className="text-zinc-500 text-sm">Customize property names and prices</Text>
-          </View>
-        </TouchableOpacity>
         
         <TouchableOpacity 
           className="w-full bg-zinc-800 border border-zinc-700 p-6 rounded-2xl flex-row items-center justify-between"
@@ -39,8 +30,8 @@ export default function EditorsMenu() {
           onPress={() => router.push('/rule-editor')}
         >
           <View>
-              <Text className="text-white font-bold text-xl mb-1">Rule Editor</Text>
-              <Text className="text-zinc-500 text-sm">Change starting money, fines, and salaries</Text>
+              <Text className="text-white font-bold text-xl mb-1">Game Settings & Board</Text>
+              <Text className="text-zinc-500 text-sm">Change board generation and game rules</Text>
           </View>
         </TouchableOpacity>
       </View>

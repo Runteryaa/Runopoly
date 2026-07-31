@@ -7,9 +7,10 @@ import { socket } from '../utils/socket';
 interface TradeModalProps {
     visible: boolean;
     onClose: () => void;
+    initialTradeTarget?: { ownerId: string; propertyId: string } | null;
 }
 
-export default function TradeModal({ visible, onClose }: TradeModalProps) {
+export default function TradeModal({ visible, onClose, initialTradeTarget }: TradeModalProps) {
     const { gamePlayers, playerName, properties, lobbyCode } = useGameStore();
     const myPlayer = gamePlayers.find(p => p.name === playerName);
     
@@ -18,6 +19,21 @@ export default function TradeModal({ visible, onClose }: TradeModalProps) {
     const [requestMoney, setRequestMoney] = useState('');
     const [offerProps, setOfferProps] = useState<string[]>([]);
     const [requestProps, setRequestProps] = useState<string[]>([]);
+
+    React.useEffect(() => {
+        if (visible) {
+            if (initialTradeTarget) {
+                setTargetId(initialTradeTarget.ownerId);
+                setRequestProps([initialTradeTarget.propertyId]);
+            } else {
+                setTargetId('');
+                setRequestProps([]);
+            }
+            setOfferMoney('');
+            setRequestMoney('');
+            setOfferProps([]);
+        }
+    }, [visible, initialTradeTarget]);
 
     if (!myPlayer) return null;
 

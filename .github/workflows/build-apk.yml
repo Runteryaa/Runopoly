@@ -42,6 +42,17 @@ jobs:
       - name: 📦 Install Dependencies
         run: npm install
 
+      - name: 🚀 Setup Expo
+        uses: expo/expo-github-action@v8
+        with:
+          expo-version: latest
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+          
+      - name: 🔄 Publish OTA Update
+        run: eas update --auto --non-interactive
+
+
       - name: 🛠 Prebuild & Build APK
         run: |
           npx expo prebuild --platform android

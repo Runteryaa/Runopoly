@@ -4,11 +4,13 @@ import { useGameStore, TradeData } from '../store/gameStore';
 import { socket } from '../utils/socket';
 import { useEffect, useState } from 'react';
 import TradeModal from '../components/TradeModal';
+import LoanRequestModal from '../components/LoanRequestModal';
 import IncomingTradeModal from '../components/IncomingTradeModal';
 import InventoryModal from '../components/InventoryModal';
 import RentPaymentModal from '../components/RentPaymentModal';
 import IncomingRentOfferModal from '../components/IncomingRentOfferModal';
 import AuctionModal from '../components/AuctionModal';
+import PropertyInfoModal from '../components/PropertyInfoModal';
 
 export default function GameBoard() {
   const { properties, gamePlayers, lobbyCode, updatePlayerPosition, playerName, activeTurnName, setActiveTurnName, rules } = useGameStore();
@@ -21,9 +23,13 @@ export default function GameBoard() {
   const [landingMessage, setLandingMessage] = useState<string | null>(null);
   const [rentPaymentTarget, setRentPaymentTarget] = useState<any>(null);
   const [incomingRentOffer, setIncomingRentOffer] = useState<any>(null);
+  const [loanModalVisible, setLoanModalVisible] = useState(false);
+  const [isAwaitingLoan, setIsAwaitingLoan] = useState(false);
   const [activeAuction, setActiveAuction] = useState<any>(null);
   const [playersModalVisible, setPlayersModalVisible] = useState(false);
   const [turnTimeLeft, setTurnTimeLeft] = useState<number | null>(null);
+  const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
+  const [initialTradeTarget, setInitialTradeTarget] = useState<{ ownerId: string; propertyId: string } | null>(null);
 
   const myPlayer = gamePlayers.find(p => p.name === playerName);
   const activePlayer = gamePlayers.find(p => p.name === activeTurnName);
@@ -38,6 +44,27 @@ export default function GameBoard() {
       setActiveTurnName(nextPlayerName);
       setLastRoll(null);
       setHasRolled(false);
+
+      const state = useGameStore.getState();
+      const me = state.gamePlayers.find(p => p.name === playerName);
+      if (me && me.isHost) {
+          const nextIdx = state.gamePlayers.findIndex(p => p.name === nextPlayerName);
+          const previousPlayerIndex = (nextIdx - 1 + state.gamePlayers.length) % state.gamePlayers.length;
+          const previousPlayer = state.gamePlayers[previousPlayerIndex];
+          if (previousPlayer) {
+              state.properties.forEach(p => {
+                  if (p.ownerId === previousPlayer.id && (p.houses || 0) < 0) {
+                      socket.emit('upgrade_property', { 
+                          lobbyCode, 
+                          propertyId: p.id, 
+                          houses: p.houses! - 1, 
+                          hotels: 0, 
+                          cost: 0 
+                      });
+                  }
+              });
+          }
+      }
     });
 
     socket.on('turn_timer_tick', (timeLeft) => {
@@ -61,7 +88,12 @@ export default function GameBoard() {
     });
 
     socket.on('card_executed', ({ playerId, card }) => {
-      useGameStore.getState().executeCard(playerId, card);
+      if (card.action === 'show') {
+          const player = useGameStore.getState().gamePlayers.find(p => p.id === playerId);
+          CustomAlert.alert('Card Revealed!', `${player?.name} revealed a card:\n\n${card.text}`, [{ text: 'OK' }]);
+      } else {
+          useGameStore.getState().executeCard(playerId, card);
+      }
     });
 
     socket.on('went_to_jail', (playerId) => {
@@ -78,7 +110,7 @@ export default function GameBoard() {
       const state = useGameStore.getState();
       const kickedPlayer = state.gamePlayers.find(p => p.id === playerId);
       if (kickedPlayer) {
-          CustomAlert.alert('Player Kicked', `${kickedPlayer.name} has been kicked by the host.`);
+          CustomAlert.alert('Player Eliminated', `${kickedPlayer.name} has been eliminated from the game.`);
           // Remove player from store and reset their properties
           useGameStore.setState({
               gamePlayers: state.gamePlayers.filter(p => p.id !== playerId),
@@ -129,9 +161,58 @@ export default function GameBoard() {
             }
         } else {
             if (me && response.fromPlayerId === me.id) {
-                CustomAlert.alert('Offer Rejected', `The owner rejected your offer. You must pay the full $${response.amount}!`);
-                socket.emit('pay_rent', { lobbyCode, fromPlayerId: response.fromPlayerId, toPlayerId: response.toPlayerId, amount: response.amount });
+                CustomAlert.alert('Rent Negotiation', 'Your offer was declined.');
             }
+        }
+    });
+
+    socket.on('loan_requested', ({ fromPlayerId, amount }) => {
+        const me = useGameStore.getState().gamePlayers.find(p => p.name === playerName);
+        if (me && fromPlayerId !== me.id) {
+            const requester = useGameStore.getState().gamePlayers.find(p => p.id === fromPlayerId);
+            if (!requester) return;
+
+            CustomAlert.alert(
+                'Loan Request', 
+                `${requester.name} is asking for a loan of $${amount}. Will you fund it?`, 
+                [
+                    { text: 'Decline', style: 'cancel' },
+                    { text: 'Fund Loan', onPress: () => {
+                        const currentMe = useGameStore.getState().gamePlayers.find(p => p.id === me.id);
+                        if ((currentMe?.money || 0) < amount) {
+                            CustomAlert.alert('Error', 'You do not have enough money to fund this loan.');
+                            return;
+                        }
+                        socket.emit('respond_loan', { lobbyCode, fromPlayerId, toPlayerId: me.id, amount, accepted: true });
+                    }}
+                ]
+            );
+        }
+    });
+
+    socket.on('loan_responded', ({ fromPlayerId, toPlayerId, amount, accepted }) => {
+        if (!accepted) return;
+        const state = useGameStore.getState();
+        const me = state.gamePlayers.find(p => p.name === playerName);
+        if (!me) return;
+
+        if (me.id === fromPlayerId) {
+            setIsAwaitingLoan(false);
+            const lender = state.gamePlayers.find(p => p.id === toPlayerId);
+            CustomAlert.alert('Loan Accepted', `${lender?.name} funded your loan of $${amount}! You must pay it back later.`);
+            
+            const myDebts = me.debts ? [...me.debts] : [];
+            myDebts.push({ to: toPlayerId, amount });
+            
+            socket.emit('update_player_stats', { lobbyCode, playerId: fromPlayerId, updates: { 
+                money: me.money + amount,
+                debts: myDebts
+            }});
+            
+            const lenderMoney = lender?.money || 0;
+            socket.emit('update_player_stats', { lobbyCode, playerId: toPlayerId, updates: {
+                money: lenderMoney - amount
+            }});
         }
     });
 
@@ -202,6 +283,25 @@ export default function GameBoard() {
       socket.off('turn_timer_tick');
     };
   }, []);
+
+  const handleDrawCard = (type: 'chance' | 'community') => {
+      if (!myPlayer) return;
+      const { cards } = useGameStore.getState();
+      const filtered = cards.filter(c => c.type === type);
+      if (filtered.length === 0) {
+          CustomAlert.alert('Empty Deck', `No ${type} cards available in the deck.`, [{ text: 'OK' }]);
+          return;
+      }
+      const card = filtered[Math.floor(Math.random() * filtered.length)];
+      
+      socket.emit('update_player_stats', { 
+          lobbyCode, 
+          playerId: myPlayer.id, 
+          updates: { inventoryCards: [...(myPlayer.inventoryCards || []), card] } 
+      });
+
+      CustomAlert.alert('Card Drawn', `You drew a ${type} card:\n\n"${card.text}"\n\nIt has been added to your inventory.`, [{ text: 'OK' }]);
+  };
 
   const handleRollDice = () => {
     if (!isMyTurn || !myPlayer) return;
@@ -301,15 +401,12 @@ export default function GameBoard() {
         }
 
         if (newPosition === 7 || newPosition === 22 || newPosition === 36) {
-            const { cards } = useGameStore.getState();
-            if (cards.length > 0) {
-                const randomCard = cards[Math.floor(Math.random() * cards.length)];
-                CustomAlert.alert('Chance Card!', randomCard.text, [{ text: 'OK', onPress: () => {
-                    socket.emit('execute_card', { lobbyCode, playerId: myPlayer!.id, card: randomCard });
-                }}], { cancelable: false });
-            } else {
-                CustomAlert.alert('Chance!', 'Nothing happened. No cards in deck.', [{ text: 'OK' }], { cancelable: false });
-            }
+            handleDrawCard('chance');
+            return;
+        }
+
+        if (newPosition === 2 || newPosition === 17 || newPosition === 33) {
+            handleDrawCard('community');
             return;
         }
 
@@ -328,7 +425,28 @@ export default function GameBoard() {
                 { cancelable: false }
             );
         } else if (landedProperty.ownerId && landedProperty.ownerId !== myPlayer!.id) {
-            const rentToPay = landedProperty.rent * (1 + (landedProperty.houses || 0) + (landedProperty.hotels || 0) * 5);
+            const sameColorProps = properties.filter(p => p.color === landedProperty.color);
+            const hasFullSet = sameColorProps.length > 0 && sameColorProps.every(p => p.ownerId === landedProperty.ownerId);
+            const isUnimproved = (landedProperty.houses || 0) === 0 && (landedProperty.hotels || 0) === 0;
+            
+            let rentToPay = 0;
+            
+            if (landedProperty.name === 'STATION') {
+                const ownedStations = properties.filter(p => p.name === 'STATION' && p.ownerId === landedProperty.ownerId).length;
+                rentToPay = 25 * Math.pow(2, Math.max(0, ownedStations - 1));
+            } else if (landedProperty.name === 'UTILITY') {
+                const ownedUtilities = properties.filter(p => p.name === 'UTILITY' && p.ownerId === landedProperty.ownerId).length;
+                rentToPay = totalSteps * (ownedUtilities > 1 ? 10 : 4);
+            } else {
+                let rentMultiplier = 1;
+                if (isUnimproved && hasFullSet) {
+                    rentMultiplier = 2; // Color Set Bonus
+                } else {
+                    rentMultiplier = 1 + (landedProperty.houses || 0) + (landedProperty.hotels || 0) * 5;
+                }
+                rentToPay = landedProperty.rent * rentMultiplier;
+            }
+            
             setRentPaymentTarget({
                 property: landedProperty,
                 ownerId: landedProperty.ownerId,
@@ -416,7 +534,11 @@ export default function GameBoard() {
         </View>
       )}
 
-      <TradeModal visible={tradeModalVisible} onClose={() => setTradeModalVisible(false)} />
+      <TradeModal 
+        visible={tradeModalVisible} 
+        onClose={() => { setTradeModalVisible(false); setInitialTradeTarget(null); }} 
+        initialTradeTarget={initialTradeTarget}
+      />
       <IncomingTradeModal trade={incomingTrade} onClose={() => setIncomingTrade(null)} />
       <InventoryModal visible={inventoryVisible} onClose={() => setInventoryVisible(false)} />
       <RentPaymentModal 
@@ -447,6 +569,15 @@ export default function GameBoard() {
                 <View className="absolute top-[60px] left-[60px] right-[60px] bottom-[60px] bg-zinc-900 items-center justify-center p-8">
                     <Text className="text-zinc-700 text-5xl font-black text-center opacity-30 transform -rotate-45 mb-8">RUNOPOLY</Text>
                     
+                    <View className="absolute top-4 left-4 flex-row gap-4 z-30 opacity-80">
+                        <TouchableOpacity onPress={() => handleDrawCard('chance')} className="w-16 h-24 bg-orange-500 rounded-xl border-2 border-white/50 shadow-lg items-center justify-center">
+                            <Text className="text-white font-black text-xs uppercase transform -rotate-90">Chance</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => handleDrawCard('community')} className="w-16 h-24 bg-blue-500 rounded-xl border-2 border-white/50 shadow-lg items-center justify-center">
+                            <Text className="text-white font-black text-[10px] text-center px-1 uppercase transform -rotate-90">Community</Text>
+                        </TouchableOpacity>
+                    </View>
+
                     {lastRoll && (
                       <Text className="text-white font-bold text-lg mb-4">Rolled: {lastRoll}</Text>
                     )}
@@ -458,7 +589,44 @@ export default function GameBoard() {
                     )}
 
                     {isMyTurn ? (
-                      hasRolled ? (
+                      (myPlayer?.money ?? 0) < 0 ? (
+                          <View className="flex-row gap-2">
+                              <TouchableOpacity 
+                                className="flex-1 bg-red-600 px-2 py-4 rounded-2xl shadow-lg shadow-red-600/30 justify-center items-center"
+                                onPress={() => {
+                                    CustomAlert.alert('Declare Bankruptcy?', 'Are you sure you want to declare bankruptcy? You will be eliminated and lose all your properties.', [
+                                        { text: 'Cancel', style: 'cancel' },
+                                        { text: 'I am Bankrupt', style: 'destructive', onPress: () => {
+                                            socket.emit('end_turn', { lobbyCode });
+                                            socket.emit('kick_player', { lobbyCode, playerId: myPlayer!.id });
+                                        }}
+                                    ]);
+                                }}
+                              >
+                                <Text className="text-white font-black text-sm text-center leading-tight">BANKRUPT</Text>
+                              </TouchableOpacity>
+
+                              <TouchableOpacity 
+                                className="flex-1 bg-orange-500 px-2 py-4 rounded-2xl shadow-lg shadow-orange-500/30 justify-center items-center"
+                                onPress={() => setInventoryVisible(true)}
+                              >
+                                <Text className="text-white font-black text-sm text-center leading-tight">MORTGAGE</Text>
+                              </TouchableOpacity>
+
+                              <TouchableOpacity 
+                                className="flex-1 bg-blue-500 px-2 py-4 rounded-2xl shadow-lg shadow-blue-500/30 justify-center items-center opacity-100"
+                                onPress={() => {
+                                    if (isAwaitingLoan) {
+                                        CustomAlert.alert('Pending', 'You already requested a loan. Waiting for responses...');
+                                    } else {
+                                        setLoanModalVisible(true);
+                                    }
+                                }}
+                              >
+                                <Text className="text-white font-black text-sm text-center leading-tight">BORROW</Text>
+                              </TouchableOpacity>
+                          </View>
+                      ) : hasRolled ? (
                           <TouchableOpacity 
                             className="bg-red-500 px-6 py-4 rounded-2xl shadow-lg shadow-red-500/30"
                             onPress={() => socket.emit('end_turn', { lobbyCode })}
@@ -488,6 +656,38 @@ export default function GameBoard() {
                           )}
                       </View>
                     )}
+                    
+                    {myPlayer?.debts && myPlayer.debts.length > 0 && (
+                        <TouchableOpacity 
+                            className="bg-orange-500 px-6 py-4 rounded-2xl shadow-lg shadow-orange-500/30 mt-4"
+                            onPress={() => {
+                                const debt = myPlayer.debts[0];
+                                if ((myPlayer?.money || 0) < debt.amount) {
+                                    CustomAlert.alert('Not Enough Money', `You need $${debt.amount} to pay off your debt to this player.`);
+                                    return;
+                                }
+                                
+                                CustomAlert.alert('Pay Debt?', `Pay $${debt.amount} to clear your debt?`, [
+                                    { text: 'Cancel', style: 'cancel' },
+                                    { text: 'Pay', onPress: () => {
+                                        const newDebts = myPlayer.debts.slice(1);
+                                        socket.emit('update_player_stats', { lobbyCode, playerId: myPlayer.id, updates: { 
+                                            money: myPlayer.money - debt.amount,
+                                            debts: newDebts
+                                        }});
+                                        const lender = gamePlayers.find(p => p.id === debt.to);
+                                        if (lender) {
+                                            socket.emit('update_player_stats', { lobbyCode, playerId: lender.id, updates: {
+                                                money: lender.money + debt.amount
+                                            }});
+                                        }
+                                    }}
+                                ]);
+                            }}
+                        >
+                            <Text className="text-white font-black text-lg text-center">PAY DEBT (${myPlayer.debts[0].amount})</Text>
+                        </TouchableOpacity>
+                    )}
                 </View>
 
                 {/* Tiles */}
@@ -498,7 +698,13 @@ export default function GameBoard() {
                     const isCorner = i === 0 || i === s || i === s * 2 || i === s * 3;
                     
                     return (
-                        <View key={prop.id} style={style} className={`border border-zinc-700/50 p-1 items-center justify-between ${isCorner ? 'bg-zinc-700' : 'bg-zinc-800'}`}>
+                        <TouchableOpacity 
+                            key={prop.id} 
+                            style={style} 
+                            activeOpacity={0.8}
+                            onPress={() => setSelectedPropertyId(prop.id)}
+                            className={`border border-zinc-700/50 p-1 items-center justify-between ${isCorner ? 'bg-zinc-700' : 'bg-zinc-800'}`}
+                        >
                             {!isCorner && <View style={{ backgroundColor: prop.color }} className="w-full h-4 rounded-sm" />}
                             
                             {isCorner ? (
@@ -531,12 +737,35 @@ export default function GameBoard() {
                             {prop.ownerId && !isCorner && (
                                 <View style={{ backgroundColor: gamePlayers.find(p => p.id === prop.ownerId)?.color }} className="w-full h-1 absolute bottom-0" />
                             )}
-                        </View>
+                        </TouchableOpacity>
                     );
                 })}
             </View>
         </ScrollView>
       </ScrollView>
+
+      <PropertyInfoModal 
+        propertyId={selectedPropertyId} 
+        onClose={() => setSelectedPropertyId(null)} 
+        myPlayerId={myPlayer?.id}
+        lobbyCode={lobbyCode}
+        onTradePress={(ownerId, propertyId) => {
+            setSelectedPropertyId(null);
+            setInitialTradeTarget({ ownerId, propertyId });
+            setTradeModalVisible(true);
+        }}
+      />
+      {loanModalVisible && (
+          <LoanRequestModal 
+              visible={loanModalVisible} 
+              onClose={() => setLoanModalVisible(false)} 
+              onSubmit={(amount) => {
+                  setIsAwaitingLoan(true);
+                  socket.emit('request_loan', { lobbyCode, fromPlayerId: myPlayer!.id, amount });
+              }} 
+          />
+      )}
+
     </View>
   );
 }

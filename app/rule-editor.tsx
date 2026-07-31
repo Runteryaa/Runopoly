@@ -12,13 +12,19 @@ export default function RuleEditor() {
   const [jailFine, setJailFine] = useState(rules.jailFine.toString());
   const [startingMoney, setStartingMoney] = useState(rules.startingMoney.toString());
   const [maxDebt, setMaxDebt] = useState((rules.maxDebt || 500).toString());
+  const [chanceCount, setChanceCount] = useState((rules.chanceCount ?? 3).toString());
+  const [communityCount, setCommunityCount] = useState((rules.communityCount ?? 3).toString());
+  const [taxCount, setTaxCount] = useState((rules.taxCount ?? 2).toString());
 
   const handleSave = () => {
     setRules({
         goSalary: parseInt(goSalary) || 200,
         jailFine: parseInt(jailFine) || 50,
         startingMoney: parseInt(startingMoney) || 1500,
-        maxDebt: parseInt(maxDebt) || 500
+        maxDebt: parseInt(maxDebt) || 500,
+        chanceCount: parseInt(chanceCount) || 0,
+        communityCount: parseInt(communityCount) || 0,
+        taxCount: parseInt(taxCount) || 0
     });
     CustomAlert.alert('Saved', 'Game rules updated successfully!');
     router.back();
@@ -106,7 +112,38 @@ export default function RuleEditor() {
                     </TouchableOpacity>
                 ))}
             </View>
-            <Text className="text-zinc-500 text-xs mt-2">Changes the number of tiles on the board.</Text>
+            <Text className="text-zinc-500 text-xs mt-2 mb-4">Changes the number of tiles on the board.</Text>
+            
+            <View className="flex-row gap-4">
+                <View className="flex-1">
+                    <Text className="text-zinc-400 font-bold uppercase tracking-widest mb-2 text-[10px]">Chance Tiles</Text>
+                    <TextInput
+                        className="w-full bg-zinc-800 text-white p-3 rounded-xl border border-zinc-700 font-bold"
+                        keyboardType="numeric"
+                        value={chanceCount}
+                        onChangeText={setChanceCount}
+                    />
+                </View>
+                <View className="flex-1">
+                    <Text className="text-zinc-400 font-bold uppercase tracking-widest mb-2 text-[10px]">Community Tiles</Text>
+                    <TextInput
+                        className="w-full bg-zinc-800 text-white p-3 rounded-xl border border-zinc-700 font-bold"
+                        keyboardType="numeric"
+                        value={communityCount}
+                        onChangeText={setCommunityCount}
+                    />
+                </View>
+                <View className="flex-1">
+                    <Text className="text-zinc-400 font-bold uppercase tracking-widest mb-2 text-[10px]">Tax Tiles</Text>
+                    <TextInput
+                        className="w-full bg-zinc-800 text-white p-3 rounded-xl border border-zinc-700 font-bold"
+                        keyboardType="numeric"
+                        value={taxCount}
+                        onChangeText={setTaxCount}
+                    />
+                </View>
+            </View>
+            <Text className="text-zinc-500 text-xs mt-2">Set how many of each special tile type to place around the board. Properties will be placed in the remaining slots.</Text>
         </View>
 
         <TouchableOpacity 
