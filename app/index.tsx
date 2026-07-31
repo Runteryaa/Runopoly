@@ -3,6 +3,8 @@ import { useRouter } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { socket } from '../utils/socket';
+import * as Updates from 'expo-updates';
+import { CustomAlert } from '../utils/alert';
 
 const APP_VERSION = '1.0.2';
 
@@ -11,8 +13,24 @@ export default function Home() {
   const { playerName, setPlayerName } = useGameStore();
   const [tempName, setTempName] = useState('');
   const [serverVersion, setServerVersion] = useState<string | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
+      const checkUpdateOnStart = async () => {
+          if (__DEV__) return;
+          try {
+              const update = await Updates.checkForUpdateAsync();
+              if (update.isAvailable) {
+                  setIsUpdating(true);
+                  await Updates.fetchUpdateAsync();
+                  await Updates.reloadAsync();
+              }
+          } catch (e) {
+              console.log('Update check failed on start', e);
+          }
+      };
+      checkUpdateOnStart();
+
       socket.connect();
       socket.on('server_info', (info) => {
           setServerVersion(info.version);
@@ -21,6 +39,27 @@ export default function Home() {
           socket.off('server_info');
       }
   }, []);
+
+  const handleManualUpdateCheck = async () => {
+      if (__DEV__) {
+          CustomAlert.alert('Development', 'Updates are disabled in development mode.');
+          return;
+      }
+      try {
+          setIsUpdating(true);
+          const update = await Updates.checkForUpdateAsync();
+          if (update.isAvailable) {
+              await Updates.fetchUpdateAsync();
+              await Updates.reloadAsync();
+          } else {
+              setIsUpdating(false);
+              CustomAlert.alert('Up to Date', 'You are already on the latest version.');
+          }
+      } catch (e) {
+          setIsUpdating(false);
+          CustomAlert.alert('Error', 'Could not check for updates.');
+      }
+  };
 
   const needsUpdate = serverVersion && serverVersion !== APP_VERSION && serverVersion > APP_VERSION;
 
@@ -39,12 +78,29 @@ export default function Home() {
     );
   }
 
+  if (isUpdating) {
+    return (
+      <View className="flex-1 items-center justify-center bg-zinc-900 p-6">
+        <View className="items-center mb-8">
+          <Text className="text-6xl mb-4 animate-bounce">📦</Text>
+          <Text className="text-3xl font-black text-white text-center">Güncelleme İndiriliyor...</Text>
+          <Text className="text-zinc-400 mt-4 text-center text-lg">
+            Lütfen bekleyin, oyun güncelleniyor ve baştan başlatılacak.
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
   if (!playerName) {
     return (
       <View className="flex-1 items-center justify-center bg-zinc-900 p-6">
-        <View className="absolute top-12 right-6">
-            <Text className="text-zinc-600 font-bold text-xs uppercase">v{APP_VERSION}</Text>
-        </View>
+        <TouchableOpacity 
+            className="absolute top-12 right-6 bg-zinc-800 px-3 py-1 rounded-full border border-zinc-700"
+            onPress={handleManualUpdateCheck}
+        >
+            <Text className="text-zinc-400 font-bold text-xs uppercase">v{APP_VERSION}</Text>
+        </TouchableOpacity>
         <View className="items-center mb-12">
           <Text className="text-5xl font-black text-white tracking-tighter">
             RUN<Text className="text-emerald-500">OPOLY</Text>
@@ -73,9 +129,12 @@ export default function Home() {
 
   return (
     <View className="flex-1 items-center justify-center bg-zinc-900 p-6">
-      <View className="absolute top-12 right-6">
-          <Text className="text-zinc-600 font-bold text-xs uppercase">v{APP_VERSION}</Text>
-      </View>
+      <TouchableOpacity 
+          className="absolute top-12 right-6 bg-zinc-800 px-3 py-1 rounded-full border border-zinc-700"
+          onPress={handleManualUpdateCheck}
+      >
+          <Text className="text-zinc-400 font-bold text-xs uppercase">v{APP_VERSION}</Text>
+      </TouchableOpacity>
       <View className="items-center mb-12">
         <Text className="text-5xl font-black text-white tracking-tighter">
           RUN<Text className="text-emerald-500">OPOLY</Text>
