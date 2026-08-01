@@ -11,6 +11,24 @@ import RentPaymentModal from '../components/RentPaymentModal';
 import IncomingRentOfferModal from '../components/IncomingRentOfferModal';
 import AuctionModal from '../components/AuctionModal';
 import PropertyInfoModal from '../components/PropertyInfoModal';
+import { Platform } from 'react-native';
+
+const BoardWrapper = ({ children }: { children: React.ReactNode }) => {
+    if (Platform.OS === 'web') {
+        return (
+            <View style={{ overflow: 'auto', flex: 1, marginTop: 128 } as any}>
+                {children}
+            </View>
+        );
+    }
+    return (
+        <ScrollView horizontal bounces={false} className="flex-1 mt-32">
+            <ScrollView bounces={false}>
+                {children}
+            </ScrollView>
+        </ScrollView>
+    );
+};
 
 export default function GameBoard() {
   const { properties, gamePlayers, lobbyCode, updatePlayerPosition, playerName, activeTurnName, setActiveTurnName, rules } = useGameStore();
@@ -144,7 +162,7 @@ export default function GameBoard() {
     });
 
     socket.on('trade_proposed', (trade: TradeData) => {
-        const me = useGameStore.getState().gamePlayers.find(p => p.name === playerName);
+        const me = useGameStore.getState().gamePlayers.find(p => p.name === useGameStore.getState().playerName);
         if (me && trade.toId === me.id) {
             setIncomingTrade(trade);
         }
@@ -155,7 +173,7 @@ export default function GameBoard() {
             useGameStore.getState().executeTrade(trade);
             CustomAlert.alert('Trade Accepted', 'The trade was successfully completed!');
         } else {
-            const me = useGameStore.getState().gamePlayers.find(p => p.name === playerName);
+            const me = useGameStore.getState().gamePlayers.find(p => p.name === useGameStore.getState().playerName);
             if (me && trade.fromId === me.id) {
                 CustomAlert.alert('Trade Rejected', 'The other player declined your trade proposal.');
             }
@@ -163,14 +181,14 @@ export default function GameBoard() {
     });
 
     socket.on('custom_rent_proposed', (offer) => {
-        const me = useGameStore.getState().gamePlayers.find(p => p.name === playerName);
+        const me = useGameStore.getState().gamePlayers.find(p => p.name === useGameStore.getState().playerName);
         if (me && offer.toPlayerId === me.id) {
             setIncomingRentOffer(offer);
         }
     });
 
     socket.on('custom_rent_responded', (response) => {
-        const me = useGameStore.getState().gamePlayers.find(p => p.name === playerName);
+        const me = useGameStore.getState().gamePlayers.find(p => p.name === useGameStore.getState().playerName);
         if (response.accepted) {
             useGameStore.getState().payRent(response.fromPlayerId, response.toPlayerId, response.amount);
             if (me && (response.fromPlayerId === me.id || response.toPlayerId === me.id)) {
@@ -184,7 +202,7 @@ export default function GameBoard() {
     });
 
     socket.on('loan_requested', ({ fromPlayerId, amount }) => {
-        const me = useGameStore.getState().gamePlayers.find(p => p.name === playerName);
+        const me = useGameStore.getState().gamePlayers.find(p => p.name === useGameStore.getState().playerName);
         if (me && fromPlayerId !== me.id) {
             const requester = useGameStore.getState().gamePlayers.find(p => p.id === fromPlayerId);
             if (!requester) return;
@@ -605,8 +623,7 @@ export default function GameBoard() {
         myPlayerId={myPlayer?.id} 
       />
 
-      <ScrollView horizontal bounces={false} className="flex-1 mt-32">
-        <ScrollView bounces={false}>
+      <BoardWrapper>
             <View style={{ width: boardSize, height: boardSize }} className="bg-zinc-800 m-4 rounded-xl overflow-hidden border-4 border-zinc-700 relative">
                 {/* Center of the board */}
                 <View className="absolute top-[60px] left-[60px] right-[60px] bottom-[60px] bg-zinc-900 items-center justify-center p-8">
@@ -790,8 +807,7 @@ export default function GameBoard() {
                     );
                 })}
             </View>
-        </ScrollView>
-      </ScrollView>
+      </BoardWrapper>
 
       <PropertyInfoModal 
         propertyId={selectedPropertyId} 
