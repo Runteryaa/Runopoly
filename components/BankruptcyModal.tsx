@@ -3,11 +3,13 @@ import { View, Text, TouchableOpacity, Modal } from 'react-native';
 import { CustomAlert } from '../utils/alert';
 import { socket } from '../utils/socket';
 import { useGameStore } from '../store/gameStore';
+import { useTranslation } from '../utils/i18n';
 
-export default function BankruptcyModal({ visible, myPlayerId, lobbyCode, onMortgage, onBorrow, isAwaitingLoan }: any) {
+export default function BankruptcyModal({ visible, myPlayerId, lobbyCode, onMortgage }: any) {
     if (!visible) return null;
 
     const myPlayer = useGameStore.getState().gamePlayers.find(p => p.id === myPlayerId);
+    const { t } = useTranslation();
     if (!myPlayer) return null;
 
     return (
@@ -19,12 +21,12 @@ export default function BankruptcyModal({ visible, myPlayerId, lobbyCode, onMort
                         <Text className="text-red-500 text-4xl">🚨</Text>
                     </View>
 
-                    <Text className="text-red-500 text-3xl font-black mb-2 text-center">BANKRUPT!</Text>
+                    <Text className="text-red-500 text-3xl font-black mb-2 text-center">{t('bankrupt')}</Text>
                     <Text className="text-zinc-300 text-center text-lg mb-2">
-                        You are in debt! Your balance is <Text className="text-red-400 font-bold">${myPlayer.money}</Text>.
+                        {t('inDebtDesc')}<Text className="text-red-400 font-bold">${myPlayer.money}</Text>.
                     </Text>
                     <Text className="text-zinc-500 text-center mb-6">
-                        You must raise funds to continue playing, or declare bankruptcy and leave the game.
+                        {t('raiseFundsDesc')}
                     </Text>
 
                     <View className="w-full gap-3">
@@ -32,23 +34,11 @@ export default function BankruptcyModal({ visible, myPlayerId, lobbyCode, onMort
                             className="bg-orange-600 p-4 rounded-xl items-center border border-orange-500 shadow-lg shadow-orange-600/20"
                             onPress={onMortgage}
                         >
-                            <Text className="text-white font-black text-lg">MORTGAGE PROPERTIES</Text>
-                            <Text className="text-orange-200 text-xs mt-1">Sell houses or mortgage properties</Text>
+                            <Text className="text-white font-black text-lg">{t('mortgagePropertiesBtn')}</Text>
+                            <Text className="text-orange-200 text-xs mt-1">{t('mortgagePropertiesDesc')}</Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity 
-                            className="bg-blue-600 p-4 rounded-xl items-center border border-blue-500 shadow-lg shadow-blue-600/20"
-                            onPress={() => {
-                                if (isAwaitingLoan) {
-                                    CustomAlert.alert('Pending', 'You already requested a loan. Waiting for responses...');
-                                } else {
-                                    onBorrow();
-                                }
-                            }}
-                        >
-                            <Text className="text-white font-black text-lg">REQUEST LOAN</Text>
-                            <Text className="text-blue-200 text-xs mt-1">Borrow money from other players</Text>
-                        </TouchableOpacity>
+
 
                         <View className="h-px bg-zinc-800 my-2" />
 
@@ -56,11 +46,11 @@ export default function BankruptcyModal({ visible, myPlayerId, lobbyCode, onMort
                             className="bg-zinc-800 p-4 rounded-xl items-center border border-red-900/50"
                             onPress={() => {
                                 CustomAlert.alert(
-                                    'Declare Bankruptcy?', 
-                                    'Are you sure you want to declare bankruptcy? You will be eliminated and lose all your properties.', 
+                                    t('declareBankruptcyConfirm'), 
+                                    t('declareBankruptcyConfirmDesc'), 
                                     [
-                                        { text: 'Cancel', style: 'cancel' },
-                                        { text: 'I am Bankrupt', style: 'destructive', onPress: () => {
+                                        { text: t('cancel'), style: 'cancel' },
+                                        { text: t('iAmBankruptBtn'), style: 'destructive', onPress: () => {
                                             socket.emit('declare_bankruptcy', { lobbyCode, playerId: myPlayer!.id });
                                             socket.emit('end_turn', { lobbyCode });
                                             socket.emit('kick_player', { lobbyCode, playerId: myPlayer!.id });
@@ -69,7 +59,7 @@ export default function BankruptcyModal({ visible, myPlayerId, lobbyCode, onMort
                                 );
                             }}
                         >
-                            <Text className="text-red-500 font-bold">DECLARE BANKRUPTCY</Text>
+                            <Text className="text-red-500 font-bold">{t('declareBankruptcyBtn')}</Text>
                         </TouchableOpacity>
                     </View>
                 </View>

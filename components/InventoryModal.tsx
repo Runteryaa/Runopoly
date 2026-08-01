@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Modal, ScrollView } from 'react-native';
 import { useGameStore } from '../store/gameStore';
+import { useTranslation } from '../utils/i18n';
 
 interface InventoryModalProps {
     visible: boolean;
@@ -10,6 +11,7 @@ interface InventoryModalProps {
 export default function InventoryModal({ visible, onClose }: InventoryModalProps) {
     const { gamePlayers, playerName, properties, removeCardFromInventory, executeCard, lobbyCode } = useGameStore();
     const myPlayer = gamePlayers.find(p => p.name === playerName);
+    const { t } = useTranslation();
     
     const [selectedPlayerId, setSelectedPlayerId] = useState<string>('');
 
@@ -30,7 +32,7 @@ export default function InventoryModal({ visible, onClose }: InventoryModalProps
             <View className="flex-1 bg-zinc-900/90 justify-center p-4">
                 <View className="bg-zinc-800 rounded-3xl p-6 border border-zinc-700 max-h-[80%] w-full flex-shrink">
                     <View className="flex-row justify-between items-center mb-4">
-                        <Text className="text-white text-2xl font-black">Inventories</Text>
+                        <Text className="text-white text-2xl font-black">{t('inventories')}</Text>
                         <TouchableOpacity onPress={onClose} className="bg-zinc-700 w-8 h-8 rounded-full items-center justify-center">
                             <Text className="text-white font-bold">X</Text>
                         </TouchableOpacity>
@@ -43,20 +45,20 @@ export default function InventoryModal({ visible, onClose }: InventoryModalProps
                                 onPress={() => setSelectedPlayerId(p.id)}
                                 className={`mr-2 px-4 h-[40px] justify-center rounded-xl border ${selectedPlayerId === p.id ? 'bg-emerald-500 border-emerald-500' : 'bg-zinc-700 border-zinc-600'}`}
                             >
-                                <Text className="text-white font-bold">{p.id === myPlayer.id ? 'Me' : p.name}</Text>
+                                <Text className="text-white font-bold">{p.id === myPlayer.id ? t('me') : p.name}</Text>
                             </TouchableOpacity>
                         ))}
                     </ScrollView>
 
                     <View className="bg-zinc-900 p-4 rounded-xl mb-4 border border-zinc-700 flex-row justify-between items-center">
-                        <Text className="text-zinc-400 font-bold uppercase tracking-widest text-xs">Total Balance</Text>
+                        <Text className="text-zinc-400 font-bold uppercase tracking-widest text-xs">{t('totalBalance')}</Text>
                         <Text className="text-emerald-400 text-2xl font-black">${viewedPlayer.money}</Text>
                     </View>
 
-                    <Text className="text-zinc-400 font-bold uppercase tracking-widest text-xs mb-3">{viewedPlayer.name}'s Properties ({viewedProperties.length})</Text>
+                    <Text className="text-zinc-400 font-bold uppercase tracking-widest text-xs mb-3">{t('playerProperties', { name: viewedPlayer.name, count: viewedProperties.length })}</Text>
                     <ScrollView className="w-full mt-2">
                         {viewedProperties.length === 0 ? (
-                            <Text className="text-zinc-500 italic text-center py-4">No properties owned yet.</Text>
+                            <Text className="text-zinc-500 italic text-center py-4">{t('noPropertiesOwned')}</Text>
                         ) : (
                             viewedProperties.map(prop => (
                                 <View key={prop.id} className="bg-zinc-900 p-4 rounded-xl mb-3 border border-zinc-700 flex-row justify-between items-center">
@@ -65,7 +67,7 @@ export default function InventoryModal({ visible, onClose }: InventoryModalProps
                                         <View>
                                             <Text className="text-white font-bold text-lg">{prop.name}</Text>
                                             <Text className="text-zinc-500 text-[10px] font-bold">
-                                                Houses: {prop.houses || 0} • Hotels: {prop.hotels || 0}
+                                                {t('housesHotels', { houses: prop.houses || 0, hotels: prop.hotels || 0 })}
                                             </Text>
                                         </View>
                                         {viewedPlayer.id === myPlayer.id && !prop.isMortgaged && (
@@ -76,11 +78,11 @@ export default function InventoryModal({ visible, onClose }: InventoryModalProps
                                                     const currentHotels = prop.hotels || 0;
                                                     
                                                     if (myPlayer.money < cost) {
-                                                        alert(`You need $${cost} to build a house!`);
+                                                        alert(t('needMoneyToBuildHouse', { cost }));
                                                         return;
                                                     }
                                                     if (currentHotels >= 1) {
-                                                        alert('This property is fully upgraded.');
+                                                        alert(t('fullyUpgraded'));
                                                         return;
                                                     }
 
@@ -91,11 +93,11 @@ export default function InventoryModal({ visible, onClose }: InventoryModalProps
                                                     const totalHotels = allProps.reduce((acc, p) => acc + Math.max(0, p.hotels || 0), 0);
                                                     const isHotelNext = currentHouses === 4;
                                                     if (isHotelNext && totalHotels >= 12) {
-                                                        alert('The Bank has no more hotels to sell!');
+                                                        alert(t('bankNoMoreHotels'));
                                                         return;
                                                     }
                                                     if (!isHotelNext && totalHouses >= 32) {
-                                                        alert('The Bank has no more houses to sell!');
+                                                        alert(t('bankNoMoreHouses'));
                                                         return;
                                                     }
 
@@ -103,7 +105,7 @@ export default function InventoryModal({ visible, onClose }: InventoryModalProps
                                                     const ownsAll = sameColorProps.every(p => p.ownerId === myPlayer.id);
                                                     
                                                     if (!ownsAll) {
-                                                        alert('You must own all properties of this color group to build!');
+                                                        alert(t('mustOwnAllColor'));
                                                         return;
                                                     }
 
@@ -113,13 +115,15 @@ export default function InventoryModal({ visible, onClose }: InventoryModalProps
                                                     const minLevelInGroup = Math.min(...sameColorProps.map(getUpgradeLevel));
 
                                                     if (currentLevel > minLevelInGroup) {
-                                                        alert('You must build evenly! Upgrade other properties in this color group first.');
+                                                        import('../utils/alert').then(m => {
+                                                            m.CustomAlert.alert(t('error'), t('mustBuildEvenly'));
+                                                        });
                                                         return;
                                                     }
                                                     
                                                     let h = currentHouses, ht = currentHotels;
                                                     if (h === 4) { h = 0; ht = 1; } else { h++; }
-                                                    
+
                                                     import('../utils/socket').then(m => {
                                                         m.socket.emit('upgrade_property', { 
                                                             lobbyCode: useGameStore.getState().lobbyCode, 
@@ -132,13 +136,13 @@ export default function InventoryModal({ visible, onClose }: InventoryModalProps
                                                 }}
                                                 className="bg-emerald-500/20 px-3 py-1 rounded-full ml-2 border border-emerald-500/50"
                                             >
-                                                <Text className="text-emerald-400 font-bold text-xs uppercase">Build (${prop.housePrice})</Text>
+                                                <Text className="text-emerald-400 font-bold text-xs uppercase">{t('buildCost', { cost: prop.housePrice || 0 })}</Text>
                                             </TouchableOpacity>
                                         )}
                                     </View>
                                     <View className="items-end gap-2">
                                         <View className="items-end">
-                                            <Text className="text-zinc-500 font-bold text-[10px] uppercase">Rent Yield</Text>
+                                            <Text className="text-zinc-500 font-bold text-[10px] uppercase">{t('rentYield')}</Text>
                                             <Text className={`font-black ${prop.isMortgaged ? 'text-red-500 line-through' : 'text-emerald-400'}`}>${prop.rent}</Text>
                                         </View>
                                         
@@ -150,7 +154,7 @@ export default function InventoryModal({ visible, onClose }: InventoryModalProps
                                                         const interestRate = 0.10 + Math.max(0, mortgageTurns) * 0.01;
                                                         const unmortgageCost = Math.floor((prop.price / 2) * (1 + interestRate));
                                                         if (myPlayer.money < unmortgageCost) {
-                                                            alert(`You need $${unmortgageCost} to unmortgage this property.`);
+                                                            alert(t('needMoneyToUnmortgage', { cost: unmortgageCost }));
                                                             return;
                                                         }
                                                         import('../utils/socket').then(m => {
@@ -165,7 +169,7 @@ export default function InventoryModal({ visible, onClose }: InventoryModalProps
                                                     className="bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-500/50"
                                                 >
                                                     <Text className="text-emerald-400 font-bold text-[10px] uppercase">
-                                                        Unmortgage (-${Math.floor((prop.price / 2) * (1 + 0.10 + Math.max(0, prop.mortgageTurns || 0) * 0.01))})
+                                                        {t('unmortgageCost', { cost: Math.floor((prop.price / 2) * (1 + 0.10 + Math.max(0, prop.mortgageTurns || 0) * 0.01)) })}
                                                     </Text>
                                                 </TouchableOpacity>
                                             ) : (
@@ -176,7 +180,7 @@ export default function InventoryModal({ visible, onClose }: InventoryModalProps
                                                         const hasHouses = sameColorProps.some(p => (p.houses || 0) > 0 || (p.hotels || 0) > 0);
                                                         
                                                         if (hasHouses) {
-                                                            alert('You must sell all houses in this color group before mortgaging!');
+                                                            alert(t('mustSellHousesBeforeMortgage'));
                                                             return;
                                                         }
                                                         
@@ -191,7 +195,7 @@ export default function InventoryModal({ visible, onClose }: InventoryModalProps
                                                     }}
                                                     className="bg-red-500/20 px-3 py-1 rounded-full border border-red-500/50"
                                                 >
-                                                    <Text className="text-red-400 font-bold text-[10px] uppercase">Mortgage (+${Math.floor(prop.price / 2)})</Text>
+                                                    <Text className="text-red-400 font-bold text-[10px] uppercase">{t('mortgageCost', { cost: Math.floor(prop.price / 2) })}</Text>
                                                 </TouchableOpacity>
                                             )
                                         )}
@@ -201,10 +205,10 @@ export default function InventoryModal({ visible, onClose }: InventoryModalProps
                         )}
                     </ScrollView>
 
-                    <Text className="text-zinc-400 font-bold uppercase tracking-widest text-xs mb-3 mt-4">{viewedPlayer.name}'s Cards ({viewedCards.length})</Text>
+                    <Text className="text-zinc-400 font-bold uppercase tracking-widest text-xs mb-3 mt-4">{t('playerCards', { name: viewedPlayer.name, count: viewedCards.length })}</Text>
                     <ScrollView className="w-full max-h-[150px]">
                         {viewedCards.length === 0 ? (
-                            <Text className="text-zinc-500 italic text-center py-4">No cards in inventory.</Text>
+                            <Text className="text-zinc-500 italic text-center py-4">{t('noCardsInInventory')}</Text>
                         ) : (
                             viewedCards.map((card: any) => (
                                 <View key={card.id} className={`p-4 rounded-xl mb-3 border flex-row justify-between items-center ${viewedPlayer.id === myPlayer.id ? (card.type === 'chance' ? 'bg-orange-500/10 border-orange-500/30' : 'bg-blue-500/10 border-blue-500/30') : 'bg-zinc-900 border-zinc-700'}`}>
@@ -228,7 +232,7 @@ export default function InventoryModal({ visible, onClose }: InventoryModalProps
                                                     }}
                                                     className="bg-zinc-700/50 px-3 py-1.5 rounded-lg border border-zinc-600/50 items-center"
                                                 >
-                                                    <Text className="text-white font-bold text-xs">Show</Text>
+                                                    <Text className="text-white font-bold text-xs">{t('show')}</Text>
                                                 </TouchableOpacity>
                                                 <TouchableOpacity 
                                                     onPress={() => {
@@ -241,7 +245,7 @@ export default function InventoryModal({ visible, onClose }: InventoryModalProps
                                                     }}
                                                     className="bg-emerald-500 px-3 py-1.5 rounded-lg items-center"
                                                 >
-                                                    <Text className="text-white font-bold text-xs shadow-sm shadow-emerald-500/20">Use</Text>
+                                                    <Text className="text-white font-bold text-xs shadow-sm shadow-emerald-500/20">{t('use')}</Text>
                                                 </TouchableOpacity>
                                             </View>
                                         </>
@@ -250,7 +254,7 @@ export default function InventoryModal({ visible, onClose }: InventoryModalProps
                                             <View className="w-8 h-8 rounded-lg bg-zinc-800 border border-zinc-700 items-center justify-center">
                                                 <Text className="text-zinc-500 font-bold">?</Text>
                                             </View>
-                                            <Text className="text-zinc-400 font-bold italic">Secret Card</Text>
+                                            <Text className="text-zinc-400 font-bold italic">{t('secretCard')}</Text>
                                         </View>
                                     )}
                                 </View>

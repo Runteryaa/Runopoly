@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Modal, TextInput, ScrollView, Alert } from 'react-native';
 import { useGameStore, TradeData } from '../store/gameStore';
 import { socket } from '../utils/socket';
+import { useTranslation } from '../utils/i18n';
 
 interface TradeModalProps {
     visible: boolean;
@@ -13,6 +14,7 @@ interface TradeModalProps {
 export default function TradeModal({ visible, onClose, initialTradeTarget }: TradeModalProps) {
     const { gamePlayers, playerName, properties, lobbyCode } = useGameStore();
     const myPlayer = gamePlayers.find(p => p.name === playerName);
+    const { t } = useTranslation();
     
     const [targetId, setTargetId] = useState('');
     const [offerMoney, setOfferMoney] = useState('');
@@ -44,7 +46,7 @@ export default function TradeModal({ visible, onClose, initialTradeTarget }: Tra
 
     const handlePropose = () => {
         if (!targetId) {
-            CustomAlert.alert('Error', 'Select a player to trade with.');
+            CustomAlert.alert(t('error'), t('selectPlayerTrade'));
             return;
         }
         const cleanOffer = offerMoney.replace(/[^0-9]/g, '');
@@ -61,7 +63,7 @@ export default function TradeModal({ visible, onClose, initialTradeTarget }: Tra
         };
         
         socket.emit('propose_trade', { lobbyCode, trade });
-        CustomAlert.alert('Sent', 'Trade proposal sent!');
+        CustomAlert.alert(t('sent'), t('tradeProposalSent'));
         onClose();
     };
 
@@ -77,9 +79,9 @@ export default function TradeModal({ visible, onClose, initialTradeTarget }: Tra
         <Modal visible={visible} animationType="slide" transparent>
             <View className="flex-1 bg-zinc-900/90 justify-center p-4">
                 <View className="bg-zinc-800 rounded-3xl p-6 border border-zinc-700 max-h-[80%] flex-shrink w-full">
-                    <Text className="text-white text-2xl font-black mb-4">Propose Trade</Text>
+                    <Text className="text-white text-2xl font-black mb-4">{t('proposeTrade')}</Text>
                     
-                    <Text className="text-zinc-400 font-bold mb-2">Trade With:</Text>
+                    <Text className="text-zinc-400 font-bold mb-2">{t('tradeWith')}</Text>
                     <ScrollView horizontal className="mb-4 max-h-[45px]">
                         {gamePlayers.filter(p => p.id !== myPlayer.id).map(p => (
                             <TouchableOpacity 
@@ -94,10 +96,10 @@ export default function TradeModal({ visible, onClose, initialTradeTarget }: Tra
 
                     {targetPlayer && (
                         <ScrollView className="w-full mt-2">
-                            <Text className="text-emerald-400 font-bold mb-2">You Offer:</Text>
+                            <Text className="text-emerald-400 font-bold mb-2">{t('youOffer')}</Text>
                             <TextInput 
                                 className="bg-zinc-900 text-white p-3 rounded-xl mb-2"
-                                placeholder="Money to offer ($)"
+                                placeholder={t('moneyToOffer')}
                                 placeholderTextColor="#71717a"
                                 keyboardType="numeric"
                                 value={offerMoney}
@@ -113,10 +115,10 @@ export default function TradeModal({ visible, onClose, initialTradeTarget }: Tra
                                 </TouchableOpacity>
                             ))}
 
-                            <Text className="text-rose-400 font-bold mt-4 mb-2">You Request from {targetPlayer.name}:</Text>
+                            <Text className="text-rose-400 font-bold mt-4 mb-2">{t('youRequestFrom', { name: targetPlayer.name })}</Text>
                             <TextInput 
                                 className="bg-zinc-900 text-white p-3 rounded-xl mb-2"
-                                placeholder="Money to request ($)"
+                                placeholder={t('moneyToRequest')}
                                 placeholderTextColor="#71717a"
                                 keyboardType="numeric"
                                 value={requestMoney}
@@ -136,10 +138,10 @@ export default function TradeModal({ visible, onClose, initialTradeTarget }: Tra
 
                     <View className="flex-row gap-3 mt-6">
                         <TouchableOpacity onPress={onClose} className="flex-1 bg-zinc-700 p-4 rounded-xl items-center">
-                            <Text className="text-white font-bold">Cancel</Text>
+                            <Text className="text-white font-bold">{t('cancel')}</Text>
                         </TouchableOpacity>
                         <TouchableOpacity onPress={handlePropose} className="flex-1 bg-emerald-500 p-4 rounded-xl items-center">
-                            <Text className="text-white font-bold">Propose</Text>
+                            <Text className="text-white font-bold">{t('propose')}</Text>
                         </TouchableOpacity>
                     </View>
                 </View>

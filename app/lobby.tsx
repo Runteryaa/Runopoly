@@ -4,6 +4,7 @@ import { View, Text, TouchableOpacity, ScrollView, Alert, Modal, TextInput, Swit
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { socket } from '../utils/socket';
 import { useGameStore, AVAILABLE_CHARACTERS } from '../store/gameStore';
+import { useTranslation } from '../utils/i18n';
 
 export default function Lobby() {
   const router = useRouter();
@@ -17,6 +18,7 @@ export default function Lobby() {
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [localRules, setLocalRules] = useState(rules);
   const [isPublic, setIsPublic] = useState(true);
+  const { t } = useTranslation();
 
   useEffect(() => {
       setLocalRules(rules);
@@ -27,7 +29,7 @@ export default function Lobby() {
     
     const timeout = setTimeout(() => {
         if (!socket.connected) {
-            CustomAlert.alert('Connection Failed', 'Could not connect to the server. Please check your internet or server status.');
+            CustomAlert.alert(t('connectionFailed'), t('connectionFailedDesc'));
             router.back();
         }
     }, 5000);
@@ -60,12 +62,12 @@ export default function Lobby() {
     socket.on('host_transferred', (newHostName) => {
         if (playerName === newHostName) {
             setIsHost(true);
-            CustomAlert.alert('Host Transfer', 'The previous host left. You are now the host!');
+            CustomAlert.alert(t('hostTransfer'), t('hostTransferDesc'));
         }
     });
 
     socket.on('server_error', (msg) => {
-        CustomAlert.alert('Error', msg);
+        CustomAlert.alert(t('error'), msg);
         router.back();
     });
 
@@ -96,7 +98,7 @@ export default function Lobby() {
 
     socket.on('kicked_from_lobby', (kickedId) => {
         if (myId === kickedId) {
-            CustomAlert.alert('Kicked', 'You have been kicked from the lobby by the host.');
+            CustomAlert.alert(t('kicked'), t('kickedDesc'));
             router.back();
         }
     });
@@ -118,15 +120,15 @@ export default function Lobby() {
   return (
     <View className="flex-1 bg-zinc-900 pt-16">
       <View className="px-6 pb-4 border-b border-zinc-800 flex-row justify-between items-center">
-        <Text className="text-white text-2xl font-black">Game Lobby</Text>
+        <Text className="text-white text-2xl font-black">{t('gameLobby')}</Text>
         <View className="flex-row gap-2">
             {isHost && (
                 <TouchableOpacity onPress={() => setSettingsVisible(true)} className="bg-zinc-800 px-4 py-2 rounded-lg border border-zinc-700">
-                  <Text className="text-zinc-400 font-bold">⚙️ Rules</Text>
+                  <Text className="text-zinc-400 font-bold">{t('rulesSettings')}</Text>
                 </TouchableOpacity>
             )}
             <TouchableOpacity onPress={() => router.back()} className="bg-red-500/20 px-4 py-2 rounded-lg border border-red-500/30">
-              <Text className="text-red-400 font-bold">Leave</Text>
+              <Text className="text-red-400 font-bold">{t('leave')}</Text>
             </TouchableOpacity>
         </View>
       </View>
@@ -134,10 +136,10 @@ export default function Lobby() {
       <Modal visible={settingsVisible} animationType="slide" transparent>
           <View className="flex-1 bg-zinc-900/95 justify-center p-4">
               <View className="bg-zinc-800 rounded-3xl p-6 border border-zinc-700">
-                  <Text className="text-white text-2xl font-black mb-4">Game Rules</Text>
+                  <Text className="text-white text-2xl font-black mb-4">{t('gameRules')}</Text>
                   <ScrollView className="max-h-[70vh]">
                       <View className="mb-4">
-                          <Text className="text-zinc-400 font-bold mb-1">Starting Money ($)</Text>
+                          <Text className="text-zinc-400 font-bold mb-1">{t('startingMoney')}</Text>
                           <TextInput 
                               className="bg-zinc-900 text-white p-3 rounded-lg border border-zinc-700"
                               keyboardType="numeric"
@@ -146,7 +148,7 @@ export default function Lobby() {
                           />
                       </View>
                       <View className="mb-4">
-                          <Text className="text-zinc-400 font-bold mb-1">GO Salary ($)</Text>
+                          <Text className="text-zinc-400 font-bold mb-1">{t('goSalary')}</Text>
                           <TextInput 
                               className="bg-zinc-900 text-white p-3 rounded-lg border border-zinc-700"
                               keyboardType="numeric"
@@ -155,7 +157,7 @@ export default function Lobby() {
                           />
                       </View>
                       <View className="mb-4">
-                          <Text className="text-zinc-400 font-bold mb-1">Income Tax ($)</Text>
+                          <Text className="text-zinc-400 font-bold mb-1">{t('incomeTax')}</Text>
                           <TextInput 
                               className="bg-zinc-900 text-white p-3 rounded-lg border border-zinc-700"
                               keyboardType="numeric"
@@ -164,7 +166,7 @@ export default function Lobby() {
                           />
                       </View>
                       <View className="mb-4">
-                          <Text className="text-zinc-400 font-bold mb-1">Jail Fine ($)</Text>
+                          <Text className="text-zinc-400 font-bold mb-1">{t('jailFine')}</Text>
                           <TextInput 
                               className="bg-zinc-900 text-white p-3 rounded-lg border border-zinc-700"
                               keyboardType="numeric"
@@ -173,7 +175,7 @@ export default function Lobby() {
                           />
                       </View>
                       <View className="mb-4 flex-row justify-between items-center bg-zinc-900 p-3 rounded-lg border border-zinc-700">
-                          <Text className="text-zinc-300 font-bold">Speed Die (Faster game)</Text>
+                          <Text className="text-zinc-300 font-bold">{t('speedDieDesc')}</Text>
                           <Switch 
                               value={localRules.speedDie} 
                               onValueChange={(v) => setLocalRules({...localRules, speedDie: v})}
@@ -183,7 +185,7 @@ export default function Lobby() {
                   </ScrollView>
                   <View className="flex-row gap-3 mt-4">
                       <TouchableOpacity onPress={() => setSettingsVisible(false)} className="flex-1 bg-zinc-700 py-3 rounded-xl items-center">
-                          <Text className="text-white font-bold">Cancel</Text>
+                          <Text className="text-white font-bold">{t('cancel')}</Text>
                       </TouchableOpacity>
                       <TouchableOpacity 
                         onPress={() => {
@@ -193,7 +195,7 @@ export default function Lobby() {
                         }} 
                         className="flex-1 bg-emerald-500 py-3 rounded-xl items-center"
                       >
-                          <Text className="text-white font-bold">Save Rules</Text>
+                          <Text className="text-white font-bold">{t('saveRules')}</Text>
                       </TouchableOpacity>
                   </View>
               </View>
@@ -201,15 +203,15 @@ export default function Lobby() {
       </Modal>
 
       <View className="items-center mt-8 mb-8">
-        <Text className="text-zinc-400 text-sm font-bold uppercase tracking-widest mb-2">Room Code</Text>
+        <Text className="text-zinc-400 text-sm font-bold uppercase tracking-widest mb-2">{t('roomCode')}</Text>
         <View className="bg-zinc-800 px-8 py-4 rounded-2xl border border-zinc-700/50 shadow-sm mb-3">
             <Text className="text-emerald-400 text-4xl font-black tracking-widest">{roomCode}</Text>
         </View>
-        <Text className="text-zinc-500 text-xs text-center px-6">Share this code with your friends to let them join</Text>
+        <Text className="text-zinc-500 text-xs text-center px-6">{t('shareCodeDesc')}</Text>
         
         {isHost && (
             <View className="flex-row items-center gap-3 mt-4 bg-zinc-800/50 px-4 py-2 rounded-xl border border-zinc-700/30">
-                <Text className="text-zinc-300 font-bold">Public Lobby</Text>
+                <Text className="text-zinc-300 font-bold">{t('publicLobby')}</Text>
                 <Switch 
                     value={isPublic} 
                     onValueChange={(v) => {
@@ -222,7 +224,7 @@ export default function Lobby() {
         )}
       </View>
 
-      <Text className="px-6 text-zinc-500 font-bold mb-4 uppercase tracking-widest">Players ({players.length}/4)</Text>
+      <Text className="px-6 text-zinc-500 font-bold mb-4 uppercase tracking-widest">{t('players')} ({players.length}/4)</Text>
       <ScrollView className="flex-1 px-4">
         {players.map((player) => (
             <View key={player.id} className="bg-zinc-800 p-4 rounded-2xl mb-3 flex-row justify-between items-center border border-zinc-700/30">
@@ -231,7 +233,7 @@ export default function Lobby() {
                     <Text className="text-white font-bold text-lg">{player.name}</Text>
                     {player.isHost && (
                         <View className="bg-emerald-500/10 px-2 py-1 rounded-md">
-                            <Text className="text-emerald-500 font-black text-[10px] uppercase tracking-widest">Host</Text>
+                            <Text className="text-emerald-500 font-black text-[10px] uppercase tracking-widest">{t('host')}</Text>
                         </View>
                     )}
                 </View>
@@ -242,16 +244,16 @@ export default function Lobby() {
                             onPress={() => socket.emit('kick_player', { lobbyCode: roomCode, playerId: player.id })}
                             className="bg-red-500/20 px-3 py-1 rounded-full"
                         >
-                            <Text className="text-red-500 font-bold text-xs uppercase tracking-widest">Kick</Text>
+                            <Text className="text-red-500 font-bold text-xs uppercase tracking-widest">{t('kick')}</Text>
                         </TouchableOpacity>
                     )}
                     {player.ready ? (
                         <View className="bg-emerald-500/20 px-3 py-1 rounded-full">
-                            <Text className="text-emerald-500 font-bold text-xs uppercase">Ready</Text>
+                            <Text className="text-emerald-500 font-bold text-xs uppercase">{t('ready')}</Text>
                         </View>
                     ) : (
                         <View className="bg-zinc-700 px-3 py-1 rounded-full">
-                            <Text className="text-zinc-400 font-bold text-xs uppercase">Waiting</Text>
+                            <Text className="text-zinc-400 font-bold text-xs uppercase">{t('waiting')}</Text>
                         </View>
                     )}
                 </View>
@@ -259,7 +261,7 @@ export default function Lobby() {
         ))}
       </ScrollView>
 
-      <Text className="px-6 text-zinc-500 font-bold mb-2 mt-2 uppercase tracking-widest text-center">Select Character</Text>
+      <Text className="px-6 text-zinc-500 font-bold mb-2 mt-2 uppercase tracking-widest text-center">{t('selectCharacter')}</Text>
       <View className="px-6 flex-row justify-between mb-4">
         {AVAILABLE_CHARACTERS.map(char => {
             const isTakenByOther = players.some(p => p.id !== myId && p.character === char);
@@ -279,7 +281,7 @@ export default function Lobby() {
 
       <View className="p-6 pb-10">
         {isHost ? (
-            <TouchableOpacity 
+              <TouchableOpacity 
               className="w-full bg-emerald-500 py-4 rounded-2xl items-center shadow-lg shadow-emerald-500/30"
               onPress={() => {
                   const state = useGameStore.getState();
@@ -287,11 +289,11 @@ export default function Lobby() {
                   socket.emit('start_game', roomCode);
               }}
             >
-                <Text className="text-white font-bold text-lg">Start Game</Text>
+                <Text className="text-white font-bold text-lg">{t('startGame')}</Text>
             </TouchableOpacity>
         ) : (
             <View className="w-full bg-zinc-800 border border-zinc-700 py-4 rounded-2xl items-center">
-                <Text className="text-zinc-400 font-bold text-lg">Waiting for Host to start...</Text>
+                <Text className="text-zinc-400 font-bold text-lg">{t('waitingForHost')}</Text>
             </View>
         )}
       </View>

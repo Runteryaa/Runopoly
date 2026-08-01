@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Modal, Animated, Easing, StyleSheet } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { useTranslation } from '../utils/i18n';
 
 export default function DiceRollerModal({ visible, dice1, dice2, onComplete }: { visible: boolean, dice1: number, dice2: number, onComplete: () => void }) {
     const [currentD1, setCurrentD1] = useState(1);
     const [currentD2, setCurrentD2] = useState(1);
+    const { t } = useTranslation();
     
     // Fallback if vector icons fail to load or something, but we'll use MaterialCommunityIcons (dice-1, dice-2, etc.)
     const getDiceIcon = (num: number) => {
@@ -48,7 +50,7 @@ export default function DiceRollerModal({ visible, dice1, dice2, onComplete }: {
         <Modal transparent animationType="fade" visible={visible}>
             <View className="flex-1 bg-black/60 justify-center items-center">
                 <View className="bg-zinc-900 border border-zinc-700 p-8 rounded-3xl shadow-2xl items-center">
-                    <Text className="text-white text-2xl font-black mb-6 tracking-widest text-zinc-300">ROLLING...</Text>
+                    <Text className="text-white text-2xl font-black mb-6 tracking-widest text-zinc-300">{t('rolling')}</Text>
                     
                     <View className="flex-row gap-6">
                         <View className="bg-white rounded-2xl w-24 h-24 justify-center items-center shadow-lg">

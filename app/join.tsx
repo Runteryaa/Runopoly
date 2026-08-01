@@ -4,11 +4,13 @@ import { useRouter } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { socket } from '../utils/socket';
+import { useTranslation } from '../utils/i18n';
 
 export default function JoinGame() {
   const router = useRouter();
   const [code, setCode] = useState('');
   const { playerName } = useGameStore();
+  const { t } = useTranslation();
 
   useEffect(() => {
       socket.connect();
@@ -17,7 +19,7 @@ export default function JoinGame() {
       });
       socket.on('server_error', (msg) => {
           if (msg === 'No available public lobbies found.') {
-              CustomAlert.alert('No Lobbies', msg);
+              CustomAlert.alert(t('noLobbies'), t('noPublicLobbies'));
           }
       });
       return () => {
@@ -29,14 +31,14 @@ export default function JoinGame() {
   return (
     <View className="flex-1 bg-zinc-900 pt-16">
       <View className="px-6 pb-4 border-b border-zinc-800 flex-row justify-between items-center">
-        <Text className="text-white text-2xl font-black">Join Game</Text>
+        <Text className="text-white text-2xl font-black">{t('joinGame')}</Text>
         <TouchableOpacity onPress={() => router.back()} className="bg-zinc-800 px-4 py-2 rounded-lg">
-          <Text className="text-zinc-400 font-bold">Back</Text>
+          <Text className="text-zinc-400 font-bold">{t('back')}</Text>
         </TouchableOpacity>
       </View>
 
       <View className="flex-1 px-6 pt-12 items-center">
-        <Text className="text-zinc-400 text-sm font-bold uppercase tracking-widest mb-4">Enter Room Code</Text>
+        <Text className="text-zinc-400 text-sm font-bold uppercase tracking-widest mb-4">{t('enterRoomCode')}</Text>
         <TextInput 
             className="bg-zinc-800 text-white text-center text-4xl font-black tracking-widest p-6 rounded-2xl border border-zinc-700 w-full mb-8"
             placeholder="XXXX"
@@ -51,7 +53,7 @@ export default function JoinGame() {
             disabled={code.length !== 4}
             onPress={() => router.push({ pathname: '/lobby', params: { code: code } })}
         >
-            <Text className={`font-bold text-lg ${code.length === 4 ? 'text-white' : 'text-zinc-500'}`}>Join Lobby</Text>
+            <Text className={`font-bold text-lg ${code.length === 4 ? 'text-white' : 'text-zinc-500'}`}>{t('joinLobby')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity 
@@ -61,7 +63,7 @@ export default function JoinGame() {
                 socket.emit('join_random_lobby', { user: { name: playerName } });
             }}
         >
-            <Text className="font-bold text-lg text-blue-400">Join Random Lobby</Text>
+            <Text className="font-bold text-lg text-blue-400">{t('joinRandomLobby')}</Text>
         </TouchableOpacity>
       </View>
     </View>

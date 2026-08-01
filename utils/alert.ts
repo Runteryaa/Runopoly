@@ -8,10 +8,6 @@ export const CustomAlert = {
     buttons?: AlertButton[],
     options?: AlertOptions
   ) => {
-    if (Platform.OS === 'web') {
-      useAlertStore.getState().showAlert(title, message, buttons || [{ text: 'OK' }], options);
-    } else {
-      RNAlert.alert(title, message, buttons as any, options);
-    }
+    useAlertStore.getState().showAlert(title, message, buttons || [{ text: 'OK' }], options);
   }
 };
