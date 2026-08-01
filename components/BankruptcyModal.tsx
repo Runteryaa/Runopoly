@@ -6,10 +6,10 @@ import { useGameStore } from '../store/gameStore';
 import { useTranslation } from '../utils/i18n';
 
 export default function BankruptcyModal({ visible, myPlayerId, lobbyCode, onMortgage }: any) {
-    if (!visible) return null;
-
-    const myPlayer = useGameStore.getState().gamePlayers.find(p => p.id === myPlayerId);
     const { t } = useTranslation();
+    const myPlayer = useGameStore.getState().gamePlayers.find(p => p.id === myPlayerId);
+
+    if (!visible) return null;
     if (!myPlayer) return null;
 
     return (
