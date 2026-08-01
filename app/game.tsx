@@ -118,11 +118,24 @@ export default function GameBoard() {
           // Remove player from store and reset their properties
           useGameStore.setState({
               gamePlayers: state.gamePlayers.filter(p => p.id !== playerId),
-              properties: state.properties.map(p => p.ownerId === playerId ? { ...p, ownerId: null, houses: 0, hotels: 0 } : p)
+              properties: state.properties.map(p => p.ownerId === playerId ? { ...p, ownerId: null, houses: 0, hotels: 0, isMortgaged: false } : p)
           });
           if (state.playerName === kickedPlayer.name) {
               socket.disconnect();
           }
+      }
+    });
+
+    socket.on('player_disconnected', (playerId) => {
+      const state = useGameStore.getState();
+      const disconnectedPlayer = state.gamePlayers.find(p => p.id === playerId);
+      if (disconnectedPlayer) {
+          CustomAlert.alert('Player Disconnected', `${disconnectedPlayer.name} has left the game.`);
+          
+          useGameStore.setState({
+              gamePlayers: state.gamePlayers.filter(p => p.id !== playerId),
+              properties: state.properties.map(p => p.ownerId === playerId ? { ...p, ownerId: null, houses: 0, hotels: 0, isMortgaged: false } : p)
+          });
       }
     });
 

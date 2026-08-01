@@ -72,6 +72,10 @@ export default function Lobby() {
     socket.on('lobby_state', (currentPlayers) => {
         playersRef.current = currentPlayers;
         setPlayers(playersRef.current);
+        const me = currentPlayers.find((p: any) => p.id === myId);
+        if (me) {
+            setIsHost(me.isHost);
+        }
     });
 
     socket.on('player_joined', (user) => {
