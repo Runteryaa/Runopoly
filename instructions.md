@@ -1,0 +1,37 @@
+# Runopoly Sürüm ve Güncelleme Rehberi
+
+Bu dosya Runopoly projesinin Sunucu (Backend) ve Uygulama (Mobil/Web) versiyonlarının nasıl yönetilmesi ve güncellenmesi gerektiğini detaylandırır.
+
+## 1. Sunucu (Backend) Güncellemeleri
+Sunucu versiyonu `A.B` (Örnek: `1.1`, `1.2`, `1.3`) formatında ilerler. 
+Sunucuya yeni bir özellik eklendiğinde veya hata düzeltildiğinde:
+1. `runopoly-backend/index.js` dosyasına gidin.
+2. `socket.emit('server_info', { version: '1.X' });` satırındaki versiyon numarasını manuel olarak bir kademe artırın.
+3. Sunucudaki (VPS) PM2 uygulamasını yeniden başlatın (`pm2 restart runopoly`).
+
+*Not: Sunucu ile mobil uygulamanın sürümleri aynı olmak zorunda değildir.*
+
+---
+
+## 2. Uygulama (App) Güncellemeleri
+Uygulama versiyonları `A.B.C` (Örnek: `1.0.45`) formatında ilerler.
+Sürüm numarasının anlamı:
+- **A (Major):** Çok büyük ve oyunun altyapısını değiştiren vizyon güncellemelerinde **sadece manuel olarak** artırılır.
+- **B (Minor / Native):** Uygulamaya OTA (Over-The-Air) üzerinden **gönderilemeyecek**, uygulamanın tamamen baştan indirilip kurulmasını gerektiren çekirdek/native kod değişikliklerinde (örneğin kamerayı açan bir özellik, yeni bir harici kütüphane eklenmesi vs.) artırılır. 
+- **C (Build / Patch):** Her GitHub Actions Build (APK çıkartma) işleminde **otomatik olarak** (`github.run_number` ile) artar. Sizin müdahale etmenize gerek yoktur.
+
+### Senaryo 1: OTA (Arka Plan) Güncellemesi Göndermek (Sadece Kod/Arayüz Değişikliği)
+Eğer sadece yazı tipini, bir hatayı veya oyunun mantığını değiştirdiyseniz bu bir **OTA güncellemesidir**.
+* Kullanıcının yeni APK indirmesine gerek **yoktur.**
+* `app.json` içerisindeki `version` ve `runtimeVersion` ayarlarına **DOKUNMAYIN.**
+* Kodları GitHub'a gönderin veya direkt terminalden `eas update --auto` komutunu çalıştırın.
+* Kullanıcılar oyunu açtığında arkadan gizlice yeni kodları indireceklerdir.
+
+### Senaryo 2: Büyük/Native Güncelleme Yapmak (Yeni APK Gerektiren)
+Eğer uygulamaya OTA ile gidemeyecek büyük bir kütüphane eklediyseniz, mecburen **B sayısını (Ortadaki sayıyı)** artırmanız gerekir.
+1. `runopoly-app/app.json` dosyasını açın.
+2. `version` alanını bir sonraki onluğa yuvarlayın. (Örnek: `"1.0.0"` ise `"1.1.0"` yapın).
+3. **ÇOK ÖNEMLİ:** `runtimeVersion` alanını da `version`'un ilk iki hanesi ile eşitleyin! (Örnek: `"1.1"` yapın).
+4. Değişiklikleri GitHub'a pushlayın (gönderin).
+5. GitHub otomatik olarak (örneğin) `runopoly-1.1.46.apk` dosyasını oluşturacaktır.
+6. Oyunculara bu yeni APK'yı indirip kurmalarını söyleyin. Eski OTA güncellemeleri bu yeni sürüme etki etmeyecektir, artık tertemiz bir `1.1` OTA kanalınız olacaktır.

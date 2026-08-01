@@ -42,6 +42,18 @@ jobs:
       - name: 📦 Install Dependencies
         run: npm install
 
+      - name: 📝 Bump Version Dynamically (A.B.C)
+        env:
+          RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          node -e "
+          const fs = require('fs');
+          const data = JSON.parse(fs.readFileSync('app.json', 'utf8'));
+          const parts = data.expo.version.split('.');
+          data.expo.version = \`\${parts[0]}.\${parts[1]}.\${process.env.RUN_NUMBER}\`;
+          fs.writeFileSync('app.json', JSON.stringify(data, null, 2));
+          "
+
       - name: 🚀 Setup Expo
         uses: expo/expo-github-action@v8
         with:
