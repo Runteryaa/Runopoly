@@ -55,12 +55,6 @@ jobs:
           console.log('NEW_VERSION=' + data.expo.version);
           " >> $GITHUB_ENV
 
-      - name: 🌐 Update Server App Version
-        run: |
-          curl -X POST ${{ secrets.UPDATE_ENDPOINT }} \
-          -H "Content-Type: application/json" \
-          -d "{\"version\":\"${{ env.NEW_VERSION }}\", \"secret\":\"${{ secrets.UPDATE_TOKEN }}\"}"
-
       - name: 🚀 Setup Expo
         uses: expo/expo-github-action@v8
         with:
@@ -102,3 +96,9 @@ jobs:
           files: ${{ env.APK_NAME }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🌐 Update Server App Version
+        run: |
+          curl -s -X POST ${{ secrets.UPDATE_ENDPOINT }} \
+          -H "Content-Type: application/json" \
+          -d "{\"version\":\"${{ env.NEW_VERSION }}\", \"secret\":\"${{ secrets.UPDATE_TOKEN }}\"}"
