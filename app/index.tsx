@@ -15,6 +15,7 @@ export default function Home() {
   const [tempName, setTempName] = useState('');
   const [serverInfo, setServerInfo] = useState<{ version: string, minBVersion?: number } | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [webVersion, setWebVersion] = useState<string | null>(null);
 
   useEffect(() => {
       const checkUpdateOnStart = async () => {
@@ -36,6 +37,19 @@ export default function Home() {
       socket.on('server_info', (info) => {
           setServerInfo(info);
       });
+
+      if (Platform.OS === 'web') {
+          fetch('https://api.github.com/repos/Runteryaa/Runopoly/releases/latest')
+              .then(res => res.json())
+              .then(data => {
+                  if (data && data.tag_name) {
+                      // tag_name is usually like v1.0.0-45
+                      setWebVersion(data.tag_name.replace('v', ''));
+                  }
+              })
+              .catch(e => console.log('Could not fetch github release', e));
+      }
+
       return () => {
           socket.off('server_info');
       }
@@ -102,7 +116,7 @@ export default function Home() {
             className="absolute top-12 right-6 bg-zinc-800 px-3 py-2 rounded-xl border border-zinc-700 items-end"
             onPress={handleManualUpdateCheck}
         >
-            <Text className="text-zinc-400 font-bold text-xs uppercase">App: v{APP_VERSION}</Text>
+            <Text className="text-zinc-400 font-bold text-xs uppercase">App: v{Platform.OS === 'web' && webVersion ? webVersion : APP_VERSION}</Text>
             <Text className="text-zinc-500 font-bold text-xs uppercase">Server: v{serverInfo?.version || '...'}</Text>
         </TouchableOpacity>
         <View className="items-center mb-12">
@@ -137,7 +151,7 @@ export default function Home() {
           className="absolute top-12 right-6 bg-zinc-800 px-3 py-2 rounded-xl border border-zinc-700 items-end"
           onPress={handleManualUpdateCheck}
       >
-          <Text className="text-zinc-400 font-bold text-xs uppercase">App: v{APP_VERSION}</Text>
+          <Text className="text-zinc-400 font-bold text-xs uppercase">App: v{Platform.OS === 'web' && webVersion ? webVersion : APP_VERSION}</Text>
           <Text className="text-zinc-500 font-bold text-xs uppercase">Server: v{serverInfo?.version || '...'}</Text>
       </TouchableOpacity>
       <View className="items-center mb-12">
