@@ -505,8 +505,8 @@ export default function GameBoard() {
                 {gamePlayers.map(p => (
                     <View key={p.id} className="flex-row justify-between items-center bg-zinc-800 p-3 rounded-xl mb-2">
                         <View className="flex-row items-center gap-2">
-                            <View style={{ backgroundColor: p.color }} className="w-4 h-4 rounded-full" />
-                            <Text className="text-white font-bold">{p.name}</Text>
+                            <Text className="text-xl">{p.character || '?'}</Text>
+                            <Text className="text-white font-bold" style={{ color: p.color }}>{p.name}</Text>
                         </View>
                         <View className="flex-row gap-2">
                             {myPlayer?.isHost && p.id !== myPlayer.id && (
@@ -713,10 +713,10 @@ export default function GameBoard() {
                                 <Text className="text-white text-[10px] text-center font-bold numberOfLines={2}">{prop.name}</Text>
                             )}
                             
-                            <View className="flex-row gap-1 flex-wrap justify-center w-full px-1">
+                            <View className="flex-row gap-1 flex-wrap justify-center w-full px-1 z-10 absolute bottom-6">
                                 {playersOnTile.map(p => (
-                                    <View key={p.id} style={{ backgroundColor: p.color }} className="w-4 h-4 rounded-full border-2 border-zinc-900 items-center justify-center">
-                                      <Text className="text-[6px] text-white font-black">{p.name.substring(0, 2).toUpperCase()}</Text>
+                                    <View key={p.id} style={{ backgroundColor: p.color }} className="w-6 h-6 rounded-full border-2 border-zinc-900 items-center justify-center shadow-lg">
+                                      <Text className="text-[10px]">{p.character || '?'}</Text>
                                     </View>
                                 ))}
                             </View>

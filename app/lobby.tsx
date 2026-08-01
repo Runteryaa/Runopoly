@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Alert, Modal, TextInput, Switch } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { socket } from '../utils/socket';
-import { useGameStore } from '../store/gameStore';
+import { useGameStore, AVAILABLE_CHARACTERS } from '../store/gameStore';
 
 export default function Lobby() {
   const router = useRouter();
@@ -11,6 +11,7 @@ export default function Lobby() {
   const [isHost, setIsHost] = useState(params.isHost === 'true');
   const { playerName, rules, properties, cards, setRules, setAllProperties, setAllCards } = useGameStore();
   const [roomCode] = useState((params.code as string) || Math.random().toString(36).substring(2, 6).toUpperCase());
+  const [myId] = useState(() => Math.random().toString());
   const [players, setPlayers] = useState<any[]>([]);
   const playersRef = useRef<any[]>([]);
   const [settingsVisible, setSettingsVisible] = useState(false);
@@ -31,7 +32,7 @@ export default function Lobby() {
         }
     }, 5000);
     
-    const myUser = { id: Math.random().toString(), name: playerName, ready: true, isHost };
+    const myUser = { id: myId, name: playerName, ready: true, isHost };
     playersRef.current = [myUser];
     setPlayers(playersRef.current);
 
@@ -90,7 +91,7 @@ export default function Lobby() {
     });
 
     socket.on('kicked_from_lobby', (kickedId) => {
-        if (myUser.id === kickedId) {
+        if (myId === kickedId) {
             CustomAlert.alert('Kicked', 'You have been kicked from the lobby by the host.');
             router.back();
         }
@@ -222,6 +223,7 @@ export default function Lobby() {
         {players.map((player) => (
             <View key={player.id} className="bg-zinc-800 p-4 rounded-2xl mb-3 flex-row justify-between items-center border border-zinc-700/30">
                 <View className="flex-row items-center gap-2">
+                    <Text className="text-2xl mr-1">{player.character || '?'}</Text>
                     <Text className="text-white font-bold text-lg">{player.name}</Text>
                     {player.isHost && (
                         <View className="bg-emerald-500/10 px-2 py-1 rounded-md">
@@ -252,6 +254,24 @@ export default function Lobby() {
             </View>
         ))}
       </ScrollView>
+
+      <Text className="px-6 text-zinc-500 font-bold mb-2 mt-2 uppercase tracking-widest text-center">Select Character</Text>
+      <View className="px-6 flex-row justify-between mb-4">
+        {AVAILABLE_CHARACTERS.map(char => {
+            const isTakenByOther = players.some(p => p.id !== myId && p.character === char);
+            const isMine = players.find(p => p.id === myId)?.character === char;
+            return (
+                <TouchableOpacity 
+                    key={char} 
+                    disabled={isTakenByOther}
+                    onPress={() => socket.emit('change_character', { lobbyCode: roomCode, playerId: myId, character: char })}
+                    className={`w-12 h-12 rounded-full items-center justify-center border-2 ${isMine ? 'border-emerald-500 bg-emerald-500/20' : isTakenByOther ? 'border-zinc-800 bg-zinc-800/50 opacity-30' : 'border-zinc-700 bg-zinc-800'}`}
+                >
+                    <Text className="text-2xl">{char}</Text>
+                </TouchableOpacity>
+            )
+        })}
+      </View>
 
       <View className="p-6 pb-10">
         {isHost ? (

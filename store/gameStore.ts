@@ -20,6 +20,8 @@ export interface Card {
   behavior?: 'instant' | 'keepable';
 }
 
+export const AVAILABLE_CHARACTERS = ['🚗', '🐕', '🎩', '🚢', '👞', '🛒'];
+
 export interface GameRules {
   goSalary: number;
   jailFine: number;
