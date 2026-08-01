@@ -325,13 +325,17 @@ export default function GameBoard() {
       }
       const card = filtered[Math.floor(Math.random() * filtered.length)];
       
-      socket.emit('update_player_stats', { 
-          lobbyCode, 
-          playerId: myPlayer.id, 
-          updates: { inventoryCards: [...(myPlayer.inventoryCards || []), card] } 
-      });
-
-      CustomAlert.alert('Card Drawn', `You drew a ${type} card:\n\n"${card.text}"\n\nIt has been added to your inventory.`, [{ text: 'OK' }]);
+      if (card.behavior === 'instant') {
+          socket.emit('execute_card', { lobbyCode, playerId: myPlayer.id, card });
+          CustomAlert.alert('Card Drawn', `You drew a ${type} card:\n\n"${card.text}"\n\nThe card effect has been applied!`, [{ text: 'OK' }]);
+      } else {
+          socket.emit('update_player_stats', { 
+              lobbyCode, 
+              playerId: myPlayer.id, 
+              updates: { inventoryCards: [...(myPlayer.inventoryCards || []), card] } 
+          });
+          CustomAlert.alert('Card Drawn', `You drew a ${type} card:\n\n"${card.text}"\n\nIt has been added to your inventory.`, [{ text: 'OK' }]);
+      }
   };
 
   const handleRollDice = () => {
@@ -609,12 +613,12 @@ export default function GameBoard() {
                     <Text className="text-zinc-700 text-5xl font-black text-center opacity-30 transform -rotate-45 mb-8">RUNOPOLY</Text>
                     
                     <View className="absolute top-4 left-4 flex-row gap-4 z-30 opacity-80">
-                        <TouchableOpacity onPress={() => handleDrawCard('chance')} className="w-16 h-24 bg-orange-500 rounded-xl border-2 border-white/50 shadow-lg items-center justify-center">
+                        <View className="w-16 h-24 bg-orange-500 rounded-xl border-2 border-white/50 shadow-lg items-center justify-center">
                             <Text className="text-white font-black text-xs uppercase transform -rotate-90">Chance</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => handleDrawCard('community')} className="w-16 h-24 bg-blue-500 rounded-xl border-2 border-white/50 shadow-lg items-center justify-center">
+                        </View>
+                        <View className="w-16 h-24 bg-blue-500 rounded-xl border-2 border-white/50 shadow-lg items-center justify-center">
                             <Text className="text-white font-black text-[10px] text-center px-1 uppercase transform -rotate-90">Community</Text>
-                        </TouchableOpacity>
+                        </View>
                     </View>
 
                     {lastRoll && (
