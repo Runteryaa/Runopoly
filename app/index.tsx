@@ -55,9 +55,9 @@ export default function Home() {
               setIsUpdating(false);
               CustomAlert.alert('Up to Date', 'You are already on the latest version.');
           }
-      } catch (e) {
+      } catch (e: any) {
           setIsUpdating(false);
-          CustomAlert.alert('Error', 'Could not check for updates.');
+          CustomAlert.alert('Error', `Could not check for updates. Details: ${e.message || String(e)}`);
       }
   };
 
