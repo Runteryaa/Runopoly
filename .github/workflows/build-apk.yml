@@ -59,7 +59,7 @@ jobs:
         run: |
           curl -X POST ${{ secrets.UPDATE_ENDPOINT }} \
           -H "Content-Type: application/json" \
-          -d "{\"version\":\"${{ env.NEW_VERSION }}\", \"secret\":\"runopoly-update-token-123\"}"
+          -d "{\"version\":\"${{ env.NEW_VERSION }}\", \"secret\":\"${{ secrets.UPDATE_TOKEN }}\"}"
 
       - name: 🚀 Setup Expo
         uses: expo/expo-github-action@v8
