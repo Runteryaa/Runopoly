@@ -278,6 +278,19 @@ export default function GameBoard() {
         }
     });
 
+    socket.on('lobby_state', (currentPlayers) => {
+        const state = useGameStore.getState();
+        useGameStore.setState({
+            gamePlayers: state.gamePlayers.map(gp => {
+                const lp = currentPlayers.find((p: any) => p.id === gp.id);
+                if (lp) {
+                    return { ...gp, isDisconnected: lp.isDisconnected, isHost: lp.isHost };
+                }
+                return gp;
+            })
+        });
+    });
+
     if (!myPlayer || typeof myPlayer.position === 'undefined') {
         socket.emit('request_game_state', { lobbyCode });
     }
@@ -530,7 +543,9 @@ export default function GameBoard() {
                     <View key={p.id} className="flex-row justify-between items-center bg-zinc-800 p-3 rounded-xl mb-2">
                         <View className="flex-row items-center gap-2">
                             <Text className="text-xl">{p.character || '?'}</Text>
-                            <Text className="text-white font-bold" style={{ color: p.color }}>{p.name}</Text>
+                            <Text className={`font-bold ${p.isDisconnected ? 'opacity-50' : ''}`} style={{ color: p.color }}>
+                                {p.name} {p.isDisconnected && '(Offline)'}
+                            </Text>
                         </View>
                         <View className="flex-row gap-2">
                             {myPlayer?.isHost && p.id !== myPlayer.id && (
