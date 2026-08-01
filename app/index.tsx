@@ -62,22 +62,7 @@ export default function Home() {
       }
   };
 
-  const needsUpdate = Platform.OS !== 'web' && serverVersion && serverVersion !== APP_VERSION && serverVersion > APP_VERSION;
 
-  if (needsUpdate) {
-    return (
-      <View className="flex-1 items-center justify-center bg-zinc-900 p-6">
-        <View className="items-center mb-8">
-          <Text className="text-6xl mb-4">⚠️</Text>
-          <Text className="text-3xl font-black text-white text-center">Update Required</Text>
-          <Text className="text-zinc-400 mt-4 text-center text-lg">
-            Your game version ({APP_VERSION}) is older than the server version ({serverVersion}). 
-            Please update your game to continue playing.
-          </Text>
-        </View>
-      </View>
-    );
-  }
 
   if (isUpdating) {
     return (
