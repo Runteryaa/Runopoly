@@ -83,6 +83,10 @@ export default function GameBoard() {
       useGameStore.getState().upgradeProperty(propertyId, houses, hotels, cost);
     });
 
+    socket.on('property_mortgaged', ({ propertyId, isMortgaged, cost }) => {
+      useGameStore.getState().toggleMortgage(propertyId, isMortgaged, cost);
+    });
+
     socket.on('passed_go', (playerId) => {
       useGameStore.getState().passedGo(playerId);
     });
@@ -281,6 +285,7 @@ export default function GameBoard() {
       socket.off('host_transferred');
       socket.off('player_kicked_ingame');
       socket.off('turn_timer_tick');
+      socket.off('property_mortgaged');
     };
   }, []);
 
@@ -425,6 +430,12 @@ export default function GameBoard() {
                 { cancelable: false }
             );
         } else if (landedProperty.ownerId && landedProperty.ownerId !== myPlayer!.id) {
+            if (landedProperty.isMortgaged) {
+                // If the property is mortgaged, no rent is paid.
+                setRentPaymentTarget(null);
+                return;
+            }
+
             const sameColorProps = properties.filter(p => p.color === landedProperty.color);
             const hasFullSet = sameColorProps.length > 0 && sameColorProps.every(p => p.ownerId === landedProperty.ownerId);
             const isUnimproved = (landedProperty.houses || 0) === 0 && (landedProperty.hotels || 0) === 0;
@@ -736,6 +747,12 @@ export default function GameBoard() {
 
                             {prop.ownerId && !isCorner && (
                                 <View style={{ backgroundColor: gamePlayers.find(p => p.id === prop.ownerId)?.color }} className="w-full h-1 absolute bottom-0" />
+                            )}
+                            
+                            {prop.isMortgaged && (
+                                <View className="absolute inset-0 bg-black/60 items-center justify-center">
+                                    <Text className="text-red-500 font-black text-[8px] transform -rotate-45">MORTGAGED</Text>
+                                </View>
                             )}
                         </TouchableOpacity>
                     );

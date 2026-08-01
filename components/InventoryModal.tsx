@@ -68,15 +68,15 @@ export default function InventoryModal({ visible, onClose }: InventoryModalProps
                                                 Houses: {prop.houses || 0} • Hotels: {prop.hotels || 0}
                                             </Text>
                                         </View>
-                                        {viewedPlayer.id === myPlayer.id && (
+                                        {viewedPlayer.id === myPlayer.id && !prop.isMortgaged && (
                                             <TouchableOpacity 
                                                 onPress={() => {
-                                                    const cost = 50;
+                                                    const cost = prop.housePrice || 50;
                                                     const currentHouses = prop.houses || 0;
                                                     const currentHotels = prop.hotels || 0;
                                                     
                                                     if (myPlayer.money < cost) {
-                                                        alert('You need $50 to build a house!');
+                                                        alert(`You need $${cost} to build a house!`);
                                                         return;
                                                     }
                                                     if (currentHotels >= 1) {
@@ -119,13 +119,65 @@ export default function InventoryModal({ visible, onClose }: InventoryModalProps
                                                 }}
                                                 className="bg-emerald-500/20 px-3 py-1 rounded-full ml-2 border border-emerald-500/50"
                                             >
-                                                <Text className="text-emerald-400 font-bold text-xs uppercase">Build ($50)</Text>
+                                                <Text className="text-emerald-400 font-bold text-xs uppercase">Build (${prop.housePrice})</Text>
                                             </TouchableOpacity>
                                         )}
                                     </View>
-                                    <View className="items-end">
-                                        <Text className="text-zinc-500 font-bold text-[10px] uppercase">Rent Yield</Text>
-                                        <Text className="text-emerald-400 font-black">${prop.rent}</Text>
+                                    <View className="items-end gap-2">
+                                        <View className="items-end">
+                                            <Text className="text-zinc-500 font-bold text-[10px] uppercase">Rent Yield</Text>
+                                            <Text className={`font-black ${prop.isMortgaged ? 'text-red-500 line-through' : 'text-emerald-400'}`}>${prop.rent}</Text>
+                                        </View>
+                                        
+                                        {viewedPlayer.id === myPlayer.id && (
+                                            prop.isMortgaged ? (
+                                                <TouchableOpacity 
+                                                    onPress={() => {
+                                                        const unmortgageCost = Math.ceil((prop.price / 2) * 1.1);
+                                                        if (myPlayer.money < unmortgageCost) {
+                                                            alert(`You need $${unmortgageCost} to unmortgage this property.`);
+                                                            return;
+                                                        }
+                                                        import('../utils/socket').then(m => {
+                                                            m.socket.emit('toggle_mortgage', {
+                                                                lobbyCode: useGameStore.getState().lobbyCode,
+                                                                propertyId: prop.id,
+                                                                isMortgaged: false,
+                                                                cost: -unmortgageCost
+                                                            });
+                                                        });
+                                                    }}
+                                                    className="bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-500/50"
+                                                >
+                                                    <Text className="text-emerald-400 font-bold text-[10px] uppercase">Unmortgage (-${Math.ceil((prop.price / 2) * 1.1)})</Text>
+                                                </TouchableOpacity>
+                                            ) : (
+                                                <TouchableOpacity 
+                                                    onPress={() => {
+                                                        const allProps = useGameStore.getState().properties;
+                                                        const sameColorProps = allProps.filter(p => p.color === prop.color);
+                                                        const hasHouses = sameColorProps.some(p => (p.houses || 0) > 0 || (p.hotels || 0) > 0);
+                                                        
+                                                        if (hasHouses) {
+                                                            alert('You must sell all houses in this color group before mortgaging!');
+                                                            return;
+                                                        }
+                                                        
+                                                        import('../utils/socket').then(m => {
+                                                            m.socket.emit('toggle_mortgage', {
+                                                                lobbyCode: useGameStore.getState().lobbyCode,
+                                                                propertyId: prop.id,
+                                                                isMortgaged: true,
+                                                                cost: Math.floor(prop.price / 2)
+                                                            });
+                                                        });
+                                                    }}
+                                                    className="bg-red-500/20 px-3 py-1 rounded-full border border-red-500/50"
+                                                >
+                                                    <Text className="text-red-400 font-bold text-[10px] uppercase">Mortgage (+${Math.floor(prop.price / 2)})</Text>
+                                                </TouchableOpacity>
+                                            )
+                                        )}
                                     </View>
                                 </View>
                             ))

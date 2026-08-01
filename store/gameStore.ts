@@ -9,6 +9,8 @@ export interface Property {
   ownerId?: string | null;
   houses?: number;
   hotels?: number;
+  isMortgaged?: boolean;
+  housePrice?: number;
 }
 
 export interface Card {
@@ -98,6 +100,7 @@ interface GameState {
   setRules: (rules: Partial<GameRules>) => void;
   executeTrade: (trade: TradeData) => void;
   upgradeProperty: (propertyId: string, houses: number, hotels: number, cost: number) => void;
+  toggleMortgage: (propertyId: string, isMortgaged: boolean, cost: number) => void;
   updatePlayerStats: (id: string, updates: any) => void;
   addCardToInventory: (playerId: string, card: Card) => void;
   removeCardFromInventory: (playerId: string, cardId: string) => void;
@@ -150,12 +153,19 @@ function generateBoard(rules: GameRules): Property[] {
     
     availableIndices.forEach((r, idx) => {
         const price = 100 + (r * 10);
+        let housePrice = 50;
+        if (r > s && r < s * 2) housePrice = 100;
+        else if (r > s * 2 && r < s * 3) housePrice = 150;
+        else if (r > s * 3) housePrice = 200;
+
         genProps[r] = {
             id: `tile_${r}`,
             name: themeNames[nameIndex % themeNames.length],
             price,
             rent: price > 0 ? 10 + r : 0,
-            color: colors[Math.min(7, Math.floor(idx / propsPerColor))]
+            color: colors[Math.min(7, Math.floor(idx / propsPerColor))],
+            housePrice,
+            isMortgaged: false
         };
         nameIndex++;
     });
@@ -280,6 +290,14 @@ export const useGameStore = create<GameState>((set) => ({
     return {
         properties: state.properties.map(p => p.id === propertyId ? { ...p, houses, hotels } : p),
         gamePlayers: state.gamePlayers.map(p => p.id === prop.ownerId ? { ...p, money: p.money - cost } : p)
+    };
+  }),
+  toggleMortgage: (propertyId, isMortgaged, cost) => set((state) => {
+    const prop = state.properties.find(p => p.id === propertyId);
+    if (!prop || !prop.ownerId) return state;
+    return {
+        properties: state.properties.map(p => p.id === propertyId ? { ...p, isMortgaged } : p),
+        gamePlayers: state.gamePlayers.map(p => p.id === prop.ownerId ? { ...p, money: p.money + cost } : p)
     };
   }),
   updatePlayerStats: (id, updates) => set((state) => ({
