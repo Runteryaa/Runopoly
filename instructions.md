@@ -36,9 +36,4 @@ Eğer uygulamaya OTA ile gidemeyecek büyük bir kütüphane eklediyseniz, mecbu
 5. Değişiklikleri GitHub'a pushlayın (gönderin).
 6. GitHub otomatik olarak (örneğin) `runopoly-1.1.46.apk` dosyasını oluşturacaktır.
 7. Oyunculara bu yeni APK'yı indirip kurmalarını söyleyin. Eski OTA güncellemeleri bu yeni sürüme etki etmeyecektir, artık tertemiz bir `1.1` OTA kanalınız olacaktır. Ve eski APK'yı kullananlar "Update Required" uyarısı ile karşılaşacaklardır.
-
-### Senaryo 3: APK Build Sürecini Hızlandırmak ([build] komutu)
-Eğer her "git push" işleminde 15-20 dakika süren o hantal Android (APK) derlemesini **İSTEMİYORSANIZ**, commit mesajınıza `[build]` yazmanıza gerek yoktur. `[build]` yazmadığınız tüm push'lar otomatik olarak o ağır APK üretme sürecini ATLAR (Skip). 
-Sadece 1 dakikalık hızlı bir "OTA Update" yapar ve oyuncular oyuna girdiği an güncellenir.
-Eğer cidden yeni bir APK oluşturmak isterseniz (örneğin kütüphane eklediniz), o zaman commit mesajınızda mutlaka `[build]` yazmalısınız (Örn: `git commit -m "feat: yeni kamera kütüphanesi [build]"`).
 - Backend (Sunucu) kodunda bir mantik veya islev degisikligi yapildiginda mutlaka 'index.js' icerisindeki 'server_info' kismindaki version numarasi arttirilmalidir. (Orn: 1.3 -

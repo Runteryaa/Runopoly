@@ -35,7 +35,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('package-lock.json', 'app.json') }}
+          key: gradle-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
           restore-keys: |
             gradle-${{ runner.os }}-
 
@@ -73,7 +73,6 @@ jobs:
 
 
       - name: 🛠 Prebuild & Build APK
-        if: contains(github.event.head_commit.message, '[build]')
         run: |
           npx expo prebuild --platform android
           cd android
@@ -81,7 +80,6 @@ jobs:
           ./gradlew assembleRelease --no-daemon --build-cache
 
       - name: 🚚 Rename APK
-        if: contains(github.event.head_commit.message, '[build]')
         run: |
           APP_VERSION=$(node -p "require('./app.json').expo.version")
           mv android/app/build/outputs/apk/release/app-release.apk runopoly-${APP_VERSION}.apk
@@ -89,14 +87,12 @@ jobs:
           echo "APP_VERSION=${APP_VERSION}" >> $GITHUB_ENV
 
       - name: 📤 Upload APK Artifact
-        if: contains(github.event.head_commit.message, '[build]')
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.APK_NAME }}
           path: ${{ env.APK_NAME }}
 
       - name: 🏷 Create Release & Upload APK
-        if: contains(github.event.head_commit.message, '[build]')
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ env.APP_VERSION }}-${{ github.run_number }}
