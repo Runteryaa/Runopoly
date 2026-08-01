@@ -41,6 +41,7 @@ export default function GameBoard() {
   const [landingMessage, setLandingMessage] = useState<string | null>(null);
   const [rentPaymentTarget, setRentPaymentTarget] = useState<any>(null);
   const [incomingRentOffer, setIncomingRentOffer] = useState<any>(null);
+  const [rentModalVisible, setRentModalVisible] = useState<boolean>(false);
   const [loanModalVisible, setLoanModalVisible] = useState(false);
   const [isAwaitingLoan, setIsAwaitingLoan] = useState(false);
   const [activeAuction, setActiveAuction] = useState<any>(null);
@@ -511,6 +512,7 @@ export default function GameBoard() {
                 ownerId: landedProperty.ownerId,
                 fullRentAmount: rentToPay
             });
+            setRentModalVisible(true);
         }
     }, 800);
   };
@@ -603,8 +605,9 @@ export default function GameBoard() {
       <IncomingTradeModal trade={incomingTrade} onClose={() => setIncomingTrade(null)} />
       <InventoryModal visible={inventoryVisible} onClose={() => setInventoryVisible(false)} />
       <RentPaymentModal 
-        visible={!!rentPaymentTarget} 
-        onClose={() => setRentPaymentTarget(null)} 
+        visible={rentModalVisible} 
+        onClose={() => setRentModalVisible(false)} 
+        onPay={() => { setRentPaymentTarget(null); setRentModalVisible(false); }}
         {...rentPaymentTarget} 
         myPlayerId={myPlayer?.id} 
         lobbyCode={lobbyCode} 
@@ -686,6 +689,13 @@ export default function GameBoard() {
                                 <Text className="text-white font-black text-sm text-center leading-tight">BORROW</Text>
                               </TouchableOpacity>
                           </View>
+                      ) : rentPaymentTarget ? (
+                          <TouchableOpacity 
+                            className="bg-purple-500 px-6 py-4 rounded-2xl shadow-lg shadow-purple-500/30"
+                            onPress={() => setRentModalVisible(true)}
+                          >
+                            <Text className="text-white font-black text-lg text-center leading-tight">PAY RENT (${rentPaymentTarget.fullRentAmount})</Text>
+                          </TouchableOpacity>
                       ) : hasRolled ? (
                           <TouchableOpacity 
                             className="bg-red-500 px-6 py-4 rounded-2xl shadow-lg shadow-red-500/30"
