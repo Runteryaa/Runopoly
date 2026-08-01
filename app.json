@@ -3,7 +3,7 @@
     "name": "runopoly-app",
     "slug": "runopoly-app",
     "scheme": "runopoly",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -41,7 +41,7 @@
         "projectId": "18620aa9-98b6-49c0-9f2d-6f83f6c1f6dc"
       }
     },
-    "runtimeVersion": "1.0",
+    "runtimeVersion": "1.1",
     "updates": {
       "url": "https://u.expo.dev/18620aa9-98b6-49c0-9f2d-6f83f6c1f6dc",
       "requestHeaders": {
