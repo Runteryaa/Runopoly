@@ -13,7 +13,7 @@ export default function Home() {
   const router = useRouter();
   const { playerName, setPlayerName } = useGameStore();
   const [tempName, setTempName] = useState('');
-  const [serverVersion, setServerVersion] = useState<string | null>(null);
+  const [serverInfo, setServerInfo] = useState<{ version: string, minBVersion?: number } | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
@@ -34,7 +34,7 @@ export default function Home() {
 
       socket.connect();
       socket.on('server_info', (info) => {
-          setServerVersion(info.version);
+          setServerInfo(info);
       });
       return () => {
           socket.off('server_info');
@@ -62,7 +62,24 @@ export default function Home() {
       }
   };
 
+  const appParts = APP_VERSION.split('.');
+  const appB = parseInt(appParts[1] || '0', 10);
+  const needsUpdate = Platform.OS !== 'web' && serverInfo?.minBVersion !== undefined && appB < serverInfo.minBVersion;
 
+  if (needsUpdate) {
+    return (
+      <View className="flex-1 items-center justify-center bg-zinc-900 p-6">
+        <View className="items-center mb-8">
+          <Text className="text-6xl mb-4">⚠️</Text>
+          <Text className="text-3xl font-black text-white text-center">Update Required</Text>
+          <Text className="text-zinc-400 mt-4 text-center text-lg">
+            This update includes major core features. Your app version ({APP_VERSION}) is too old. 
+            Please download the latest version to continue playing.
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
   if (isUpdating) {
     return (
@@ -86,7 +103,7 @@ export default function Home() {
             onPress={handleManualUpdateCheck}
         >
             <Text className="text-zinc-400 font-bold text-xs uppercase">App: v{APP_VERSION}</Text>
-            <Text className="text-zinc-500 font-bold text-xs uppercase">Server: v{serverVersion || '...'}</Text>
+            <Text className="text-zinc-500 font-bold text-xs uppercase">Server: v{serverInfo?.version || '...'}</Text>
         </TouchableOpacity>
         <View className="items-center mb-12">
           <Text className="text-5xl font-black text-white tracking-tighter">
@@ -121,7 +138,7 @@ export default function Home() {
           onPress={handleManualUpdateCheck}
       >
           <Text className="text-zinc-400 font-bold text-xs uppercase">App: v{APP_VERSION}</Text>
-          <Text className="text-zinc-500 font-bold text-xs uppercase">Server: v{serverVersion || '...'}</Text>
+          <Text className="text-zinc-500 font-bold text-xs uppercase">Server: v{serverInfo?.version || '...'}</Text>
       </TouchableOpacity>
       <View className="items-center mb-12">
         <Text className="text-5xl font-black text-white tracking-tighter">

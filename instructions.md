@@ -32,6 +32,7 @@ Eğer uygulamaya OTA ile gidemeyecek büyük bir kütüphane eklediyseniz, mecbu
 1. `runopoly-app/app.json` dosyasını açın.
 2. `version` alanını bir sonraki onluğa yuvarlayın. (Örnek: `"1.0.0"` ise `"1.1.0"` yapın).
 3. **ÇOK ÖNEMLİ:** `runtimeVersion` alanını da `version`'un ilk iki hanesi ile eşitleyin! (Örnek: `"1.1"` yapın).
-4. Değişiklikleri GitHub'a pushlayın (gönderin).
-5. GitHub otomatik olarak (örneğin) `runopoly-1.1.46.apk` dosyasını oluşturacaktır.
-6. Oyunculara bu yeni APK'yı indirip kurmalarını söyleyin. Eski OTA güncellemeleri bu yeni sürüme etki etmeyecektir, artık tertemiz bir `1.1` OTA kanalınız olacaktır.
+4. **ZORUNLU UYARI:** Eski sürümlerin sunucuya girip oyunu bozmasını engellemek için `runopoly-backend/index.js` dosyasına gidin. `socket.emit('server_info', { version: '1.X', minBVersion: 1 });` satırındaki `minBVersion` sayısını, yeni B sayınız (örnekte 1) ile eşitleyin.
+5. Değişiklikleri GitHub'a pushlayın (gönderin).
+6. GitHub otomatik olarak (örneğin) `runopoly-1.1.46.apk` dosyasını oluşturacaktır.
+7. Oyunculara bu yeni APK'yı indirip kurmalarını söyleyin. Eski OTA güncellemeleri bu yeni sürüme etki etmeyecektir, artık tertemiz bir `1.1` OTA kanalınız olacaktır. Ve eski APK'yı kullananlar "Update Required" uyarısı ile karşılaşacaklardır.
