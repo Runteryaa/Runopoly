@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, TextInput, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { useGameStore } from '../store/gameStore';
@@ -62,7 +62,7 @@ export default function Home() {
       }
   };
 
-  const needsUpdate = serverVersion && serverVersion !== APP_VERSION && serverVersion > APP_VERSION;
+  const needsUpdate = Platform.OS !== 'web' && serverVersion && serverVersion !== APP_VERSION && serverVersion > APP_VERSION;
 
   if (needsUpdate) {
     return (
