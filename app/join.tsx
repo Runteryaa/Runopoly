@@ -57,6 +57,7 @@ export default function JoinGame() {
         <TouchableOpacity 
             className="w-full mt-4 py-4 rounded-2xl items-center bg-blue-500/20 border border-blue-500/50"
             onPress={() => {
+                if (!socket.connected) socket.connect();
                 socket.emit('join_random_lobby', { user: { name: playerName } });
             }}
         >
