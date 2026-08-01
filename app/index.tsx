@@ -13,9 +13,8 @@ export default function Home() {
   const router = useRouter();
   const { playerName, setPlayerName } = useGameStore();
   const [tempName, setTempName] = useState('');
-  const [serverInfo, setServerInfo] = useState<{ version: string, minBVersion?: number } | null>(null);
+  const [serverInfo, setServerInfo] = useState<{ version: string, minBVersion?: number, latestAppVersion?: string } | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [webVersion, setWebVersion] = useState<string | null>(null);
 
   useEffect(() => {
       const checkUpdateOnStart = async () => {
@@ -38,18 +37,6 @@ export default function Home() {
           setServerInfo(info);
       });
 
-      if (Platform.OS === 'web') {
-          fetch('https://api.github.com/repos/Runteryaa/Runopoly/releases/latest')
-              .then(res => res.json())
-              .then(data => {
-                  if (data && data.tag_name) {
-                      // tag_name is usually like v1.0.0-45
-                      setWebVersion(data.tag_name.replace('v', ''));
-                  }
-              })
-              .catch(e => console.log('Could not fetch github release', e));
-      }
-
       return () => {
           socket.off('server_info');
       }
@@ -60,6 +47,10 @@ export default function Home() {
           CustomAlert.alert('Development', 'Updates are disabled in development mode.');
           return;
       }
+      if (Platform.OS === 'web') {
+          CustomAlert.alert('Web Version', `Mevcut son sürüm: v${serverInfo?.latestAppVersion || '1.0.0'}`);
+          return;
+      }
       try {
           setIsUpdating(true);
           const update = await Updates.checkForUpdateAsync();
@@ -68,7 +59,10 @@ export default function Home() {
               await Updates.reloadAsync();
           } else {
               setIsUpdating(false);
-              CustomAlert.alert('Up to Date', 'You are already on the latest version.');
+              CustomAlert.alert(
+                  'Up to Date', 
+                  `You are already on the latest version.\n\nLatest Server App Version: v${serverInfo?.latestAppVersion || APP_VERSION}`
+              );
           }
       } catch (e: any) {
           setIsUpdating(false);
@@ -116,7 +110,7 @@ export default function Home() {
             className="absolute top-12 right-6 bg-zinc-800 px-3 py-2 rounded-xl border border-zinc-700 items-end"
             onPress={handleManualUpdateCheck}
         >
-            <Text className="text-zinc-400 font-bold text-xs uppercase">App: v{Platform.OS === 'web' && webVersion ? webVersion : APP_VERSION}</Text>
+            <Text className="text-zinc-400 font-bold text-xs uppercase">App: v{Platform.OS === 'web' && serverInfo?.latestAppVersion ? serverInfo.latestAppVersion : APP_VERSION}</Text>
             <Text className="text-zinc-500 font-bold text-xs uppercase">Server: v{serverInfo?.version || '...'}</Text>
         </TouchableOpacity>
         <View className="items-center mb-12">
@@ -151,7 +145,7 @@ export default function Home() {
           className="absolute top-12 right-6 bg-zinc-800 px-3 py-2 rounded-xl border border-zinc-700 items-end"
           onPress={handleManualUpdateCheck}
       >
-          <Text className="text-zinc-400 font-bold text-xs uppercase">App: v{Platform.OS === 'web' && webVersion ? webVersion : APP_VERSION}</Text>
+          <Text className="text-zinc-400 font-bold text-xs uppercase">App: v{Platform.OS === 'web' && serverInfo?.latestAppVersion ? serverInfo.latestAppVersion : APP_VERSION}</Text>
           <Text className="text-zinc-500 font-bold text-xs uppercase">Server: v{serverInfo?.version || '...'}</Text>
       </TouchableOpacity>
       <View className="items-center mb-12">

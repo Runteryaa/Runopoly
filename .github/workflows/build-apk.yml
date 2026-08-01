@@ -52,7 +52,14 @@ jobs:
           const parts = data.expo.version.split('.');
           data.expo.version = \`\${parts[0]}.\${parts[1]}.\${process.env.RUN_NUMBER}\`;
           fs.writeFileSync('app.json', JSON.stringify(data, null, 2));
-          "
+          console.log('NEW_VERSION=' + data.expo.version);
+          " >> $GITHUB_ENV
+
+      - name: 🌐 Update Server App Version
+        run: |
+          curl -X POST http://150.230.154.153:3000/update-app-version \
+          -H "Content-Type: application/json" \
+          -d "{\"version\":\"${{ env.NEW_VERSION }}\", \"secret\":\"runopoly-update-token-123\"}"
 
       - name: 🚀 Setup Expo
         uses: expo/expo-github-action@v8
