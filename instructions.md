@@ -36,3 +36,4 @@ Eğer uygulamaya OTA ile gidemeyecek büyük bir kütüphane eklediyseniz, mecbu
 5. Değişiklikleri GitHub'a pushlayın (gönderin).
 6. GitHub otomatik olarak (örneğin) `runopoly-1.1.46.apk` dosyasını oluşturacaktır.
 7. Oyunculara bu yeni APK'yı indirip kurmalarını söyleyin. Eski OTA güncellemeleri bu yeni sürüme etki etmeyecektir, artık tertemiz bir `1.1` OTA kanalınız olacaktır. Ve eski APK'yı kullananlar "Update Required" uyarısı ile karşılaşacaklardır.
+- Backend (Sunucu) kodunda bir mantik veya islev degisikligi yapildiginda mutlaka 'index.js' icerisindeki 'server_info' kismindaki version numarasi arttirilmalidir. (Orn: 1.3 -
