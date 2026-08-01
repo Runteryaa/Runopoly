@@ -11,6 +11,7 @@ import RentPaymentModal from '../components/RentPaymentModal';
 import IncomingRentOfferModal from '../components/IncomingRentOfferModal';
 import AuctionModal from '../components/AuctionModal';
 import PropertyInfoModal from '../components/PropertyInfoModal';
+import BankruptcyModal from '../components/BankruptcyModal';
 import { Platform } from 'react-native';
 
 const BoardWrapper = ({ children }: { children: React.ReactNode }) => {
@@ -41,7 +42,6 @@ export default function GameBoard() {
   const [landingMessage, setLandingMessage] = useState<string | null>(null);
   const [rentPaymentTarget, setRentPaymentTarget] = useState<any>(null);
   const [incomingRentOffer, setIncomingRentOffer] = useState<any>(null);
-  const [rentModalVisible, setRentModalVisible] = useState<boolean>(false);
   const [loanModalVisible, setLoanModalVisible] = useState(false);
   const [isAwaitingLoan, setIsAwaitingLoan] = useState(false);
   const [activeAuction, setActiveAuction] = useState<any>(null);
@@ -512,7 +512,6 @@ export default function GameBoard() {
                 ownerId: landedProperty.ownerId,
                 fullRentAmount: rentToPay
             });
-            setRentModalVisible(true);
         }
     }, 800);
   };
@@ -605,9 +604,8 @@ export default function GameBoard() {
       <IncomingTradeModal trade={incomingTrade} onClose={() => setIncomingTrade(null)} />
       <InventoryModal visible={inventoryVisible} onClose={() => setInventoryVisible(false)} />
       <RentPaymentModal 
-        visible={rentModalVisible} 
-        onClose={() => setRentModalVisible(false)} 
-        onPay={() => { setRentPaymentTarget(null); setRentModalVisible(false); }}
+        visible={!!rentPaymentTarget} 
+        onClose={() => setRentPaymentTarget(null)} 
         {...rentPaymentTarget} 
         myPlayerId={myPlayer?.id} 
         lobbyCode={lobbyCode} 
@@ -652,57 +650,15 @@ export default function GameBoard() {
                     )}
 
                     {isMyTurn ? (
-                      (myPlayer?.money ?? 0) < 0 ? (
-                          <View className="flex-row gap-2">
+                      hasRolled ? (
+                          (myPlayer?.money ?? 0) >= 0 && (
                               <TouchableOpacity 
-                                className="flex-1 bg-red-600 px-2 py-4 rounded-2xl shadow-lg shadow-red-600/30 justify-center items-center"
-                                onPress={() => {
-                                    CustomAlert.alert('Declare Bankruptcy?', 'Are you sure you want to declare bankruptcy? You will be eliminated and lose all your properties.', [
-                                        { text: 'Cancel', style: 'cancel' },
-                                        { text: 'I am Bankrupt', style: 'destructive', onPress: () => {
-                                            socket.emit('end_turn', { lobbyCode });
-                                            socket.emit('kick_player', { lobbyCode, playerId: myPlayer!.id });
-                                        }}
-                                    ]);
-                                }}
+                                className="bg-red-500 px-6 py-4 rounded-2xl shadow-lg shadow-red-500/30"
+                                onPress={() => socket.emit('end_turn', { lobbyCode })}
                               >
-                                <Text className="text-white font-black text-sm text-center leading-tight">BANKRUPT</Text>
+                                <Text className="text-white font-black text-lg">END TURN</Text>
                               </TouchableOpacity>
-
-                              <TouchableOpacity 
-                                className="flex-1 bg-orange-500 px-2 py-4 rounded-2xl shadow-lg shadow-orange-500/30 justify-center items-center"
-                                onPress={() => setInventoryVisible(true)}
-                              >
-                                <Text className="text-white font-black text-sm text-center leading-tight">MORTGAGE</Text>
-                              </TouchableOpacity>
-
-                              <TouchableOpacity 
-                                className="flex-1 bg-blue-500 px-2 py-4 rounded-2xl shadow-lg shadow-blue-500/30 justify-center items-center opacity-100"
-                                onPress={() => {
-                                    if (isAwaitingLoan) {
-                                        CustomAlert.alert('Pending', 'You already requested a loan. Waiting for responses...');
-                                    } else {
-                                        setLoanModalVisible(true);
-                                    }
-                                }}
-                              >
-                                <Text className="text-white font-black text-sm text-center leading-tight">BORROW</Text>
-                              </TouchableOpacity>
-                          </View>
-                      ) : rentPaymentTarget ? (
-                          <TouchableOpacity 
-                            className="bg-purple-500 px-6 py-4 rounded-2xl shadow-lg shadow-purple-500/30"
-                            onPress={() => setRentModalVisible(true)}
-                          >
-                            <Text className="text-white font-black text-lg text-center leading-tight">PAY RENT (${rentPaymentTarget.fullRentAmount})</Text>
-                          </TouchableOpacity>
-                      ) : hasRolled ? (
-                          <TouchableOpacity 
-                            className="bg-red-500 px-6 py-4 rounded-2xl shadow-lg shadow-red-500/30"
-                            onPress={() => socket.emit('end_turn', { lobbyCode })}
-                          >
-                            <Text className="text-white font-black text-lg">END TURN</Text>
-                          </TouchableOpacity>
+                          )
                       ) : (
                           <TouchableOpacity 
                             className="bg-emerald-500 px-6 py-4 rounded-2xl shadow-lg shadow-emerald-500/30"
@@ -841,6 +797,14 @@ export default function GameBoard() {
           />
       )}
 
+      <BankruptcyModal 
+        visible={(myPlayer?.money ?? 0) < 0} 
+        myPlayerId={myPlayer?.id} 
+        lobbyCode={lobbyCode} 
+        onMortgage={() => setInventoryVisible(true)} 
+        onBorrow={() => setLoanModalVisible(true)} 
+        isAwaitingLoan={isAwaitingLoan} 
+      />
     </View>
   );
 }

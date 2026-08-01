@@ -3,10 +3,8 @@ import { View, Text, TouchableOpacity, Modal, TextInput } from 'react-native';
 import { socket } from '../utils/socket';
 import { useGameStore } from '../store/gameStore';
 
-export default function RentPaymentModal({ visible, onClose, onPay, property, ownerId, fullRentAmount, myPlayerId, lobbyCode }: any) {
+export default function RentPaymentModal({ visible, onClose, property, ownerId, fullRentAmount, myPlayerId, lobbyCode }: any) {
     const [customAmount, setCustomAmount] = useState(fullRentAmount?.toString() || '0');
-    const myPlayer = useGameStore.getState().gamePlayers.find(p => p.id === myPlayerId);
-    const hasEnoughMoney = (myPlayer?.money || 0) >= fullRentAmount;
 
     useEffect(() => {
         if (visible) {
@@ -18,9 +16,8 @@ export default function RentPaymentModal({ visible, onClose, onPay, property, ow
     const owner = useGameStore.getState().gamePlayers.find(p => p.id === ownerId);
 
     const handlePayFull = () => {
-        if (!hasEnoughMoney) return;
         socket.emit('pay_rent', { lobbyCode, fromPlayerId: myPlayerId, toPlayerId: ownerId, amount: fullRentAmount });
-        if (onPay) onPay();
+        onClose();
     };
 
     const handleProposeCustom = () => {
@@ -63,27 +60,20 @@ export default function RentPaymentModal({ visible, onClose, onPay, property, ow
                         placeholderTextColor="#71717a"
                     />
 
-                    <View className="flex-col gap-2">
-                        <View className="flex-row justify-between gap-2">
-                            <TouchableOpacity 
-                                onPress={handleProposeCustom}
-                                className="flex-1 bg-zinc-700 py-3 rounded-xl items-center border border-zinc-600"
-                            >
-                                <Text className="text-white font-bold">Ask Discount</Text>
-                            </TouchableOpacity>
-                            
-                            <TouchableOpacity 
-                                onPress={hasEnoughMoney ? handlePayFull : onClose}
-                                className={`flex-1 py-3 rounded-xl items-center ${hasEnoughMoney ? 'bg-red-500 shadow-lg shadow-red-500/30' : 'bg-orange-500 shadow-lg shadow-orange-500/30'}`}
-                            >
-                                <Text className="text-white font-black">{hasEnoughMoney ? 'Pay Full' : 'Raise Funds'}</Text>
-                            </TouchableOpacity>
-                        </View>
-                        {!hasEnoughMoney && (
-                            <Text className="text-orange-400 text-xs text-center mt-2 font-bold">
-                                You don't have enough money. Mortgage properties or borrow money to pay.
-                            </Text>
-                        )}
+                    <View className="flex-row justify-between gap-2">
+                        <TouchableOpacity 
+                            onPress={handleProposeCustom}
+                            className="flex-1 bg-zinc-700 py-3 rounded-xl items-center border border-zinc-600"
+                        >
+                            <Text className="text-white font-bold">Ask Discount</Text>
+                        </TouchableOpacity>
+                        
+                        <TouchableOpacity 
+                            onPress={handlePayFull}
+                            className="flex-1 bg-red-500 py-3 rounded-xl items-center shadow-lg shadow-red-500/30"
+                        >
+                            <Text className="text-white font-black">Pay Full</Text>
+                        </TouchableOpacity>
                     </View>
                 </View>
             </View>
