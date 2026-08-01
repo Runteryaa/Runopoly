@@ -23,7 +23,7 @@ export default function Home() {
 
   useEffect(() => {
       const checkUpdateOnStart = async () => {
-          if (__DEV__) return;
+          if (__DEV__ || Platform.OS === 'web') return;
           try {
               const update = await Updates.checkForUpdateAsync();
               if (update.isAvailable) {

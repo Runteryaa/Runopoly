@@ -1,11 +1,11 @@
 import React from 'react';
-import { Modal, View, Text, TouchableOpacity, Platform, StyleSheet } from 'react-native';
+import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useAlertStore } from '../store/alertStore';
 
 export const CustomAlertModal = () => {
   const { isVisible, title, message, buttons, options, hideAlert } = useAlertStore();
 
-  if (Platform.OS !== 'web' || !isVisible) return null;
+  if (!isVisible) return null;
 
   return (
     <Modal transparent={true} visible={isVisible} animationType="fade">
