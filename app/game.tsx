@@ -2,7 +2,7 @@ import { CustomAlert } from '../utils/alert';
 import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useGameStore, TradeData } from '../store/gameStore';
 import { socket } from '../utils/socket';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import TradeModal from '../components/TradeModal';
 import LoanRequestModal from '../components/LoanRequestModal';
 import IncomingTradeModal from '../components/IncomingTradeModal';
