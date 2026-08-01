@@ -47,12 +47,15 @@ export default function TradeModal({ visible, onClose, initialTradeTarget }: Tra
             CustomAlert.alert('Error', 'Select a player to trade with.');
             return;
         }
+        const cleanOffer = offerMoney.replace(/[^0-9]/g, '');
+        const cleanRequest = requestMoney.replace(/[^0-9]/g, '');
+        
         const trade: TradeData = {
             id: Math.random().toString(),
             fromId: myPlayer.id,
             toId: targetId,
-            offerMoney: parseInt(offerMoney) || 0,
-            requestMoney: parseInt(requestMoney) || 0,
+            offerMoney: Math.max(0, parseInt(cleanOffer, 10) || 0),
+            requestMoney: Math.max(0, parseInt(cleanRequest, 10) || 0),
             offerProperties: offerProps,
             requestProperties: requestProps
         };
