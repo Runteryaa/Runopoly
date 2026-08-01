@@ -12,6 +12,7 @@ import IncomingRentOfferModal from '../components/IncomingRentOfferModal';
 import AuctionModal from '../components/AuctionModal';
 import PropertyInfoModal from '../components/PropertyInfoModal';
 import BankruptcyModal from '../components/BankruptcyModal';
+import DiceRollerModal from '../components/DiceRollerModal';
 import { Platform } from 'react-native';
 
 const BoardWrapper = ({ children }: { children: React.ReactNode }) => {
@@ -49,6 +50,26 @@ export default function GameBoard() {
   const [turnTimeLeft, setTurnTimeLeft] = useState<number | null>(null);
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
   const [initialTradeTarget, setInitialTradeTarget] = useState<{ ownerId: string; propertyId: string } | null>(null);
+
+  const [diceRollerVisible, setDiceRollerVisible] = useState(false);
+  const [currentDice, setCurrentDice] = useState({ d1: 1, d2: 1 });
+  const pendingRollCallback = useRef<((d1: number, d2: number) => void) | null>(null);
+
+  const startVisualRoll = (onFinish: (d1: number, d2: number) => void) => {
+      const d1 = Math.floor(Math.random() * 6) + 1;
+      const d2 = Math.floor(Math.random() * 6) + 1;
+      setCurrentDice({ d1, d2 });
+      pendingRollCallback.current = onFinish;
+      setDiceRollerVisible(true);
+  };
+
+  const handleRollComplete = () => {
+      setDiceRollerVisible(false);
+      if (pendingRollCallback.current) {
+          pendingRollCallback.current(currentDice.d1, currentDice.d2);
+          pendingRollCallback.current = null;
+      }
+  };
 
   const myPlayer = gamePlayers.find(p => p.name === playerName);
   const activePlayer = gamePlayers.find(p => p.name === activeTurnName);
@@ -366,20 +387,20 @@ export default function GameBoard() {
 
         if (!mustPay) {
             options.push({ text: 'Roll for Doubles', onPress: () => {
-                const dice1 = Math.floor(Math.random() * 6) + 1;
-                const dice2 = Math.floor(Math.random() * 6) + 1;
-                const totalSteps = dice1 + dice2;
-                setLastRoll(totalSteps);
-                setHasRolled(true);
-                
-                if (dice1 === dice2) {
-                    CustomAlert.alert('Lucky!', `You rolled doubles (${dice1} & ${dice2}) and escaped Jail!`);
-                    socket.emit('leave_jail', { lobbyCode, playerId: myPlayer.id });
-                    processMove(totalSteps);
-                } else {
-                    CustomAlert.alert('Unlucky', `You rolled ${dice1} & ${dice2}. Not doubles. You stay in Jail.`);
-                    socket.emit('update_player_stats', { lobbyCode, playerId: myPlayer.id, updates: { jailTurns: (myPlayer.jailTurns || 0) + 1 } });
-                }
+                startVisualRoll((dice1, dice2) => {
+                    const totalSteps = dice1 + dice2;
+                    setLastRoll(totalSteps);
+                    setHasRolled(true);
+                    
+                    if (dice1 === dice2) {
+                        CustomAlert.alert('Lucky!', `You rolled doubles (${dice1} & ${dice2}) and escaped Jail!`);
+                        socket.emit('leave_jail', { lobbyCode, playerId: myPlayer.id });
+                        processMove(totalSteps);
+                    } else {
+                        CustomAlert.alert('Unlucky', `You rolled ${dice1} & ${dice2}. Not doubles. You stay in Jail.`);
+                        socket.emit('update_player_stats', { lobbyCode, playerId: myPlayer.id, updates: { jailTurns: (myPlayer.jailTurns || 0) + 1 } });
+                    }
+                });
             }});
         }
 
@@ -387,12 +408,12 @@ export default function GameBoard() {
             socket.emit('execute_card', { lobbyCode, playerId: myPlayer.id, card: { id: 'jail_fee', type: 'chance', action: 'pay', amount: rules.jailFine, text: 'Bribe the guards' } });
             socket.emit('leave_jail', { lobbyCode, playerId: myPlayer.id });
             
-            const dice1 = Math.floor(Math.random() * 6) + 1;
-            const dice2 = Math.floor(Math.random() * 6) + 1;
-            const totalSteps = dice1 + dice2;
-            setLastRoll(totalSteps);
-            setHasRolled(true); // Don't allow rolling again immediately if they just left jail by paying
-            processMove(totalSteps);
+            startVisualRoll((dice1, dice2) => {
+                const totalSteps = dice1 + dice2;
+                setLastRoll(totalSteps);
+                setHasRolled(true); // Don't allow rolling again immediately if they just left jail by paying
+                processMove(totalSteps);
+            });
         }});
 
         CustomAlert.alert(
@@ -404,31 +425,31 @@ export default function GameBoard() {
         return;
     }
 
-    const dice1 = Math.floor(Math.random() * 6) + 1;
-    const dice2 = Math.floor(Math.random() * 6) + 1;
-    const isDouble = dice1 === dice2;
-    const totalSteps = dice1 + dice2;
-    setLastRoll(totalSteps);
-
-    if (isDouble) {
-        const newDoublesCount = (myPlayer.doublesCount || 0) + 1;
-        socket.emit('update_player_stats', { lobbyCode, playerId: myPlayer.id, updates: { doublesCount: newDoublesCount } });
-        
-        if (newDoublesCount === 3) {
-            CustomAlert.alert('Speeding!', 'You rolled doubles 3 times in a row! Go directly to Jail!', [{ text: 'OK' }], { cancelable: false });
-            socket.emit('go_to_jail', { lobbyCode, playerId: myPlayer.id });
-            setHasRolled(true);
-            return;
+    startVisualRoll((dice1, dice2) => {
+        const isDouble = dice1 === dice2;
+        const totalSteps = dice1 + dice2;
+        setLastRoll(totalSteps);
+    
+        if (isDouble) {
+            const newDoublesCount = (myPlayer.doublesCount || 0) + 1;
+            socket.emit('update_player_stats', { lobbyCode, playerId: myPlayer.id, updates: { doublesCount: newDoublesCount } });
+            
+            if (newDoublesCount === 3) {
+                CustomAlert.alert('Speeding!', 'You rolled doubles 3 times in a row! Go directly to Jail!', [{ text: 'OK' }], { cancelable: false });
+                socket.emit('go_to_jail', { lobbyCode, playerId: myPlayer.id });
+                setHasRolled(true);
+                return;
+            } else {
+                setHasRolled(false); // Can roll again
+                CustomAlert.alert('Doubles!', `You rolled ${dice1} and ${dice2}! You get to roll again after your move.`, [{ text: 'Awesome' }], { cancelable: false });
+                processMove(totalSteps);
+            }
         } else {
-            setHasRolled(false); // Can roll again
-            CustomAlert.alert('Doubles!', `You rolled ${dice1} and ${dice2}! You get to roll again after your move.`, [{ text: 'Awesome' }], { cancelable: false });
+            setHasRolled(true);
+            socket.emit('update_player_stats', { lobbyCode, playerId: myPlayer.id, updates: { doublesCount: 0 } });
+            processMove(totalSteps);
         }
-    } else {
-        setHasRolled(true);
-        socket.emit('update_player_stats', { lobbyCode, playerId: myPlayer.id, updates: { doublesCount: 0 } });
-    }
-
-    processMove(totalSteps);
+    });
   };
 
   const processMove = (totalSteps: number) => {
@@ -804,6 +825,13 @@ export default function GameBoard() {
         onMortgage={() => setInventoryVisible(true)} 
         onBorrow={() => setLoanModalVisible(true)} 
         isAwaitingLoan={isAwaitingLoan} 
+      />
+
+      <DiceRollerModal 
+        visible={diceRollerVisible}
+        dice1={currentDice.d1}
+        dice2={currentDice.d2}
+        onComplete={handleRollComplete}
       />
     </View>
   );
