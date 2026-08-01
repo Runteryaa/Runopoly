@@ -5,8 +5,9 @@ import { useGameStore } from '../store/gameStore';
 import { socket } from '../utils/socket';
 import * as Updates from 'expo-updates';
 import { CustomAlert } from '../utils/alert';
+import Constants from 'expo-constants';
 
-const APP_VERSION = '1.0.2';
+const APP_VERSION = Constants.expoConfig?.version || '1.0.0';
 
 export default function Home() {
   const router = useRouter();
@@ -96,10 +97,11 @@ export default function Home() {
     return (
       <View className="flex-1 items-center justify-center bg-zinc-900 p-6">
         <TouchableOpacity 
-            className="absolute top-12 right-6 bg-zinc-800 px-3 py-1 rounded-full border border-zinc-700"
+            className="absolute top-12 right-6 bg-zinc-800 px-3 py-2 rounded-xl border border-zinc-700 items-end"
             onPress={handleManualUpdateCheck}
         >
-            <Text className="text-zinc-400 font-bold text-xs uppercase">v{APP_VERSION}</Text>
+            <Text className="text-zinc-400 font-bold text-xs uppercase">App: v{APP_VERSION}</Text>
+            <Text className="text-zinc-500 font-bold text-xs uppercase">Server: v{serverVersion || '...'}</Text>
         </TouchableOpacity>
         <View className="items-center mb-12">
           <Text className="text-5xl font-black text-white tracking-tighter">
@@ -130,10 +132,11 @@ export default function Home() {
   return (
     <View className="flex-1 items-center justify-center bg-zinc-900 p-6">
       <TouchableOpacity 
-          className="absolute top-12 right-6 bg-zinc-800 px-3 py-1 rounded-full border border-zinc-700"
+          className="absolute top-12 right-6 bg-zinc-800 px-3 py-2 rounded-xl border border-zinc-700 items-end"
           onPress={handleManualUpdateCheck}
       >
-          <Text className="text-zinc-400 font-bold text-xs uppercase">v{APP_VERSION}</Text>
+          <Text className="text-zinc-400 font-bold text-xs uppercase">App: v{APP_VERSION}</Text>
+          <Text className="text-zinc-500 font-bold text-xs uppercase">Server: v{serverVersion || '...'}</Text>
       </TouchableOpacity>
       <View className="items-center mb-12">
         <Text className="text-5xl font-black text-white tracking-tighter">
