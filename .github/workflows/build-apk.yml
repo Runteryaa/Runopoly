@@ -72,20 +72,7 @@ jobs:
         run: eas update --auto --non-interactive
 
 
-      - name: 🔍 Check for native changes
-        uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          filters: |
-            native:
-              - 'package.json'
-              - 'package-lock.json'
-              - 'app.json'
-              - 'plugins/**'
-              - '.github/workflows/**'
-
       - name: 🛠 Prebuild & Build APK
-        if: steps.filter.outputs.native == 'true' || github.event_name == 'workflow_dispatch'
         run: |
           npx expo prebuild --platform android
           cd android
@@ -93,7 +80,6 @@ jobs:
           ./gradlew assembleRelease --no-daemon --build-cache
 
       - name: 🚚 Rename APK
-        if: steps.filter.outputs.native == 'true' || github.event_name == 'workflow_dispatch'
         run: |
           APP_VERSION=$(node -p "require('./app.json').expo.version")
           mv android/app/build/outputs/apk/release/app-release.apk runopoly-${APP_VERSION}.apk
@@ -101,14 +87,12 @@ jobs:
           echo "APP_VERSION=${APP_VERSION}" >> $GITHUB_ENV
 
       - name: 📤 Upload APK Artifact
-        if: steps.filter.outputs.native == 'true' || github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.APK_NAME }}
           path: ${{ env.APK_NAME }}
 
       - name: 🏷 Create Release & Upload APK
-        if: steps.filter.outputs.native == 'true' || github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ env.APP_VERSION }}-${{ github.run_number }}
