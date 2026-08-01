@@ -30,8 +30,8 @@ export default function PropertyInfoModal({ propertyId, onClose, onTradePress, m
     const minBldgsInSet = Math.min(...sameColorProps.map(getBldgs));
     const maxBldgsInSet = Math.max(...sameColorProps.map(getBldgs));
     
-    const isMortgaged = (property.houses || 0) === -1;
-    const anyMortgaged = sameColorProps.some(p => (p.houses || 0) === -1);
+    const isMortgaged = property.isMortgaged === true;
+    const anyMortgaged = sameColorProps.some(p => p.isMortgaged === true);
     
     const canBuildHouse = currentBldgs < 4;
     const canBuildHotel = currentBldgs === 4 && minBldgsInSet >= 4;
@@ -41,12 +41,18 @@ export default function PropertyInfoModal({ propertyId, onClose, onTradePress, m
     const currentRent = isUnimproved && hasFullSet && !anyMortgaged ? property.rent * 2 : property.rent;
     const houseCost = Math.max(50, Math.floor(property.price / 100) * 50);
 
+    const properties = useGameStore.getState().properties;
+    const totalHouses = properties.reduce((acc, p) => acc + Math.max(0, p.houses || 0), 0);
+    const totalHotels = properties.reduce((acc, p) => acc + Math.max(0, p.hotels || 0), 0);
+    const isHotelNext = currentBldgs === 4;
+    const hasEnoughStock = isHotelNext ? (totalHotels < 12) : (totalHouses < 32);
+
     const isStation = property.name === 'STATION';
     const isUtility = property.name === 'UTILITY';
     const isBuildable = !isStation && !isUtility;
 
     const handleBuild = () => {
-        if (!lobbyCode || !myPlayerId) return;
+        if (!lobbyCode || !myPlayerId || !hasEnoughStock) return;
         const isHotel = currentBldgs === 4;
         
         socket.emit('upgrade_property', {
@@ -72,28 +78,26 @@ export default function PropertyInfoModal({ propertyId, onClose, onTradePress, m
 
     const handleMortgage = () => {
         if (!lobbyCode || !myPlayerId || maxBldgsInSet > 0) return;
-        socket.emit('upgrade_property', {
+        socket.emit('toggle_mortgage', {
             lobbyCode,
             propertyId: property.id,
-            houses: -1,
-            hotels: 0,
-            cost: -(property.price / 2)
+            isMortgaged: true,
+            cost: (property.price / 2)
         });
     };
 
     const handleUnmortgage = () => {
         if (!lobbyCode || !myPlayerId) return;
-        const mortgageTurns = Math.abs(property.houses || 0);
+        const mortgageTurns = property.mortgageTurns || 0;
         const baseUnmortgageCost = property.price / 2;
-        const interestRate = 0.10 + Math.max(0, mortgageTurns - 1) * 0.01;
+        const interestRate = 0.10 + Math.max(0, mortgageTurns) * 0.01;
         const cost = Math.floor(baseUnmortgageCost * (1 + interestRate));
 
-        socket.emit('upgrade_property', {
+        socket.emit('toggle_mortgage', {
             lobbyCode,
             propertyId: property.id,
-            houses: 0,
-            hotels: 0,
-            cost: cost
+            isMortgaged: false,
+            cost: -cost
         });
     };
 
@@ -232,7 +236,7 @@ export default function PropertyInfoModal({ propertyId, onClose, onTradePress, m
                                                 className="bg-emerald-500 py-3 rounded-xl items-center border-b-4 border-emerald-700"
                                             >
                                                 <Text className="text-white font-black text-sm uppercase tracking-widest">
-                                                    Unmortgage (${Math.floor((property.price / 2) * (1 + 0.10 + Math.max(0, Math.abs(property.houses || 0) - 1) * 0.01))})
+                                                    Unmortgage (${Math.floor((property.price / 2) * (1 + 0.10 + Math.max(0, property.mortgageTurns || 0) * 0.01))})
                                                 </Text>
                                             </TouchableOpacity>
                                         ) : (
@@ -244,14 +248,20 @@ export default function PropertyInfoModal({ propertyId, onClose, onTradePress, m
                                                         ) : anyMortgaged ? (
                                                             <Text className="text-zinc-500 text-xs text-center font-bold">Cannot build while a property in this set is mortgaged.</Text>
                                                         ) : canBuild ? (
-                                                            <TouchableOpacity 
-                                                                onPress={handleBuild}
-                                                                className="bg-blue-500 py-3 rounded-xl items-center border-b-4 border-blue-700"
-                                                            >
-                                                                <Text className="text-white font-black text-sm uppercase tracking-widest">
-                                                                    Build {currentBldgs === 4 ? 'Hotel' : 'House'} (${houseCost})
-                                                                </Text>
-                                                            </TouchableOpacity>
+                                                            <>
+                                                                <TouchableOpacity 
+                                                                    onPress={handleBuild}
+                                                                    disabled={!hasEnoughStock}
+                                                                    className={`${hasEnoughStock ? 'bg-blue-500 border-blue-700' : 'bg-zinc-700 border-zinc-600'} py-3 rounded-xl items-center border-b-4`}
+                                                                >
+                                                                    <Text className="text-white font-black text-sm uppercase tracking-widest">
+                                                                        Build {currentBldgs === 4 ? 'Hotel' : 'House'} (${houseCost})
+                                                                    </Text>
+                                                                </TouchableOpacity>
+                                                                {!hasEnoughStock && (
+                                                                    <Text className="text-red-400 text-xs text-center font-bold mt-1">Bank is out of {isHotelNext ? 'hotels' : 'houses'}.</Text>
+                                                                )}
+                                                            </>
                                                         ) : currentBldgs === 5 ? (
                                                             <Text className="text-emerald-500 text-xs text-center font-bold">Fully upgraded!</Text>
                                                         ) : (

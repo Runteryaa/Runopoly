@@ -76,6 +76,18 @@ export default function GameBoard() {
   const isMyTurn = myPlayer?.name === activeTurnName;
 
   useEffect(() => {
+    socket.on('player_bankrupt', ({ playerId }) => {
+        useGameStore.getState().resolveBankruptcy(playerId);
+        if (myPlayer?.id === playerId) {
+            CustomAlert.alert('Eliminated', 'You have been eliminated from the game.');
+        } else {
+            const bp = useGameStore.getState().gamePlayers.find(p => p.id === playerId);
+            if (bp) {
+                CustomAlert.alert('Player Bankrupt!', `${bp.name} has declared bankruptcy and their assets were surrendered.`);
+            }
+        }
+    });
+
     socket.on('player_moved', ({ playerId, steps }) => {
       updatePlayerPosition(playerId, steps);
     });
@@ -86,6 +98,8 @@ export default function GameBoard() {
       setHasRolled(false);
 
       const state = useGameStore.getState();
+      state.incrementMortgageTurns(nextPlayerName);
+      
       const me = state.gamePlayers.find(p => p.name === playerName);
       if (me && me.isHost) {
           const nextIdx = state.gamePlayers.findIndex(p => p.name === nextPlayerName);
@@ -349,6 +363,8 @@ export default function GameBoard() {
       socket.off('peer_request_game_state');
       socket.off('peer_sync_game_state');
       socket.off('host_transferred');
+      socket.off('player_kicked');
+      socket.off('player_bankrupt');
       socket.off('player_kicked_ingame');
       socket.off('turn_timer_tick');
       socket.off('property_mortgaged');

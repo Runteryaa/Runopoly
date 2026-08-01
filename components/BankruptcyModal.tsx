@@ -61,6 +61,7 @@ export default function BankruptcyModal({ visible, myPlayerId, lobbyCode, onMort
                                     [
                                         { text: 'Cancel', style: 'cancel' },
                                         { text: 'I am Bankrupt', style: 'destructive', onPress: () => {
+                                            socket.emit('declare_bankruptcy', { lobbyCode, playerId: myPlayer!.id });
                                             socket.emit('end_turn', { lobbyCode });
                                             socket.emit('kick_player', { lobbyCode, playerId: myPlayer!.id });
                                         }}

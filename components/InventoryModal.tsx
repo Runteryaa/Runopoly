@@ -86,6 +86,19 @@ export default function InventoryModal({ visible, onClose }: InventoryModalProps
 
                                                     // Monopoly Rule 1: Own all properties of the same color
                                                     const allProps = useGameStore.getState().properties;
+                                                    
+                                                    const totalHouses = allProps.reduce((acc, p) => acc + Math.max(0, p.houses || 0), 0);
+                                                    const totalHotels = allProps.reduce((acc, p) => acc + Math.max(0, p.hotels || 0), 0);
+                                                    const isHotelNext = currentHouses === 4;
+                                                    if (isHotelNext && totalHotels >= 12) {
+                                                        alert('The Bank has no more hotels to sell!');
+                                                        return;
+                                                    }
+                                                    if (!isHotelNext && totalHouses >= 32) {
+                                                        alert('The Bank has no more houses to sell!');
+                                                        return;
+                                                    }
+
                                                     const sameColorProps = allProps.filter(p => p.color === prop.color && p.price > 0);
                                                     const ownsAll = sameColorProps.every(p => p.ownerId === myPlayer.id);
                                                     
@@ -133,7 +146,9 @@ export default function InventoryModal({ visible, onClose }: InventoryModalProps
                                             prop.isMortgaged ? (
                                                 <TouchableOpacity 
                                                     onPress={() => {
-                                                        const unmortgageCost = Math.ceil((prop.price / 2) * 1.1);
+                                                        const mortgageTurns = prop.mortgageTurns || 0;
+                                                        const interestRate = 0.10 + Math.max(0, mortgageTurns) * 0.01;
+                                                        const unmortgageCost = Math.floor((prop.price / 2) * (1 + interestRate));
                                                         if (myPlayer.money < unmortgageCost) {
                                                             alert(`You need $${unmortgageCost} to unmortgage this property.`);
                                                             return;
@@ -149,7 +164,9 @@ export default function InventoryModal({ visible, onClose }: InventoryModalProps
                                                     }}
                                                     className="bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-500/50"
                                                 >
-                                                    <Text className="text-emerald-400 font-bold text-[10px] uppercase">Unmortgage (-${Math.ceil((prop.price / 2) * 1.1)})</Text>
+                                                    <Text className="text-emerald-400 font-bold text-[10px] uppercase">
+                                                        Unmortgage (-${Math.floor((prop.price / 2) * (1 + 0.10 + Math.max(0, prop.mortgageTurns || 0) * 0.01))})
+                                                    </Text>
                                                 </TouchableOpacity>
                                             ) : (
                                                 <TouchableOpacity 

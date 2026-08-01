@@ -10,6 +10,7 @@ export interface Property {
   houses?: number;
   hotels?: number;
   isMortgaged?: boolean;
+  mortgageTurns?: number;
   housePrice?: number;
 }
 
@@ -28,7 +29,6 @@ export interface GameRules {
   goSalary: number;
   jailFine: number;
   startingMoney: number;
-  maxDebt: number;
   boardSize: number;
   theme: string;
   incomeTax: number;
@@ -101,9 +101,11 @@ interface GameState {
   executeTrade: (trade: TradeData) => void;
   upgradeProperty: (propertyId: string, houses: number, hotels: number, cost: number) => void;
   toggleMortgage: (propertyId: string, isMortgaged: boolean, cost: number) => void;
+  incrementMortgageTurns: (playerName: string) => void;
   updatePlayerStats: (id: string, updates: any) => void;
   addCardToInventory: (playerId: string, card: Card) => void;
   removeCardFromInventory: (playerId: string, cardId: string) => void;
+  resolveBankruptcy: (playerId: string) => void;
 }
 
 function generateBoard(rules: GameRules): Property[] {
@@ -173,7 +175,7 @@ function generateBoard(rules: GameRules): Property[] {
     return genProps;
 }
 
-const initialRules: GameRules = { goSalary: 200, jailFine: 50, startingMoney: 1500, maxDebt: 500, boardSize: 40, theme: 'Classic', incomeTax: 200, speedDie: false, chanceCount: 3, communityCount: 3, taxCount: 2 };
+const initialRules: GameRules = { goSalary: 200, jailFine: 50, startingMoney: 1500, boardSize: 40, theme: 'Classic', incomeTax: 200, speedDie: false, chanceCount: 3, communityCount: 3, taxCount: 2 };
 
 const defaultCards: Card[] = [
     // Chance Cards
@@ -231,7 +233,10 @@ export const useGameStore = create<GameState>((set) => ({
   })),
   payRent: (fromId, toId, amount) => set((state) => ({
     gamePlayers: state.gamePlayers.map(p => {
-      if (p.id === fromId) return { ...p, money: p.money - amount };
+      if (p.id === fromId) {
+          const newMoney = p.money - amount;
+          return { ...p, money: newMoney, bankruptCreditorId: newMoney < 0 ? toId : undefined, bankruptAmount: newMoney < 0 ? Math.abs(newMoney) : undefined };
+      }
       if (p.id === toId) return { ...p, money: p.money + amount };
       return p;
     })
@@ -241,18 +246,19 @@ export const useGameStore = create<GameState>((set) => ({
   })),
   executeCard: (id, card) => set((state) => {
     if (card.action === 'show') {
-       // We can just rely on the component layer listening to socket events to show the alert,
-       // but updating state here is fine too.
        return state;
     }
     return {
-      gamePlayers: state.gamePlayers.map(p => {
-        if (p.id !== id) return p;
-        if (card.action === 'pay') return { ...p, money: p.money - (card.amount || 0) };
-        if (card.action === 'receive') return { ...p, money: p.money + (card.amount || 0) };
-        return p;
-      })
-    };
+        gamePlayers: state.gamePlayers.map(p => {
+          if (p.id !== id) return p;
+          if (card.action === 'pay') {
+              const newMoney = p.money - (card.amount || 0);
+              return { ...p, money: newMoney, bankruptCreditorId: newMoney < 0 ? 'BANK' : undefined, bankruptAmount: newMoney < 0 ? Math.abs(newMoney) : undefined };
+          }
+          if (card.action === 'receive') return { ...p, money: p.money + (card.amount || 0) };
+          return p;
+        })
+      };
   }),
   setJailStatus: (id, inJail) => set((state) => ({
     gamePlayers: state.gamePlayers.map(p => p.id === id ? { ...p, inJail, position: inJail ? (state.rules.boardSize / 4) : p.position } : p)
@@ -296,8 +302,19 @@ export const useGameStore = create<GameState>((set) => ({
     const prop = state.properties.find(p => p.id === propertyId);
     if (!prop || !prop.ownerId) return state;
     return {
-        properties: state.properties.map(p => p.id === propertyId ? { ...p, isMortgaged } : p),
+        properties: state.properties.map(p => p.id === propertyId ? { ...p, isMortgaged, mortgageTurns: isMortgaged ? 0 : undefined } : p),
         gamePlayers: state.gamePlayers.map(p => p.id === prop.ownerId ? { ...p, money: p.money + cost } : p)
+    };
+  }),
+  incrementMortgageTurns: (playerName) => set((state) => {
+    const player = state.gamePlayers.find(p => p.name === playerName);
+    if (!player) return state;
+    return {
+        properties: state.properties.map(p => 
+            (p.ownerId === player.id && p.isMortgaged) 
+                ? { ...p, mortgageTurns: (p.mortgageTurns || 0) + 1 } 
+                : p
+        )
     };
   }),
   updatePlayerStats: (id, updates) => set((state) => ({
@@ -312,5 +329,31 @@ export const useGameStore = create<GameState>((set) => ({
     gamePlayers: state.gamePlayers.map(p => 
       p.id === playerId ? { ...p, inventoryCards: (p.inventoryCards || []).filter((c: Card) => c.id !== cardId) } : p
     )
-  }))
+  })),
+  resolveBankruptcy: (playerId) => set((state) => {
+      const bankruptPlayer = state.gamePlayers.find(p => p.id === playerId);
+      if (!bankruptPlayer) return state;
+
+      let creditorId = bankruptPlayer.bankruptCreditorId;
+      let debtAmount = bankruptPlayer.bankruptAmount || 0;
+      
+      if (bankruptPlayer.debts && bankruptPlayer.debts.length > 0) {
+          creditorId = bankruptPlayer.debts[0].to;
+          debtAmount = bankruptPlayer.debts[0].amount;
+      }
+
+      let currentDebt = debtAmount;
+      const updatedProperties = state.properties.map(p => {
+          if (p.ownerId !== playerId) return p; 
+          
+          if (creditorId && creditorId !== 'BANK' && currentDebt > 0) {
+              const value = p.price; 
+              currentDebt -= value;
+              return { ...p, ownerId: creditorId, houses: 0, hotels: 0, isMortgaged: false, mortgageTurns: undefined };
+          }
+          return { ...p, ownerId: null, houses: 0, hotels: 0, isMortgaged: false, mortgageTurns: undefined };
+      });
+      
+      return { properties: updatedProperties };
+  })
 }));

@@ -11,7 +11,6 @@ export default function RuleEditor() {
   const [goSalary, setGoSalary] = useState(rules.goSalary.toString());
   const [jailFine, setJailFine] = useState(rules.jailFine.toString());
   const [startingMoney, setStartingMoney] = useState(rules.startingMoney.toString());
-  const [maxDebt, setMaxDebt] = useState((rules.maxDebt || 500).toString());
   const [chanceCount, setChanceCount] = useState((rules.chanceCount ?? 3).toString());
   const [communityCount, setCommunityCount] = useState((rules.communityCount ?? 3).toString());
   const [taxCount, setTaxCount] = useState((rules.taxCount ?? 2).toString());
@@ -21,7 +20,6 @@ export default function RuleEditor() {
         goSalary: parseInt(goSalary) || 200,
         jailFine: parseInt(jailFine) || 50,
         startingMoney: parseInt(startingMoney) || 1500,
-        maxDebt: parseInt(maxDebt) || 500,
         chanceCount: parseInt(chanceCount) || 0,
         communityCount: parseInt(communityCount) || 0,
         taxCount: parseInt(taxCount) || 0
@@ -71,17 +69,6 @@ export default function RuleEditor() {
                 onChangeText={setJailFine}
             />
             <Text className="text-zinc-500 text-xs mt-2">Cost to bribe guards and get out of jail.</Text>
-        </View>
-
-        <View className="mb-6">
-            <Text className="text-zinc-400 font-bold uppercase tracking-widest mb-2">Maximum Debt ($)</Text>
-            <TextInput
-                className="w-full bg-zinc-800 text-white p-4 rounded-xl border border-zinc-700 font-bold text-lg"
-                keyboardType="numeric"
-                value={maxDebt}
-                onChangeText={setMaxDebt}
-            />
-            <Text className="text-zinc-500 text-xs mt-2">Maximum allowed negative balance before bankruptcy.</Text>
         </View>
 
         <View className="mb-6">
