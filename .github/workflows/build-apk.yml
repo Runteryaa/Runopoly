@@ -42,15 +42,6 @@ jobs:
       - name: 📦 Install Dependencies
         run: npm install
 
-      - name: 📝 Bump Version Dynamically
-        run: |
-          node -e "
-          const fs = require('fs');
-          const data = JSON.parse(fs.readFileSync('app.json', 'utf8'));
-          data.expo.version = '1.0.${{ github.run_number }}';
-          fs.writeFileSync('app.json', JSON.stringify(data, null, 2));
-          "
-
       - name: 🚀 Setup Expo
         uses: expo/expo-github-action@v8
         with:
@@ -70,21 +61,25 @@ jobs:
           ./gradlew assembleRelease --no-daemon --build-cache
 
       - name: 🚚 Rename APK
-        run: mv android/app/build/outputs/apk/release/app-release.apk runopoly-1.0.${{ github.run_number }}.apk
+        run: |
+          APP_VERSION=$(node -p "require('./app.json').expo.version")
+          mv android/app/build/outputs/apk/release/app-release.apk runopoly-${APP_VERSION}.apk
+          echo "APK_NAME=runopoly-${APP_VERSION}.apk" >> $GITHUB_ENV
+          echo "APP_VERSION=${APP_VERSION}" >> $GITHUB_ENV
 
       - name: 📤 Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Runopoly-1.0.${{ github.run_number }}.apk
-          path: runopoly-1.0.${{ github.run_number }}.apk
+          name: ${{ env.APK_NAME }}
+          path: ${{ env.APK_NAME }}
 
       - name: 🏷 Create Release & Upload APK
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.${{ github.run_number }}
-          name: Runopoly v1.0.${{ github.run_number }}
+          tag_name: v${{ env.APP_VERSION }}-${{ github.run_number }}
+          name: Runopoly v${{ env.APP_VERSION }} (Build ${{ github.run_number }})
           body: |
-            runopoly
-          files: runopoly-1.0.${{ github.run_number }}.apk
+            Runopoly APK Release
+          files: ${{ env.APK_NAME }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
