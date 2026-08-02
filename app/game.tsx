@@ -638,18 +638,15 @@ export default function GameBoard() {
           </View>
       </View>
 
-      {/* TikTok Live Gift Style Flashy Reaction Toasts Overlay */}
+      {/* Flashy Reaction Toasts Overlay */}
       <View className="absolute top-20 left-4 z-50 flex-col gap-3 pointer-events-none">
           {reactionToasts.map(toast => (
               <View 
                 key={toast.id} 
                 className="relative flex-row items-center my-1"
               >
-                  {/* Name Bubble Badge */}
-                  <View className="bg-zinc-900/95 border-2 border-amber-400/90 pl-3.5 pr-9 py-2 rounded-2xl flex-row items-center gap-2 shadow-2xl shadow-amber-500/40">
-                      <View className="bg-amber-400/20 px-2 py-0.5 rounded-md border border-amber-400/40">
-                          <Text className="text-amber-300 font-black text-[9px] uppercase tracking-wider">LIVE</Text>
-                      </View>
+                  {/* Name Bubble Badge with generous right padding for emoji */}
+                  <View className="bg-zinc-900/95 border-2 border-amber-400/90 pl-4 pr-14 py-2.5 rounded-2xl flex-row items-center shadow-2xl shadow-amber-500/40">
                       <Text className="text-white font-black text-sm tracking-wide">{toast.name}</Text>
                   </View>
 
@@ -662,6 +659,7 @@ export default function GameBoard() {
               </View>
           ))}
       </View>
+
 
 
 
