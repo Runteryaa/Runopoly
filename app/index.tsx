@@ -97,7 +97,7 @@ export default function Home() {
     return (
       <View className="flex-1 items-center justify-center bg-zinc-900 p-6">
         <View className="items-center mb-8">
-          <Text className="text-6xl mb-4 animate-bounce">⬇️</Text>
+          <Text className="text-6xl mb-4 animate-bounce">📦</Text>
           <Text className="text-3xl font-black text-white text-center">{t('updating')}</Text>
           <Text className="text-zinc-400 mt-4 text-center text-lg">
             {t('updatingDesc')}
@@ -106,6 +106,7 @@ export default function Home() {
       </View>
     );
   }
+
 
   if (!playerName) {
     return (
