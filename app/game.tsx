@@ -595,15 +595,14 @@ export default function GameBoard() {
 
   const totalTiles = properties.length;
   const s = totalTiles / 4;
-  // On web, dynamically scale tileSize so boardSize fits within available viewport
-  // Header ~90px, footer ~80px, padding ~24px => ~200px reserved vertically
+  // On web: size the board based on available HEIGHT so it fills the screen vertically.
+  // The board (being square) will overflow horizontally — the container scrolls it.
+  // This gives a bigger, immersive board while keeping the page itself static.
   const getTileSize = () => {
     if (Platform.OS === 'web') {
-      const availableWidth = windowWidth - 24;  // 12px padding each side
-      const availableHeight = windowHeight - 200; // header + footer
-      const available = Math.min(availableWidth, availableHeight);
-      const computed = Math.floor(available / (s + 1));
-      return Math.min(Math.max(computed, 32), 58); // clamp between 32 and 58
+      const availableHeight = windowHeight - 200; // header ~90px + footer ~80px + padding
+      const computed = Math.floor(availableHeight / (s + 1));
+      return Math.min(Math.max(computed, 38), 58); // clamp: min 38, max 58
     }
     return 58;
   };
