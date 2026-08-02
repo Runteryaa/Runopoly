@@ -2,11 +2,11 @@ import React from 'react';
 import { View, Text, TouchableOpacity, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from '../utils/i18n';
-import { useGameStore, Player } from '../store/gameStore';
+import { useGameStore } from '../store/gameStore';
 
 interface VictoryModalProps {
     visible: boolean;
-    winner: Player | null;
+    winner: any;
 }
 
 export default function VictoryModal({ visible, winner }: VictoryModalProps) {
@@ -19,9 +19,9 @@ export default function VictoryModal({ visible, winner }: VictoryModalProps) {
     const ownedPropsCount = properties.filter(p => p.ownerId === winner.id).length;
 
     const handleBackHome = () => {
-        useGameStore.getState().resetGame();
         router.replace('/');
     };
+
 
     return (
         <Modal visible={visible} transparent animationType="slide">

@@ -562,30 +562,44 @@ export default function GameBoard() {
   };
 
   return (
-    <View className="flex-1 bg-zinc-900 items-center justify-center">
-      <View className="absolute top-16 left-6 z-10 w-full pr-12 flex-row justify-between items-center">
-         <View>
-            <Text className="text-white text-2xl font-black tracking-widest">RUN<Text className="text-emerald-500">OPOLY</Text></Text>
-            <View className="flex-row items-center mt-1">
-                <Text className="text-zinc-400 font-bold text-[10px] uppercase">{t('lobbyTurn', { code: lobbyCode, name: activePlayer?.name })}</Text>
-                {turnTimeLeft !== null && (
-                    <View className="ml-2 bg-red-500/20 px-2 py-0.5 rounded">
-                        <Text className="text-red-400 font-black text-[10px]">{turnTimeLeft}s</Text>
-                    </View>
-                )}
-            </View>
-         </View>
-         <View className="items-end">
-            <TouchableOpacity onPress={() => setInventoryVisible(true)}>
-                <Text className="text-emerald-400 font-black text-xl">${myPlayer?.money}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setTradeModalVisible(true)} className="bg-zinc-800 px-4 py-1 rounded border border-zinc-700 mt-2">
-                <Text className="text-zinc-300 font-bold text-xs uppercase">{t('trade')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setPlayersModalVisible(true)} className="bg-zinc-800 px-4 py-1 rounded border border-zinc-700 mt-1">
-                <Text className="text-zinc-300 font-bold text-xs uppercase">{t('players')}</Text>
-            </TouchableOpacity>
-         </View>
+    <View className="flex-1 bg-zinc-950 items-center justify-center relative">
+      {/* Top Header Navigation Bar */}
+      <View className="absolute top-0 left-0 right-0 z-40 bg-zinc-900/95 border-b border-zinc-800/80 px-4 pt-10 pb-3 flex-row justify-between items-center shadow-2xl">
+          <View className="flex-row items-center gap-3">
+             <Text className="text-white text-xl font-black tracking-widest">RUN<Text className="text-emerald-500">OPOLY</Text></Text>
+             <View className="bg-zinc-800/90 border border-zinc-700/80 px-3 py-1 rounded-full flex-row items-center gap-1.5">
+                 <View className="w-2 h-2 rounded-full bg-emerald-500" />
+                 <Text className="text-zinc-300 font-bold text-xs">{activePlayer?.name || '...'}</Text>
+                 {turnTimeLeft !== null && (
+                     <Text className="text-red-400 font-black text-xs ml-1">⏱️ {turnTimeLeft}s</Text>
+                 )}
+             </View>
+          </View>
+          
+          <View className="flex-row items-center gap-2">
+             <TouchableOpacity 
+                onPress={() => setInventoryVisible(true)}
+                className="bg-emerald-500/10 border border-emerald-500/40 px-3 py-1.5 rounded-full flex-row items-center gap-1"
+             >
+                 <Text className="text-emerald-400 font-black text-sm">${myPlayer?.money}</Text>
+             </TouchableOpacity>
+
+             <TouchableOpacity 
+                onPress={() => setTradeModalVisible(true)} 
+                className="bg-zinc-800 border border-zinc-700 px-3 py-1.5 rounded-full flex-row items-center gap-1"
+             >
+                 <Text className="text-xs">🤝</Text>
+                 <Text className="text-zinc-300 font-bold text-xs">{t('trade')}</Text>
+             </TouchableOpacity>
+
+             <TouchableOpacity 
+                onPress={() => setPlayersModalVisible(true)} 
+                className="bg-zinc-800 border border-zinc-700 px-3 py-1.5 rounded-full flex-row items-center gap-1"
+             >
+                 <Text className="text-xs">👥</Text>
+                 <Text className="text-zinc-300 font-bold text-xs">{t('players')}</Text>
+             </TouchableOpacity>
+          </View>
       </View>
 
       {/* Players Modal */}
@@ -659,7 +673,7 @@ export default function GameBoard() {
             <View style={{ width: boardSize, height: boardSize }} className="bg-zinc-800 m-4 rounded-xl overflow-hidden border-4 border-zinc-700 relative">
                 {/* Center of the board */}
                 <View className="absolute top-[60px] left-[60px] right-[60px] bottom-[60px] bg-zinc-900 items-center justify-center p-8">
-                    <Text className="text-zinc-700 text-5xl font-black text-center opacity-30 transform -rotate-45 mb-8">RUNOPOLY</Text>
+                    <Text className="text-zinc-700 text-5xl font-black text-center opacity-30 transform -rotate-45 mb-4">RUNOPOLY</Text>
                     
                     <View className="absolute top-4 left-4 flex-row gap-4 z-30 opacity-80">
                         <View className="w-16 h-24 bg-orange-500 rounded-xl border-2 border-white/50 shadow-lg items-center justify-center">
@@ -671,81 +685,16 @@ export default function GameBoard() {
                     </View>
 
                     {lastRoll && (
-                      <Text className="text-white font-bold text-lg mb-4">{t('rolled', { amount: lastRoll })}</Text>
+                      <Text className="text-zinc-300 font-bold text-base bg-zinc-800/90 px-4 py-1.5 rounded-full border border-zinc-700">{t('rolled', { amount: lastRoll })}</Text>
                     )}
 
                     {landingMessage && (
-                      <View className="absolute z-20 bg-emerald-500 px-6 py-2 rounded-full mb-28 border border-white/20">
+                      <View className="absolute z-20 bg-emerald-500 px-6 py-2 rounded-full border border-white/20 shadow-xl">
                           <Text className="text-white font-black text-center">{landingMessage}</Text>
                       </View>
                     )}
-
-                    {isMyTurn ? (
-                      hasRolled ? (
-                          (myPlayer?.money ?? 0) >= 0 && (
-                              <TouchableOpacity 
-                                className="bg-red-500 px-6 py-4 rounded-2xl shadow-lg shadow-red-500/30"
-                                onPress={() => socket.emit('end_turn', { lobbyCode })}
-                              >
-                                <Text className="text-white font-black text-lg">{t('endTurn')}</Text>
-                              </TouchableOpacity>
-                          )
-                      ) : (
-                          <TouchableOpacity 
-                            className="bg-emerald-500 px-6 py-4 rounded-2xl shadow-lg shadow-emerald-500/30"
-                            onPress={handleRollDice}
-                          >
-                            <Text className="text-white font-black text-lg">{t('rollDice')}</Text>
-                          </TouchableOpacity>
-                      )
-                    ) : (
-                      <View className="items-center">
-                          <View className="bg-zinc-800 px-6 py-4 rounded-2xl border border-zinc-700">
-                            <Text className="text-zinc-400 font-black text-sm">{t('waitingFor', { name: activePlayer?.name })}</Text>
-                          </View>
-                          {myPlayer?.isHost && (
-                              <TouchableOpacity 
-                                onPress={() => socket.emit('end_turn', { lobbyCode })}
-                                className="mt-4 bg-orange-500/20 border border-orange-500/50 px-4 py-2 rounded-xl"
-                              >
-                                  <Text className="text-orange-400 font-bold text-xs uppercase tracking-widest">{t('forceEndTurn')}</Text>
-                              </TouchableOpacity>
-                          )}
-                      </View>
-                    )}
-                    
-                    {myPlayer?.debts && myPlayer.debts.length > 0 && (
-                        <TouchableOpacity 
-                            className="bg-orange-500 px-6 py-4 rounded-2xl shadow-lg shadow-orange-500/30 mt-4"
-                            onPress={() => {
-                                const debt = myPlayer.debts[0];
-                                if ((myPlayer?.money || 0) < debt.amount) {
-                                    CustomAlert.alert(t('notEnoughMoney'), t('payDebtErrorDesc', { amount: debt.amount }));
-                                    return;
-                                }
-                                
-                                CustomAlert.alert(t('payDebt'), t('payDebtDesc', { amount: debt.amount }), [
-                                    { text: t('cancel'), style: 'cancel' },
-                                    { text: t('pay'), onPress: () => {
-                                        const newDebts = myPlayer.debts.slice(1);
-                                        socket.emit('update_player_stats', { lobbyCode, playerId: myPlayer.id, updates: { 
-                                            money: myPlayer.money - debt.amount,
-                                            debts: newDebts
-                                        }});
-                                        const lender = gamePlayers.find(p => p.id === debt.to);
-                                        if (lender) {
-                                            socket.emit('update_player_stats', { lobbyCode, playerId: lender.id, updates: {
-                                                money: lender.money + debt.amount
-                                            }});
-                                        }
-                                    }}
-                                ]);
-                            }}
-                        >
-                            <Text className="text-white font-black text-lg text-center">{t('payDebtBtn', { amount: myPlayer.debts[0].amount })}</Text>
-                        </TouchableOpacity>
-                    )}
                 </View>
+
 
                 {/* Tiles */}
                 {properties.map((prop, i) => {
@@ -813,14 +762,83 @@ export default function GameBoard() {
             </View>
       </BoardWrapper>
 
-      {/* Emoji Reaction Bar */}
-      <View className="absolute bottom-4 z-40 bg-zinc-900/90 border border-zinc-700/80 px-4 py-2 rounded-full flex-row gap-3 shadow-xl">
-          {['🎲', '💸', '👑', '😭', '🔥', '💩', '😎', '🎉'].map(emoji => (
-              <TouchableOpacity key={emoji} onPress={() => sendReaction(emoji)} className="p-1">
-                  <Text className="text-2xl">{emoji}</Text>
+      {/* Bottom Floating Control Dock */}
+      <View className="absolute bottom-4 left-4 right-4 z-40 items-center gap-2 pointer-events-box-none">
+          {/* Reaction Bar */}
+          <View className="bg-zinc-900/90 border border-zinc-700/80 px-4 py-1.5 rounded-full flex-row gap-3 shadow-xl">
+              {['🎲', '💸', '👑', '😭', '🔥', '💩', '😎', '🎉'].map(emoji => (
+                  <TouchableOpacity key={emoji} onPress={() => sendReaction(emoji)} className="p-1">
+                      <Text className="text-2xl">{emoji}</Text>
+                  </TouchableOpacity>
+              ))}
+          </View>
+
+          {/* Action Button */}
+          {isMyTurn ? (
+            hasRolled ? (
+                (myPlayer?.money ?? 0) >= 0 && (
+                    <TouchableOpacity 
+                      className="bg-rose-500 border border-rose-400/50 px-8 py-3.5 rounded-2xl shadow-xl shadow-rose-500/30 flex-row items-center gap-2"
+                      onPress={() => socket.emit('end_turn', { lobbyCode })}
+                    >
+                      <Text className="text-white font-black text-lg">{t('endTurn')} ⏭️</Text>
+                    </TouchableOpacity>
+                )
+            ) : (
+                <TouchableOpacity 
+                  className="bg-emerald-500 border border-emerald-400/50 px-8 py-3.5 rounded-2xl shadow-xl shadow-emerald-500/30 flex-row items-center gap-2"
+                  onPress={handleRollDice}
+                >
+                  <Text className="text-white font-black text-lg">{t('rollDice')} 🎲</Text>
+                </TouchableOpacity>
+            )
+          ) : (
+            <View className="bg-zinc-900/95 border border-zinc-800 px-6 py-3 rounded-2xl flex-row items-center gap-2 shadow-xl">
+               <Text className="text-zinc-400 font-bold text-sm">⏳ {t('waitingFor', { name: activePlayer?.name })}</Text>
+               {myPlayer?.isHost && (
+                   <TouchableOpacity 
+                     onPress={() => socket.emit('end_turn', { lobbyCode })}
+                     className="ml-2 bg-orange-500/20 border border-orange-500/50 px-3 py-1 rounded-xl"
+                   >
+                       <Text className="text-orange-400 font-bold text-xs uppercase">{t('forceEndTurn')}</Text>
+                   </TouchableOpacity>
+               )}
+            </View>
+          )}
+
+          {myPlayer?.debts && myPlayer.debts.length > 0 && (
+              <TouchableOpacity 
+                  className="bg-orange-500 px-6 py-3 rounded-2xl shadow-lg shadow-orange-500/30 border border-orange-400/50"
+                  onPress={() => {
+                      const debt = myPlayer.debts[0];
+                      if ((myPlayer?.money || 0) < debt.amount) {
+                          CustomAlert.alert(t('notEnoughMoney'), t('payDebtErrorDesc', { amount: debt.amount }));
+                          return;
+                      }
+                      
+                      CustomAlert.alert(t('payDebt'), t('payDebtDesc', { amount: debt.amount }), [
+                          { text: t('cancel'), style: 'cancel' },
+                          { text: t('pay'), onPress: () => {
+                              const newDebts = myPlayer.debts.slice(1);
+                              socket.emit('update_player_stats', { lobbyCode, playerId: myPlayer.id, updates: { 
+                                  money: myPlayer.money - debt.amount,
+                                  debts: newDebts
+                              }});
+                              const lender = gamePlayers.find(p => p.id === debt.to);
+                              if (lender) {
+                                  socket.emit('update_player_stats', { lobbyCode, playerId: lender.id, updates: {
+                                      money: lender.money + debt.amount
+                                  }});
+                              }
+                          }}
+                      ]);
+                  }}
+              >
+                  <Text className="text-white font-black text-base text-center">{t('payDebtBtn', { amount: myPlayer.debts[0].amount })}</Text>
               </TouchableOpacity>
-          ))}
+          )}
       </View>
+
 
       <PropertyInfoModal 
         propertyId={selectedPropertyId} 

@@ -324,6 +324,8 @@ export const translations = {
     propertiesOwned: "Properties Owned: %{count}",
     backToHome: "Return to Main Menu",
     reactions: "Reactions",
+    inventory: "Inventory",
+    myProperties: "My Properties",
   },
   tr: {
     // index.tsx
@@ -649,6 +651,8 @@ export const translations = {
     propertiesOwned: "Sahip Olunan Mülkler: %{count}",
     backToHome: "Ana Menüye Dön",
     reactions: "Tepkiler",
+    inventory: "Envanter",
+    myProperties: "Mülklerim",
   }
 };
 
