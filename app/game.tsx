@@ -12,8 +12,8 @@ import IncomingRentOfferModal from '../components/IncomingRentOfferModal';
 import AuctionModal from '../components/AuctionModal';
 import PropertyInfoModal from '../components/PropertyInfoModal';
 import BankruptcyModal from '../components/BankruptcyModal';
-import DiceRollerModal from '../components/DiceRollerModal';
 import VictoryModal from '../components/VictoryModal';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Platform } from 'react-native';
 import { useTranslation } from '../utils/i18n';
 
@@ -54,9 +54,20 @@ export default function GameBoard() {
   const [reactions, setReactions] = useState<Record<string, string>>({});
   const { t } = useTranslation();
 
-  const [diceRollerVisible, setDiceRollerVisible] = useState(false);
-  const [currentDice, setCurrentDice] = useState({ d1: 1, d2: 1 });
-  const pendingRollCallback = useRef<((d1: number, d2: number) => void) | null>(null);
+  const [currentDice, setCurrentDice] = useState<{ d1: number; d2: number } | null>({ d1: 1, d2: 1 });
+  const [isRolling, setIsRolling] = useState(false);
+
+  const getDiceIcon = (num: number) => {
+    switch (num) {
+      case 1: return 'dice-1';
+      case 2: return 'dice-2';
+      case 3: return 'dice-3';
+      case 4: return 'dice-4';
+      case 5: return 'dice-5';
+      case 6: return 'dice-6';
+      default: return 'dice-1';
+    }
+  };
 
   const animatePlayerSteps = (playerId: string, totalSteps: number, onFinish?: () => void) => {
       let currentStep = 0;
@@ -71,20 +82,26 @@ export default function GameBoard() {
   };
 
   const startVisualRoll = (onFinish: (d1: number, d2: number) => void) => {
-      const d1 = Math.floor(Math.random() * 6) + 1;
-      const d2 = Math.floor(Math.random() * 6) + 1;
-      setCurrentDice({ d1, d2 });
-      pendingRollCallback.current = onFinish;
-      setDiceRollerVisible(true);
+      if (isRolling) return;
+      setIsRolling(true);
+      const finalD1 = Math.floor(Math.random() * 6) + 1;
+      const finalD2 = Math.floor(Math.random() * 6) + 1;
+      
+      let count = 0;
+      const interval = setInterval(() => {
+          count++;
+          const randomD1 = Math.floor(Math.random() * 6) + 1;
+          const randomD2 = Math.floor(Math.random() * 6) + 1;
+          setCurrentDice({ d1: randomD1, d2: randomD2 });
+          if (count > 10) {
+              clearInterval(interval);
+              setCurrentDice({ d1: finalD1, d2: finalD2 });
+              setIsRolling(false);
+              onFinish(finalD1, finalD2);
+          }
+      }, 60);
   };
 
-  const handleRollComplete = () => {
-      setDiceRollerVisible(false);
-      if (pendingRollCallback.current) {
-          pendingRollCallback.current(currentDice.d1, currentDice.d2);
-          pendingRollCallback.current = null;
-      }
-  };
 
   const myPlayer = gamePlayers.find(p => p.name === playerName);
   const activePlayer = gamePlayers.find(p => p.name === activeTurnName);
@@ -684,7 +701,7 @@ export default function GameBoard() {
             <View style={{ width: boardSize, height: boardSize }} className="bg-zinc-800 m-4 rounded-xl overflow-hidden border-4 border-zinc-700 relative">
                 {/* Center of the board */}
                 <View className="absolute top-[60px] left-[60px] right-[60px] bottom-[60px] bg-zinc-900 items-center justify-center p-8">
-                    <Text className="text-zinc-700 text-5xl font-black text-center opacity-30 transform -rotate-45 mb-4">RUNOPOLY</Text>
+                    <Text className="text-zinc-700 text-5xl font-black text-center opacity-30 transform -rotate-45 mb-2">RUNOPOLY</Text>
                     
                     <View className="absolute top-4 left-4 flex-row gap-4 z-30 opacity-80">
                         <View className="w-16 h-24 bg-orange-500 rounded-xl border-2 border-white/50 shadow-lg items-center justify-center">
@@ -695,8 +712,16 @@ export default function GameBoard() {
                         </View>
                     </View>
 
+                    {/* Persistent In-Center Dice Display */}
+                    {currentDice && (
+                      <View className="flex-row gap-3 my-2 bg-zinc-800/90 border border-zinc-700/80 px-4 py-2 rounded-2xl items-center shadow-2xl">
+                          <MaterialCommunityIcons name={getDiceIcon(currentDice.d1) as any} size={44} color="#10b981" />
+                          <MaterialCommunityIcons name={getDiceIcon(currentDice.d2) as any} size={44} color="#10b981" />
+                      </View>
+                    )}
+
                     {lastRoll && (
-                      <Text className="text-zinc-300 font-bold text-base bg-zinc-800/90 px-4 py-1.5 rounded-full border border-zinc-700">{t('rolled', { amount: lastRoll })}</Text>
+                      <Text className="text-zinc-300 font-bold text-xs bg-zinc-800/90 px-3 py-1 rounded-full border border-zinc-700">{t('rolled', { amount: lastRoll })}</Text>
                     )}
 
                     {landingMessage && (
@@ -705,6 +730,7 @@ export default function GameBoard() {
                       </View>
                     )}
                 </View>
+
 
 
                 {/* Tiles */}
@@ -871,17 +897,11 @@ export default function GameBoard() {
         onMortgage={() => setInventoryVisible(true)} 
       />
 
-      <DiceRollerModal 
-        visible={diceRollerVisible}
-        dice1={currentDice.d1}
-        dice2={currentDice.d2}
-        onComplete={handleRollComplete}
-      />
-
       <VictoryModal 
         visible={!!(gamePlayers.length > 1 && gamePlayers.filter(p => !p.isBankrupt && !p.isEliminated).length === 1)}
         winner={gamePlayers.filter(p => !p.isBankrupt && !p.isEliminated)[0] || null}
       />
+
     </View>
   );
 }
