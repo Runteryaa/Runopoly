@@ -54,8 +54,11 @@ export default function GameBoard() {
   const [initialTradeTarget, setInitialTradeTarget] = useState<{ ownerId: string; propertyId: string } | null>(null);
   const [reactions, setReactions] = useState<Record<string, string>>({});
   const [reactionToasts, setReactionToasts] = useState<Array<{ id: string; name: string; emoji: string }>>([]);
+  const [reactionPickerOpen, setReactionPickerOpen] = useState(false);
   const [pendingCardDraw, setPendingCardDraw] = useState<'chance' | 'community' | null>(null);
   const { t } = useTranslation();
+
+
 
 
   const addReactionToast = (senderName: string, emoji: string) => {
@@ -573,10 +576,11 @@ export default function GameBoard() {
   };
 
 
-  const tileSize = 50;
+  const tileSize = 58;
   const totalTiles = properties.length;
   const s = totalTiles / 4;
   const boardSize = tileSize * (s + 1);
+
 
   const getTileStyle = (index: number) => {
     let top = 0; let left = 0;
@@ -734,7 +738,8 @@ export default function GameBoard() {
       <BoardWrapper>
             <View style={{ width: boardSize, height: boardSize }} className="bg-zinc-800 m-4 rounded-xl overflow-hidden border-4 border-zinc-700 relative">
                 {/* Center of the board */}
-                <View className="absolute top-[60px] left-[60px] right-[60px] bottom-[60px] bg-zinc-900 items-center justify-center p-8">
+                <View className="absolute top-[68px] left-[68px] right-[68px] bottom-[68px] bg-zinc-900 items-center justify-center p-8">
+
                     <Text className="text-zinc-700 text-5xl font-black text-center opacity-30 transform -rotate-45 mb-2">RUNOPOLY</Text>
                     
                     <View className="absolute top-4 left-4 flex-row gap-4 z-30">
@@ -869,61 +874,83 @@ export default function GameBoard() {
       </BoardWrapper>
 
       {/* Bottom Floating Control Dock */}
-      <View className="absolute bottom-4 left-4 right-4 z-40 items-center gap-2 pointer-events-box-none">
-          {/* Reaction Bar */}
-          <View className="bg-zinc-900/90 border border-zinc-700/80 px-4 py-1.5 rounded-full flex-row gap-3 shadow-xl">
-              {['🎲', '💸', '👑', '😭', '🔥', '💩', '😎', '🎉'].map(emoji => (
-                  <TouchableOpacity key={emoji} onPress={() => sendReaction(emoji)} className="p-1">
-                      <Text className="text-2xl">{emoji}</Text>
-                  </TouchableOpacity>
-              ))}
+      <View className="absolute bottom-4 left-4 right-4 z-40 flex-row items-center justify-between pointer-events-box-none">
+          {/* Left-Aligned Reaction Trigger Button & Mini Popover */}
+          <View className="relative pointer-events-auto z-50">
+              {/* Reaction Popover Menu */}
+              {reactionPickerOpen && (
+                  <View className="absolute bottom-14 left-0 bg-zinc-900/95 border border-zinc-700/80 p-2 rounded-2xl flex-row gap-1.5 shadow-2xl z-50">
+                      {['🎲', '💸', '👑', '😭', '🔥', '💩', '😎', '🎉'].map(emoji => (
+                          <TouchableOpacity 
+                            key={emoji} 
+                            onPress={() => {
+                              sendReaction(emoji);
+                              setReactionPickerOpen(false);
+                            }} 
+                            className="p-1.5 bg-zinc-800/80 rounded-xl border border-zinc-700/50 active:scale-125"
+                          >
+                              <Text className="text-2xl">{emoji}</Text>
+                          </TouchableOpacity>
+                      ))}
+                  </View>
+              )}
+
+              {/* Reaction Icon Toggle Button */}
+              <TouchableOpacity 
+                onPress={() => setReactionPickerOpen(!reactionPickerOpen)}
+                className={`w-12 h-12 rounded-2xl border items-center justify-center shadow-xl active:scale-95 ${reactionPickerOpen ? 'bg-amber-500/20 border-amber-400' : 'bg-zinc-900/95 border-zinc-700/80'}`}
+              >
+                  <MaterialCommunityIcons name="emoticon-happy-outline" size={26} color={reactionPickerOpen ? '#f59e0b' : '#a1a1aa'} />
+              </TouchableOpacity>
           </View>
 
           {/* Action Button */}
-          {isMyTurn ? (
-            pendingCardDraw ? (
-                <TouchableOpacity 
-                  className="bg-amber-600 border border-amber-500/50 px-8 py-3.5 rounded-xl shadow-xl flex-row items-center gap-2"
-                  onPress={() => {
-                      handleDrawCard(pendingCardDraw);
-                      setPendingCardDraw(null);
-                  }}
-                >
-                  <Text className="text-white font-black text-base uppercase tracking-wider">
-                    {t('drawCard')} ({pendingCardDraw === 'chance' ? t('chance') : t('community')})
-                  </Text>
-                </TouchableOpacity>
-            ) : hasRolled ? (
-                (myPlayer?.money ?? 0) >= 0 && (
+          <View className="pointer-events-auto flex-1 items-end ml-4">
+              {isMyTurn ? (
+                pendingCardDraw ? (
                     <TouchableOpacity 
-                      className="bg-rose-600 border border-rose-500/50 px-8 py-3.5 rounded-xl shadow-xl flex-row items-center gap-2"
-                      onPress={() => socket.emit('end_turn', { lobbyCode })}
+                      className="bg-amber-600 border border-amber-500/50 px-7 py-3.5 rounded-2xl shadow-xl flex-row items-center gap-2"
+                      onPress={() => {
+                          handleDrawCard(pendingCardDraw);
+                          setPendingCardDraw(null);
+                      }}
                     >
-                      <Text className="text-white font-black text-base uppercase tracking-wider">{t('endTurn')}</Text>
+                      <Text className="text-white font-black text-base uppercase tracking-wider">
+                        {t('drawCard')} ({pendingCardDraw === 'chance' ? t('chance') : t('community')})
+                      </Text>
+                    </TouchableOpacity>
+                ) : hasRolled ? (
+                    (myPlayer?.money ?? 0) >= 0 && (
+                        <TouchableOpacity 
+                          className="bg-rose-600 border border-rose-500/50 px-7 py-3.5 rounded-2xl shadow-xl flex-row items-center gap-2"
+                          onPress={() => socket.emit('end_turn', { lobbyCode })}
+                        >
+                          <Text className="text-white font-black text-base uppercase tracking-wider">{t('endTurn')}</Text>
+                        </TouchableOpacity>
+                    )
+                ) : (
+                    <TouchableOpacity 
+                      className="bg-emerald-600 border border-emerald-500/50 px-7 py-3.5 rounded-2xl shadow-xl flex-row items-center gap-2"
+                      onPress={handleRollDice}
+                    >
+                      <Text className="text-white font-black text-base uppercase tracking-wider">{t('rollDice')}</Text>
                     </TouchableOpacity>
                 )
-            ) : (
-                <TouchableOpacity 
-                  className="bg-emerald-600 border border-emerald-500/50 px-8 py-3.5 rounded-xl shadow-xl flex-row items-center gap-2"
-                  onPress={handleRollDice}
-                >
-                  <Text className="text-white font-black text-base uppercase tracking-wider">{t('rollDice')}</Text>
-                </TouchableOpacity>
-            )
-          ) : (
-
-            <View className="bg-zinc-900/95 border border-zinc-800 px-6 py-3 rounded-xl flex-row items-center gap-2 shadow-xl">
-               <Text className="text-zinc-400 font-bold text-sm">{t('waitingFor', { name: activePlayer?.name })}</Text>
-               {myPlayer?.isHost && (
-                   <TouchableOpacity 
-                     onPress={() => socket.emit('end_turn', { lobbyCode })}
-                     className="ml-2 bg-orange-500/20 border border-orange-500/50 px-3 py-1 rounded-lg"
-                   >
-                       <Text className="text-orange-400 font-bold text-xs uppercase">{t('forceEndTurn')}</Text>
-                   </TouchableOpacity>
-               )}
-            </View>
-          )}
+              ) : (
+                <View className="bg-zinc-900/95 border border-zinc-800 px-5 py-3 rounded-2xl flex-row items-center gap-2 shadow-xl">
+                   <Text className="text-zinc-400 font-bold text-sm">{t('waitingFor', { name: activePlayer?.name })}</Text>
+                   {myPlayer?.isHost && (
+                       <TouchableOpacity 
+                         onPress={() => socket.emit('end_turn', { lobbyCode })}
+                         className="ml-2 bg-orange-500/20 border border-orange-500/50 px-3 py-1 rounded-lg"
+                       >
+                           <Text className="text-orange-400 font-bold text-xs uppercase">{t('forceEndTurn')}</Text>
+                       </TouchableOpacity>
+                   )}
+                </View>
+              )}
+          </View>
+      </View>
 
 
           {myPlayer?.debts && myPlayer.debts.length > 0 && (
@@ -957,10 +984,11 @@ export default function GameBoard() {
                   <Text className="text-white font-black text-base text-center">{t('payDebtBtn', { amount: myPlayer.debts[0].amount })}</Text>
               </TouchableOpacity>
           )}
-      </View>
+
 
 
       <PropertyInfoModal 
+
         propertyId={selectedPropertyId} 
         onClose={() => setSelectedPropertyId(null)} 
         myPlayerId={myPlayer?.id}
