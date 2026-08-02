@@ -52,10 +52,20 @@ export default function GameBoard() {
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
   const [initialTradeTarget, setInitialTradeTarget] = useState<{ ownerId: string; propertyId: string } | null>(null);
   const [reactions, setReactions] = useState<Record<string, string>>({});
+  const [reactionToasts, setReactionToasts] = useState<Array<{ id: string; name: string; emoji: string }>>([]);
   const { t } = useTranslation();
+
+  const addReactionToast = (senderName: string, emoji: string) => {
+    const id = Math.random().toString();
+    setReactionToasts(prev => [...prev.slice(-3), { id, name: senderName, emoji }]);
+    setTimeout(() => {
+      setReactionToasts(prev => prev.filter(t => t.id !== id));
+    }, 3500);
+  };
 
   const [currentDice, setCurrentDice] = useState<{ d1: number; d2: number } | null>({ d1: 1, d2: 1 });
   const [isRolling, setIsRolling] = useState(false);
+
 
   const getDiceIcon = (num: number) => {
     switch (num) {
@@ -126,16 +136,12 @@ export default function GameBoard() {
       }
     });
 
-    socket.on('player_reaction', ({ playerId, emoji }) => {
-      setReactions(prev => ({ ...prev, [playerId]: emoji }));
-      setTimeout(() => {
-          setReactions(prev => {
-              const next = { ...prev };
-              delete next[playerId];
-              return next;
-          });
-      }, 2500);
+    socket.on('player_reaction', ({ playerId, name, emoji }) => {
+      const p = useGameStore.getState().gamePlayers.find(pl => pl.id === playerId);
+      const senderName = name || p?.name || 'Oyuncu';
+      addReactionToast(senderName, emoji);
     });
+
     
     socket.on('turn_changed', (nextPlayerName) => {
       setActiveTurnName(nextPlayerName);
@@ -466,16 +472,10 @@ export default function GameBoard() {
 
   const sendReaction = (emoji: string) => {
     if (!myPlayer) return;
-    socket.emit('player_reaction', { lobbyCode, playerId: myPlayer.id, emoji });
-    setReactions(prev => ({ ...prev, [myPlayer.id]: emoji }));
-    setTimeout(() => {
-        setReactions(prev => {
-            const next = { ...prev };
-            delete next[myPlayer.id];
-            return next;
-        });
-    }, 2500);
+    socket.emit('player_reaction', { lobbyCode, playerId: myPlayer.id, name: myPlayer.name, emoji });
+    addReactionToast(myPlayer.name, emoji);
   };
+
 
   const processMove = (totalSteps: number) => {
     socket.emit('roll_dice', { lobbyCode, playerId: myPlayer!.id, steps: totalSteps });
@@ -628,6 +628,20 @@ export default function GameBoard() {
              </TouchableOpacity>
           </View>
       </View>
+
+      {/* Edge Reaction Toasts Overlay */}
+      <View className="absolute top-20 left-4 z-50 flex-col gap-2 pointer-events-none">
+          {reactionToasts.map(toast => (
+              <View 
+                key={toast.id} 
+                className="bg-zinc-900/95 border border-zinc-700 px-3.5 py-2 rounded-xl flex-row items-center gap-2 shadow-2xl"
+              >
+                  <Text className="text-zinc-300 font-black text-xs">{toast.name}:</Text>
+                  <Text className="text-xl">{toast.emoji}</Text>
+              </View>
+          ))}
+      </View>
+
 
 
       {/* Players Modal */}
