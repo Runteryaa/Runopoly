@@ -110,16 +110,9 @@ export default function Home() {
   if (!playerName) {
     return (
       <View className="flex-1 items-center justify-center bg-zinc-900 p-6">
-        <View className="absolute top-12 right-6 gap-2">
+        <View className="absolute top-12 right-6">
             <TouchableOpacity 
-                className="bg-zinc-800 px-3 py-2 rounded-xl border border-zinc-700 items-end"
-                onPress={handleManualUpdateCheck}
-            >
-                <Text className="text-zinc-400 font-bold text-xs uppercase">App: v{Platform.OS === 'web' && serverInfo?.latestAppVersion ? serverInfo.latestAppVersion : APP_VERSION}</Text>
-                <Text className="text-zinc-500 font-bold text-xs uppercase">Server: v{serverInfo?.version || '...'}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-                className="bg-zinc-800 p-3 rounded-xl border border-zinc-700 items-center justify-center self-end"
+                className="bg-zinc-800 p-3 rounded-xl border border-zinc-700 items-center justify-center"
                 onPress={() => setSettingsVisible(true)}
             >
                 <Text style={{ fontSize: 24 }} allowFontScaling={false}>⚙️</Text>
@@ -155,16 +148,9 @@ export default function Home() {
 
   return (
     <View className="flex-1 items-center justify-center bg-zinc-900 p-6">
-      <View className="absolute top-12 right-6 gap-2">
+      <View className="absolute top-12 right-6">
           <TouchableOpacity 
-              className="bg-zinc-800 px-3 py-2 rounded-xl border border-zinc-700 items-end"
-              onPress={handleManualUpdateCheck}
-          >
-              <Text className="text-zinc-400 font-bold text-xs uppercase">App: v{Platform.OS === 'web' && serverInfo?.latestAppVersion ? serverInfo.latestAppVersion : APP_VERSION}</Text>
-              <Text className="text-zinc-500 font-bold text-xs uppercase">Server: v{serverInfo?.version || '...'}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-              className="bg-zinc-800 p-3 rounded-xl border border-zinc-700 items-center justify-center self-end"
+              className="bg-zinc-800 p-3 rounded-xl border border-zinc-700 items-center justify-center"
               onPress={() => setSettingsVisible(true)}
           >
               <Text style={{ fontSize: 24 }} allowFontScaling={false}>⚙️</Text>
