@@ -315,6 +315,15 @@ export const translations = {
     medium: "Medium (32)",
     classic: "Classic (40)",
     cardTextPlaceholder: "e.g. Bank error in your favor",
+
+    // Victory & Reactions
+    victory: "VICTORY!",
+    winner: "%{name} HAS WON THE GAME!",
+    congratulations: "Congratulations!",
+    finalBalance: "Final Balance: $%{amount}",
+    propertiesOwned: "Properties Owned: %{count}",
+    backToHome: "Return to Main Menu",
+    reactions: "Reactions",
   },
   tr: {
     // index.tsx
@@ -631,6 +640,15 @@ export const translations = {
     medium: "Orta (32)",
     classic: "Klasik (40)",
     cardTextPlaceholder: "Örn: Banka hatası lehine sonuçlandı",
+
+    // Victory & Reactions
+    victory: "ZAFER!",
+    winner: "%{name} OYUNU KAZANDI!",
+    congratulations: "Tebrikler!",
+    finalBalance: "Son Bakiye: $%{amount}",
+    propertiesOwned: "Sahip Olunan Mülkler: %{count}",
+    backToHome: "Ana Menüye Dön",
+    reactions: "Tepkiler",
   }
 };
 

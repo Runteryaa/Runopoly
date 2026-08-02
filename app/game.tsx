@@ -13,6 +13,7 @@ import AuctionModal from '../components/AuctionModal';
 import PropertyInfoModal from '../components/PropertyInfoModal';
 import BankruptcyModal from '../components/BankruptcyModal';
 import DiceRollerModal from '../components/DiceRollerModal';
+import VictoryModal from '../components/VictoryModal';
 import { Platform } from 'react-native';
 import { useTranslation } from '../utils/i18n';
 
@@ -50,11 +51,24 @@ export default function GameBoard() {
   const [turnTimeLeft, setTurnTimeLeft] = useState<number | null>(null);
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
   const [initialTradeTarget, setInitialTradeTarget] = useState<{ ownerId: string; propertyId: string } | null>(null);
+  const [reactions, setReactions] = useState<Record<string, string>>({});
   const { t } = useTranslation();
 
   const [diceRollerVisible, setDiceRollerVisible] = useState(false);
   const [currentDice, setCurrentDice] = useState({ d1: 1, d2: 1 });
   const pendingRollCallback = useRef<((d1: number, d2: number) => void) | null>(null);
+
+  const animatePlayerSteps = (playerId: string, totalSteps: number, onFinish?: () => void) => {
+      let currentStep = 0;
+      const interval = setInterval(() => {
+          currentStep++;
+          updatePlayerPosition(playerId, 1);
+          if (currentStep >= totalSteps) {
+              clearInterval(interval);
+              if (onFinish) onFinish();
+          }
+      }, 140);
+  };
 
   const startVisualRoll = (onFinish: (d1: number, d2: number) => void) => {
       const d1 = Math.floor(Math.random() * 6) + 1;
@@ -90,7 +104,20 @@ export default function GameBoard() {
     });
 
     socket.on('player_moved', ({ playerId, steps }) => {
-      updatePlayerPosition(playerId, steps);
+      if (myPlayer && playerId !== myPlayer.id) {
+        animatePlayerSteps(playerId, steps);
+      }
+    });
+
+    socket.on('player_reaction', ({ playerId, emoji }) => {
+      setReactions(prev => ({ ...prev, [playerId]: emoji }));
+      setTimeout(() => {
+          setReactions(prev => {
+              const next = { ...prev };
+              delete next[playerId];
+              return next;
+          });
+      }, 2500);
     });
     
     socket.on('turn_changed', (nextPlayerName) => {
@@ -420,90 +447,105 @@ export default function GameBoard() {
     });
   };
 
+  const sendReaction = (emoji: string) => {
+    if (!myPlayer) return;
+    socket.emit('player_reaction', { lobbyCode, playerId: myPlayer.id, emoji });
+    setReactions(prev => ({ ...prev, [myPlayer.id]: emoji }));
+    setTimeout(() => {
+        setReactions(prev => {
+            const next = { ...prev };
+            delete next[myPlayer.id];
+            return next;
+        });
+    }, 2500);
+  };
+
   const processMove = (totalSteps: number) => {
     socket.emit('roll_dice', { lobbyCode, playerId: myPlayer!.id, steps: totalSteps });
 
     const passedGo = myPlayer!.position + totalSteps >= totalTiles;
     const newPosition = (myPlayer!.position + totalSteps) % totalTiles;
 
-    if (passedGo && newPosition !== 0) {
-        socket.emit('pass_go', { lobbyCode, playerId: myPlayer!.id });
-    }
-
-    const landedProperty = properties[newPosition];
-
-    setTimeout(() => {
-        setLandingMessage(t('landedOn', { name: landedProperty.name }));
-        setTimeout(() => setLandingMessage(null), 3000);
-
-        if (newPosition === s * 3) {
-            CustomAlert.alert(t('arrested'), t('arrestedDesc', { amount: rules.goSalary }), [{ text: 'OK' }], { cancelable: false });
-            socket.emit('go_to_jail', { lobbyCode, playerId: myPlayer!.id });
-            setHasRolled(true); // End their turn basically (cannot roll again even if they had doubles)
-            return;
+    animatePlayerSteps(myPlayer!.id, totalSteps, () => {
+        if (passedGo && newPosition !== 0) {
+            socket.emit('pass_go', { lobbyCode, playerId: myPlayer!.id });
         }
 
-        if (newPosition === 7 || newPosition === 22 || newPosition === 36) {
-            handleDrawCard('chance');
-            return;
-        }
+        const landedProperty = properties[newPosition];
 
-        if (newPosition === 2 || newPosition === 17 || newPosition === 33) {
-            handleDrawCard('community');
-            return;
-        }
+        setTimeout(() => {
+            setLandingMessage(t('landedOn', { name: landedProperty.name }));
+            setTimeout(() => setLandingMessage(null), 3000);
 
-        if (!landedProperty.ownerId && landedProperty.price > 0 && newPosition !== 0 && newPosition !== s) {
-            CustomAlert.alert(
-                t('buyProperty'),
-                t('buyPropertyDesc', { name: landedProperty.name, price: landedProperty.price }),
-                [
-                    { text: t('auctionIt'), onPress: () => {
-                        socket.emit('start_auction', { lobbyCode, propertyId: landedProperty.id, excludedPlayerId: myPlayer!.id });
-                    }},
-                    { text: t('buy'), onPress: () => {
-                        socket.emit('buy_property', { lobbyCode, propertyId: landedProperty.id, ownerId: myPlayer!.id, price: landedProperty.price });
-                    }}
-                ],
-                { cancelable: false }
-            );
-        } else if (landedProperty.ownerId && landedProperty.ownerId !== myPlayer!.id) {
-            if (landedProperty.isMortgaged) {
-                // If the property is mortgaged, no rent is paid.
-                setRentPaymentTarget(null);
+            if (newPosition === s * 3) {
+                CustomAlert.alert(t('arrested'), t('arrestedDesc', { amount: rules.goSalary }), [{ text: 'OK' }], { cancelable: false });
+                socket.emit('go_to_jail', { lobbyCode, playerId: myPlayer!.id });
+                setHasRolled(true);
                 return;
             }
 
-            const sameColorProps = properties.filter(p => p.color === landedProperty.color);
-            const hasFullSet = sameColorProps.length > 0 && sameColorProps.every(p => p.ownerId === landedProperty.ownerId);
-            const isUnimproved = (landedProperty.houses || 0) === 0 && (landedProperty.hotels || 0) === 0;
-            
-            let rentToPay = 0;
-            
-            if (landedProperty.name === 'STATION') {
-                const ownedStations = properties.filter(p => p.name === 'STATION' && p.ownerId === landedProperty.ownerId).length;
-                rentToPay = 25 * Math.pow(2, Math.max(0, ownedStations - 1));
-            } else if (landedProperty.name === 'UTILITY') {
-                const ownedUtilities = properties.filter(p => p.name === 'UTILITY' && p.ownerId === landedProperty.ownerId).length;
-                rentToPay = totalSteps * (ownedUtilities > 1 ? 10 : 4);
-            } else {
-                let rentMultiplier = 1;
-                if (isUnimproved && hasFullSet) {
-                    rentMultiplier = 2; // Color Set Bonus
-                } else {
-                    rentMultiplier = 1 + (landedProperty.houses || 0) + (landedProperty.hotels || 0) * 5;
-                }
-                rentToPay = landedProperty.rent * rentMultiplier;
+            if (newPosition === 7 || newPosition === 22 || newPosition === 36) {
+                handleDrawCard('chance');
+                return;
             }
-            
-            setRentPaymentTarget({
-                property: landedProperty,
-                ownerId: landedProperty.ownerId,
-                fullRentAmount: rentToPay
-            });
-        }
-    }, 800);
+
+            if (newPosition === 2 || newPosition === 17 || newPosition === 33) {
+                handleDrawCard('community');
+                return;
+            }
+
+            if (!landedProperty.ownerId && landedProperty.price > 0 && newPosition !== 0 && newPosition !== s) {
+                CustomAlert.alert(
+                    t('buyProperty'),
+                    t('buyPropertyDesc', { name: landedProperty.name, price: landedProperty.price }),
+                    [
+                        { text: t('auctionIt'), onPress: () => {
+                            socket.emit('start_auction', { lobbyCode, propertyId: landedProperty.id, excludedPlayerId: myPlayer!.id });
+                        }},
+                        { text: t('buy'), onPress: () => {
+                            socket.emit('buy_property', { lobbyCode, propertyId: landedProperty.id, ownerId: myPlayer!.id, price: landedProperty.price });
+                        }}
+                    ],
+                    { cancelable: false }
+                );
+            } else if (landedProperty.ownerId && landedProperty.ownerId !== myPlayer!.id) {
+                if (landedProperty.isMortgaged) {
+                    setRentPaymentTarget(null);
+                    return;
+                }
+
+                const sameColorProps = properties.filter(p => p.color === landedProperty.color);
+                const hasFullSet = sameColorProps.length > 0 && sameColorProps.every(p => p.ownerId === landedProperty.ownerId);
+                const isUnimproved = (landedProperty.houses || 0) === 0 && (landedProperty.hotels || 0) === 0;
+                
+                let rentToPay = 0;
+                
+                if (landedProperty.name === 'STATION') {
+                    const ownedStations = properties.filter(p => p.name === 'STATION' && p.ownerId === landedProperty.ownerId).length;
+                    rentToPay = 25 * Math.pow(2, Math.max(0, ownedStations - 1));
+                } else if (landedProperty.name === 'UTILITY') {
+                    const ownedUtilities = properties.filter(p => p.name === 'UTILITY' && p.ownerId === landedProperty.ownerId).length;
+                    rentToPay = totalSteps * (ownedUtilities > 1 ? 10 : 4);
+                } else {
+                    let rentMultiplier = 1;
+                    if (isUnimproved && hasFullSet) {
+                        rentMultiplier = 2;
+                    } else {
+                        rentMultiplier = 1 + (landedProperty.houses || 0) + (landedProperty.hotels || 0) * 5;
+                    }
+                    rentToPay = landedProperty.rent * rentMultiplier;
+                }
+                
+                setRentPaymentTarget({
+                    property: landedProperty,
+                    ownerId: landedProperty.ownerId,
+                    fullRentAmount: rentToPay
+                });
+            }
+        }, 200);
+    });
   };
+
 
   const tileSize = 50;
   const totalTiles = properties.length;
@@ -730,8 +772,15 @@ export default function GameBoard() {
                             
                             <View className="flex-row gap-1 flex-wrap justify-center w-full px-1 z-10 absolute bottom-6">
                                 {playersOnTile.map(p => (
-                                    <View key={p.id} style={{ backgroundColor: p.color }} className="w-6 h-6 rounded-full border-2 border-zinc-900 items-center justify-center shadow-lg">
-                                      <Text className="text-[10px]">{p.character || '?'}</Text>
+                                    <View key={p.id} className="relative items-center justify-center">
+                                      {reactions[p.id] && (
+                                          <View className="absolute -top-7 bg-black/90 px-2 py-0.5 rounded-full border border-amber-400 z-50 animate-bounce shadow-lg">
+                                              <Text className="text-base">{reactions[p.id]}</Text>
+                                          </View>
+                                      )}
+                                      <View style={{ backgroundColor: p.color }} className="w-6 h-6 rounded-full border-2 border-zinc-900 items-center justify-center shadow-lg">
+                                        <Text className="text-[10px]">{p.character || '?'}</Text>
+                                      </View>
                                     </View>
                                 ))}
                             </View>
@@ -764,6 +813,15 @@ export default function GameBoard() {
             </View>
       </BoardWrapper>
 
+      {/* Emoji Reaction Bar */}
+      <View className="absolute bottom-4 z-40 bg-zinc-900/90 border border-zinc-700/80 px-4 py-2 rounded-full flex-row gap-3 shadow-xl">
+          {['🎲', '💸', '👑', '😭', '🔥', '💩', '😎', '🎉'].map(emoji => (
+              <TouchableOpacity key={emoji} onPress={() => sendReaction(emoji)} className="p-1">
+                  <Text className="text-2xl">{emoji}</Text>
+              </TouchableOpacity>
+          ))}
+      </View>
+
       <PropertyInfoModal 
         propertyId={selectedPropertyId} 
         onClose={() => setSelectedPropertyId(null)} 
@@ -781,7 +839,6 @@ export default function GameBoard() {
         myPlayerId={myPlayer?.id} 
         lobbyCode={lobbyCode} 
         onMortgage={() => setInventoryVisible(true)} 
-
       />
 
       <DiceRollerModal 
@@ -790,6 +847,12 @@ export default function GameBoard() {
         dice2={currentDice.d2}
         onComplete={handleRollComplete}
       />
+
+      <VictoryModal 
+        visible={!!(gamePlayers.length > 1 && gamePlayers.filter(p => !p.isBankrupt && !p.isEliminated).length === 1)}
+        winner={gamePlayers.filter(p => !p.isBankrupt && !p.isEliminated)[0] || null}
+      />
     </View>
   );
 }
+
