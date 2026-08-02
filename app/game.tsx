@@ -1,5 +1,5 @@
 import { CustomAlert } from '../utils/alert';
-import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Alert, useWindowDimensions } from 'react-native';
 import { useGameStore, TradeData } from '../store/gameStore';
 import { socket } from '../utils/socket';
 import { useEffect, useState, useRef } from 'react';
@@ -19,6 +19,25 @@ import { useTranslation, getTranslatedCardText, getTranslatedTileName } from '..
 
 
 const BoardWrapper = ({ children }: { children: React.ReactNode }) => {
+    if (Platform.OS === 'web') {
+        return (
+            <View className="flex-1 w-full h-full pt-24 pb-20 items-center justify-center">
+                <View 
+                    style={{ 
+                        overflow: 'auto', 
+                        width: '100%', 
+                        height: '100%', 
+                        display: 'block' 
+                    } as any}
+                >
+                    <View style={{ width: 'max-content', height: 'max-content', margin: 'auto', padding: 12 } as any}>
+                        {children}
+                    </View>
+                </View>
+            </View>
+        );
+    }
+
     return (
         <View className="flex-1 w-full h-full overflow-hidden items-center justify-center pt-24 pb-20">
             <ScrollView 
@@ -45,6 +64,7 @@ const BoardWrapper = ({ children }: { children: React.ReactNode }) => {
 
 
 export default function GameBoard() {
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const { properties, gamePlayers, lobbyCode, updatePlayerPosition, playerName, activeTurnName, setActiveTurnName, rules } = useGameStore();
   const [lastRoll, setLastRoll] = useState<number | null>(null);
   const [hasRolled, setHasRolled] = useState(false);
@@ -573,9 +593,21 @@ export default function GameBoard() {
   };
 
 
-  const tileSize = 58;
   const totalTiles = properties.length;
   const s = totalTiles / 4;
+  // On web, dynamically scale tileSize so boardSize fits within available viewport
+  // Header ~90px, footer ~80px, padding ~24px => ~200px reserved vertically
+  const getTileSize = () => {
+    if (Platform.OS === 'web') {
+      const availableWidth = windowWidth - 24;  // 12px padding each side
+      const availableHeight = windowHeight - 200; // header + footer
+      const available = Math.min(availableWidth, availableHeight);
+      const computed = Math.floor(available / (s + 1));
+      return Math.min(Math.max(computed, 32), 58); // clamp between 32 and 58
+    }
+    return 58;
+  };
+  const tileSize = getTileSize();
   const boardSize = tileSize * (s + 1);
 
 
@@ -589,7 +621,7 @@ export default function GameBoard() {
   };
 
   return (
-    <View className="flex-1 bg-zinc-950 items-center justify-center relative">
+    <View className="flex-1 bg-zinc-950 items-center justify-center relative overflow-hidden">
       {/* Top Header Navigation Bar */}
       <View className="absolute top-0 left-0 right-0 z-40 bg-zinc-900/95 border-b border-zinc-800 px-4 pt-10 pb-3 flex-row justify-between items-center shadow-xl">
           {/* Top Left: RUNOPOLY + Turn & Timer */}
