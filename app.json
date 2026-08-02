@@ -44,12 +44,13 @@
     "runtimeVersion": "1.2",
     "updates": {
       "url": "https://u.expo.dev/18620aa9-98b6-49c0-9f2d-6f83f6c1f6dc",
-      "checkAutomatically": "ON_DEV_BUILD",
+      "checkAutomatically": "NEVER",
       "fallbackToCacheTimeout": 0,
       "requestHeaders": {
         "expo-channel-name": "main"
       }
     }
+
   }
 }
 
