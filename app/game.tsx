@@ -53,7 +53,9 @@ export default function GameBoard() {
   const [initialTradeTarget, setInitialTradeTarget] = useState<{ ownerId: string; propertyId: string } | null>(null);
   const [reactions, setReactions] = useState<Record<string, string>>({});
   const [reactionToasts, setReactionToasts] = useState<Array<{ id: string; name: string; emoji: string }>>([]);
+  const [pendingCardDraw, setPendingCardDraw] = useState<'chance' | 'community' | null>(null);
   const { t } = useTranslation();
+
 
   const addReactionToast = (senderName: string, emoji: string) => {
     const id = Math.random().toString();
@@ -147,6 +149,8 @@ export default function GameBoard() {
       setActiveTurnName(nextPlayerName);
       setLastRoll(null);
       setHasRolled(false);
+      setPendingCardDraw(null);
+
 
       const state = useGameStore.getState();
       state.incrementMortgageTurns(nextPlayerName);
@@ -502,14 +506,15 @@ export default function GameBoard() {
             }
 
             if (newPosition === 7 || newPosition === 22 || newPosition === 36) {
-                handleDrawCard('chance');
+                setPendingCardDraw('chance');
                 return;
             }
 
             if (newPosition === 2 || newPosition === 17 || newPosition === 33) {
-                handleDrawCard('community');
+                setPendingCardDraw('community');
                 return;
             }
+
 
             if (!landedProperty.ownerId && landedProperty.price > 0 && newPosition !== 0 && newPosition !== s) {
                 CustomAlert.alert(
@@ -717,14 +722,34 @@ export default function GameBoard() {
                 <View className="absolute top-[60px] left-[60px] right-[60px] bottom-[60px] bg-zinc-900 items-center justify-center p-8">
                     <Text className="text-zinc-700 text-5xl font-black text-center opacity-30 transform -rotate-45 mb-2">RUNOPOLY</Text>
                     
-                    <View className="absolute top-4 left-4 flex-row gap-4 z-30 opacity-80">
-                        <View className="w-16 h-24 bg-orange-500 rounded-xl border-2 border-white/50 shadow-lg items-center justify-center">
+                    <View className="absolute top-4 left-4 flex-row gap-4 z-30">
+                        <TouchableOpacity 
+                            disabled={pendingCardDraw !== 'chance'}
+                            onPress={() => {
+                                if (pendingCardDraw === 'chance') {
+                                    handleDrawCard('chance');
+                                    setPendingCardDraw(null);
+                                }
+                            }}
+                            className={`w-16 h-24 bg-orange-500 rounded-xl border-2 shadow-lg items-center justify-center ${pendingCardDraw === 'chance' ? 'border-amber-300 scale-110 shadow-orange-500/50' : 'border-white/50 opacity-60'}`}
+                        >
                             <Text className="text-white font-black text-xs uppercase transform -rotate-90">Chance</Text>
-                        </View>
-                        <View className="w-16 h-24 bg-blue-500 rounded-xl border-2 border-white/50 shadow-lg items-center justify-center">
+                        </TouchableOpacity>
+
+                        <TouchableOpacity 
+                            disabled={pendingCardDraw !== 'community'}
+                            onPress={() => {
+                                if (pendingCardDraw === 'community') {
+                                    handleDrawCard('community');
+                                    setPendingCardDraw(null);
+                                }
+                            }}
+                            className={`w-16 h-24 bg-blue-500 rounded-xl border-2 shadow-lg items-center justify-center ${pendingCardDraw === 'community' ? 'border-amber-300 scale-110 shadow-blue-500/50' : 'border-white/50 opacity-60'}`}
+                        >
                             <Text className="text-white font-black text-[10px] text-center px-1 uppercase transform -rotate-90">Community</Text>
-                        </View>
+                        </TouchableOpacity>
                     </View>
+
 
                     {/* Persistent In-Center Dice Display */}
                     {currentDice && (
@@ -826,7 +851,19 @@ export default function GameBoard() {
 
           {/* Action Button */}
           {isMyTurn ? (
-            hasRolled ? (
+            pendingCardDraw ? (
+                <TouchableOpacity 
+                  className="bg-amber-600 border border-amber-500/50 px-8 py-3.5 rounded-xl shadow-xl flex-row items-center gap-2"
+                  onPress={() => {
+                      handleDrawCard(pendingCardDraw);
+                      setPendingCardDraw(null);
+                  }}
+                >
+                  <Text className="text-white font-black text-base uppercase tracking-wider">
+                    {t('drawCard')} ({pendingCardDraw === 'chance' ? t('chance') : t('community')})
+                  </Text>
+                </TouchableOpacity>
+            ) : hasRolled ? (
                 (myPlayer?.money ?? 0) >= 0 && (
                     <TouchableOpacity 
                       className="bg-rose-600 border border-rose-500/50 px-8 py-3.5 rounded-xl shadow-xl flex-row items-center gap-2"
@@ -844,6 +881,7 @@ export default function GameBoard() {
                 </TouchableOpacity>
             )
           ) : (
+
             <View className="bg-zinc-900/95 border border-zinc-800 px-6 py-3 rounded-xl flex-row items-center gap-2 shadow-xl">
                <Text className="text-zinc-400 font-bold text-sm">{t('waitingFor', { name: activePlayer?.name })}</Text>
                {myPlayer?.isHost && (

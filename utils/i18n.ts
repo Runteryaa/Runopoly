@@ -34,7 +34,9 @@ export const translations = {
     // game.tsx
     rollDice: "ROLL DICE",
     endTurn: "END TURN",
+    drawCard: "DRAW CARD",
     forceEndTurn: "Force End Turn",
+
     waitingFor: "Waiting for ",
     payDebt: "PAY DEBT",
     bankrupt: "BANKRUPT",
@@ -42,6 +44,7 @@ export const translations = {
     borrow: "BORROW",
     payRent: "PAY RENT",
     raiseFunds: "Raise Funds",
+
     
     // lobby.tsx
     lobbyCode: "Lobby Code",
@@ -360,7 +363,9 @@ export const translations = {
     // game.tsx
     rollDice: "ZAR AT",
     endTurn: "TURU BİTİR",
+    drawCard: "KART ÇEK",
     forceEndTurn: "Turu Zorla Bitir",
+
     waitingFor: "Bekleniyor: ",
     payDebt: "BORCUNU ÖDE",
     bankrupt: "İFLAS",
@@ -368,6 +373,7 @@ export const translations = {
     borrow: "BORÇ AL",
     payRent: "KİRA ÖDE",
     raiseFunds: "Para Bul",
+
 
     // lobby.tsx
     lobbyCode: "Lobi Kodu",
