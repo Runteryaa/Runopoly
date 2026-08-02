@@ -21,8 +21,10 @@ import { useTranslation, getTranslatedCardText, getTranslatedTileName } from '..
 const BoardWrapper = ({ children }: { children: React.ReactNode }) => {
     if (Platform.OS === 'web') {
         return (
-            <View style={{ overflow: 'auto', flex: 1, marginTop: 128 } as any}>
-                {children}
+            <View style={{ overflow: 'auto', flex: 1, marginTop: 128, display: 'flex', flexDirection: 'column' } as any}>
+                <View style={{ margin: 'auto', padding: 4 } as any}>
+                    {children}
+                </View>
             </View>
         );
     }
@@ -631,7 +633,7 @@ export default function GameBoard() {
       </View>
 
       {/* Flashy Reaction Toasts Overlay */}
-      <View className="absolute top-20 left-4 z-50 flex-col gap-3 pointer-events-none">
+      <View style={Platform.OS === 'web' ? { position: 'fixed' as any, top: 96, left: 16, zIndex: 9999 } : undefined} className="absolute top-20 left-4 z-50 flex-col gap-3 pointer-events-none">
           {reactionToasts.map(toast => (
               <View 
                 key={toast.id} 
