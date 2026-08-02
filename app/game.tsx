@@ -19,23 +19,30 @@ import { useTranslation, getTranslatedCardText, getTranslatedTileName } from '..
 
 
 const BoardWrapper = ({ children }: { children: React.ReactNode }) => {
-    if (Platform.OS === 'web') {
-        return (
-            <View style={{ overflow: 'auto', flex: 1, marginTop: 128, display: 'flex', flexDirection: 'column' } as any}>
-                <View style={{ margin: 'auto', padding: 4 } as any}>
-                    {children}
-                </View>
-            </View>
-        );
-    }
     return (
-        <ScrollView horizontal bounces={false} className="flex-1 mt-32">
-            <ScrollView bounces={false}>
-                {children}
+        <View className="flex-1 w-full h-full overflow-hidden items-center justify-center pt-24 pb-20">
+            <ScrollView 
+                horizontal 
+                bounces={false} 
+                showsHorizontalScrollIndicator={false}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', minWidth: '100%' }}
+                style={{ flex: 1, width: '100%' }}
+            >
+                <ScrollView 
+                    bounces={false}
+                    showsHorizontalScrollIndicator={false}
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: 12 }}
+                    style={{ flex: 1 }}
+                >
+                    {children}
+                </ScrollView>
             </ScrollView>
-        </ScrollView>
+        </View>
     );
 };
+
 
 export default function GameBoard() {
   const { properties, gamePlayers, lobbyCode, updatePlayerPosition, playerName, activeTurnName, setActiveTurnName, rules } = useGameStore();
@@ -585,51 +592,51 @@ export default function GameBoard() {
     <View className="flex-1 bg-zinc-950 items-center justify-center relative">
       {/* Top Header Navigation Bar */}
       <View className="absolute top-0 left-0 right-0 z-40 bg-zinc-900/95 border-b border-zinc-800 px-4 pt-10 pb-3 flex-row justify-between items-center shadow-xl">
-          {/* Top Left: RUNOPOLY + Turn & Timer underneath */}
-          <View>
-             <Text className="text-white text-xl font-black tracking-widest">RUN<Text className="text-emerald-500">OPOLY</Text></Text>
-             <View className="flex-row items-center mt-0.5 gap-1.5">
-                 <Text className="text-zinc-400 font-semibold text-xs">{activePlayer?.name || '...'}</Text>
+          {/* Top Left: RUNOPOLY + Turn & Timer */}
+          <View className="shrink-0 mr-2">
+             <Text className="text-white text-base sm:text-xl font-black tracking-widest">RUN<Text className="text-emerald-500">OPOLY</Text></Text>
+             <View className="flex-row items-center mt-0.5 gap-1">
+                 <Text className="text-zinc-400 font-semibold text-[11px]" numberOfLines={1}>{activePlayer?.name || '...'}</Text>
                  {turnTimeLeft !== null && (
-                     <Text className="text-red-400 font-bold text-xs">({turnTimeLeft}s)</Text>
+                     <Text className="text-red-400 font-bold text-[11px]">({turnTimeLeft}s)</Text>
                  )}
              </View>
           </View>
           
-          {/* Top Right: Takas (Left of Money) -> Money -> Oyuncular -> Mülklerim (Right of Money) */}
-          <View className="flex-row items-center gap-1.5">
-             {/* Takas - Paranın Solunda */}
-             <TouchableOpacity 
-                onPress={() => setTradeModalVisible(true)} 
-                className="bg-zinc-800 border border-zinc-700 px-2.5 py-1.5 rounded-lg"
-             >
-                 <Text className="text-zinc-300 font-bold text-xs">{t('trade')}</Text>
-             </TouchableOpacity>
+          {/* Top Right: Scrollable buttons container for narrow mobile screens */}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ alignItems: 'center', gap: 6 }} className="flex-shrink">
+              {/* Takas */}
+              <TouchableOpacity 
+                 onPress={() => setTradeModalVisible(true)} 
+                 className="bg-zinc-800 border border-zinc-700 px-2.5 py-1.5 rounded-lg"
+              >
+                  <Text className="text-zinc-300 font-bold text-xs">{t('trade')}</Text>
+              </TouchableOpacity>
 
-             {/* Para ($) */}
-             <TouchableOpacity 
-                onPress={() => setInventoryVisible(true)}
-                className="bg-zinc-800 border border-emerald-500/50 px-2.5 py-1.5 rounded-lg"
-             >
-                 <Text className="text-emerald-400 font-black text-xs">${myPlayer?.money}</Text>
-             </TouchableOpacity>
+              {/* Para ($) */}
+              <TouchableOpacity 
+                 onPress={() => setInventoryVisible(true)}
+                 className="bg-zinc-800 border border-emerald-500/50 px-2.5 py-1.5 rounded-lg"
+              >
+                  <Text className="text-emerald-400 font-black text-xs">${myPlayer?.money}</Text>
+              </TouchableOpacity>
 
-             {/* Oyuncular - Paranın Sağında */}
-             <TouchableOpacity 
-                onPress={() => setPlayersModalVisible(true)} 
-                className="bg-zinc-800 border border-zinc-700 px-2.5 py-1.5 rounded-lg"
-             >
-                 <Text className="text-zinc-300 font-bold text-xs">{t('players')}</Text>
-             </TouchableOpacity>
+              {/* Oyuncular */}
+              <TouchableOpacity 
+                 onPress={() => setPlayersModalVisible(true)} 
+                 className="bg-zinc-800 border border-zinc-700 px-2.5 py-1.5 rounded-lg"
+              >
+                  <Text className="text-zinc-300 font-bold text-xs">{t('players')}</Text>
+              </TouchableOpacity>
 
-             {/* Mülklerim - Paranın Sağında */}
-             <TouchableOpacity 
-                onPress={() => setInventoryVisible(true)} 
-                className="bg-zinc-800 border border-zinc-700 px-2.5 py-1.5 rounded-lg"
-             >
-                 <Text className="text-zinc-300 font-bold text-xs">{t('myProperties')}</Text>
-             </TouchableOpacity>
-          </View>
+              {/* Mülklerim */}
+              <TouchableOpacity 
+                 onPress={() => setInventoryVisible(true)} 
+                 className="bg-zinc-800 border border-zinc-700 px-2.5 py-1.5 rounded-lg"
+              >
+                  <Text className="text-zinc-300 font-bold text-xs">{t('myProperties')}</Text>
+              </TouchableOpacity>
+          </ScrollView>
       </View>
 
       {/* Flashy Reaction Toasts Overlay */}
