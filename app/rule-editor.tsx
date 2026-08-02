@@ -3,10 +3,12 @@ import { View, Text, TouchableOpacity, TextInput, ScrollView, Alert } from 'reac
 import { useRouter } from 'expo-router';
 import { useGameStore } from '../store/gameStore';
 import { useState } from 'react';
+import { useTranslation } from '../utils/i18n';
 
 export default function RuleEditor() {
   const router = useRouter();
   const { rules, setRules } = useGameStore();
+  const { t } = useTranslation();
   
   const [goSalary, setGoSalary] = useState(rules.goSalary.toString());
   const [jailFine, setJailFine] = useState(rules.jailFine.toString());
@@ -24,70 +26,70 @@ export default function RuleEditor() {
         communityCount: parseInt(communityCount) || 0,
         taxCount: parseInt(taxCount) || 0
     });
-    CustomAlert.alert('Saved', 'Game rules updated successfully!');
+    CustomAlert.alert(t('saved'), t('rulesUpdatedSuccessfully'));
     router.back();
   };
 
   return (
     <View className="flex-1 bg-zinc-900 pt-16">
       <View className="px-6 pb-4 border-b border-zinc-800 flex-row justify-between items-center">
-        <Text className="text-white text-2xl font-black">Rule Editor</Text>
+        <Text className="text-white text-2xl font-black">{t('ruleEditor')}</Text>
         <TouchableOpacity onPress={() => router.back()} className="bg-zinc-800 px-4 py-2 rounded-lg">
-          <Text className="text-zinc-400 font-bold">Back</Text>
+          <Text className="text-zinc-400 font-bold">{t('back')}</Text>
         </TouchableOpacity>
       </View>
 
       <ScrollView className="flex-1 px-6 pt-6">
         <View className="mb-6">
-            <Text className="text-zinc-400 font-bold uppercase tracking-widest mb-2">Starting Money ($)</Text>
+            <Text className="text-zinc-400 font-bold uppercase tracking-widest mb-2">{t('startingMoney')}</Text>
             <TextInput
                 className="w-full bg-zinc-800 text-white p-4 rounded-xl border border-zinc-700 font-bold text-lg"
                 keyboardType="numeric"
                 value={startingMoney}
                 onChangeText={setStartingMoney}
             />
-            <Text className="text-zinc-500 text-xs mt-2">Amount of money each player starts with.</Text>
+            <Text className="text-zinc-500 text-xs mt-2">{t('amountMoneyStart')}</Text>
         </View>
 
         <View className="mb-6">
-            <Text className="text-zinc-400 font-bold uppercase tracking-widest mb-2">Passing GO Salary ($)</Text>
+            <Text className="text-zinc-400 font-bold uppercase tracking-widest mb-2">{t('passingGoSalary')}</Text>
             <TextInput
                 className="w-full bg-zinc-800 text-white p-4 rounded-xl border border-zinc-700 font-bold text-lg"
                 keyboardType="numeric"
                 value={goSalary}
                 onChangeText={setGoSalary}
             />
-            <Text className="text-zinc-500 text-xs mt-2">Money awarded for completing a full lap.</Text>
+            <Text className="text-zinc-500 text-xs mt-2">{t('moneyAwardedLap')}</Text>
         </View>
 
         <View className="mb-6">
-            <Text className="text-zinc-400 font-bold uppercase tracking-widest mb-2">Jail Fine ($)</Text>
+            <Text className="text-zinc-400 font-bold uppercase tracking-widest mb-2">{t('jailFine')}</Text>
             <TextInput
                 className="w-full bg-zinc-800 text-white p-4 rounded-xl border border-zinc-700 font-bold text-lg"
                 keyboardType="numeric"
                 value={jailFine}
                 onChangeText={setJailFine}
             />
-            <Text className="text-zinc-500 text-xs mt-2">Cost to bribe guards and get out of jail.</Text>
+            <Text className="text-zinc-500 text-xs mt-2">{t('costToBribe')}</Text>
         </View>
 
         <View className="mb-6">
-            <Text className="text-zinc-400 font-bold uppercase tracking-widest mb-2">Theme</Text>
+            <Text className="text-zinc-400 font-bold uppercase tracking-widest mb-2">{t('theme')}</Text>
             <View className="flex-row gap-2 flex-wrap mt-2">
-                {['Classic', 'Istanbul', 'Köln', 'America'].map(t => (
+                {['Classic', 'Istanbul', 'Köln', 'America'].map(th => (
                     <TouchableOpacity 
-                        key={t}
-                        onPress={() => setRules({ theme: t })}
-                        className={`px-4 py-2 rounded-lg border ${rules.theme === t ? 'bg-emerald-500 border-emerald-500' : 'bg-zinc-800 border-zinc-700'}`}
+                        key={th}
+                        onPress={() => setRules({ theme: th })}
+                        className={`px-4 py-2 rounded-lg border ${rules.theme === th ? 'bg-emerald-500 border-emerald-500' : 'bg-zinc-800 border-zinc-700'}`}
                     >
-                        <Text className={`font-bold ${rules.theme === t ? 'text-white' : 'text-zinc-400'}`}>{t}</Text>
+                        <Text className={`font-bold ${rules.theme === th ? 'text-white' : 'text-zinc-400'}`}>{th}</Text>
                     </TouchableOpacity>
                 ))}
             </View>
         </View>
 
         <View className="mb-6">
-            <Text className="text-zinc-400 font-bold uppercase tracking-widest mb-2">Board Size</Text>
+            <Text className="text-zinc-400 font-bold uppercase tracking-widest mb-2">{t('boardSize')}</Text>
             <View className="flex-row gap-2 flex-wrap mt-2">
                 {[24, 32, 40].map(s => (
                     <TouchableOpacity 
@@ -95,15 +97,15 @@ export default function RuleEditor() {
                         onPress={() => setRules({ boardSize: s })}
                         className={`px-4 py-2 rounded-lg border ${rules.boardSize === s ? 'bg-emerald-500 border-emerald-500' : 'bg-zinc-800 border-zinc-700'}`}
                     >
-                        <Text className={`font-bold ${rules.boardSize === s ? 'text-white' : 'text-zinc-400'}`}>{s === 24 ? 'Small (24)' : s === 32 ? 'Medium (32)' : 'Classic (40)'}</Text>
+                        <Text className={`font-bold ${rules.boardSize === s ? 'text-white' : 'text-zinc-400'}`}>{s === 24 ? t('small') : s === 32 ? t('medium') : t('classic')}</Text>
                     </TouchableOpacity>
                 ))}
             </View>
-            <Text className="text-zinc-500 text-xs mt-2 mb-4">Changes the number of tiles on the board.</Text>
+            <Text className="text-zinc-500 text-xs mt-2 mb-4">{t('changesNumTiles')}</Text>
             
             <View className="flex-row gap-4">
                 <View className="flex-1">
-                    <Text className="text-zinc-400 font-bold uppercase tracking-widest mb-2 text-[10px]">Chance Tiles</Text>
+                    <Text className="text-zinc-400 font-bold uppercase tracking-widest mb-2 text-[10px]">{t('chanceTiles')}</Text>
                     <TextInput
                         className="w-full bg-zinc-800 text-white p-3 rounded-xl border border-zinc-700 font-bold"
                         keyboardType="numeric"
@@ -112,7 +114,7 @@ export default function RuleEditor() {
                     />
                 </View>
                 <View className="flex-1">
-                    <Text className="text-zinc-400 font-bold uppercase tracking-widest mb-2 text-[10px]">Community Tiles</Text>
+                    <Text className="text-zinc-400 font-bold uppercase tracking-widest mb-2 text-[10px]">{t('communityTiles')}</Text>
                     <TextInput
                         className="w-full bg-zinc-800 text-white p-3 rounded-xl border border-zinc-700 font-bold"
                         keyboardType="numeric"
@@ -121,7 +123,7 @@ export default function RuleEditor() {
                     />
                 </View>
                 <View className="flex-1">
-                    <Text className="text-zinc-400 font-bold uppercase tracking-widest mb-2 text-[10px]">Tax Tiles</Text>
+                    <Text className="text-zinc-400 font-bold uppercase tracking-widest mb-2 text-[10px]">{t('taxTiles')}</Text>
                     <TextInput
                         className="w-full bg-zinc-800 text-white p-3 rounded-xl border border-zinc-700 font-bold"
                         keyboardType="numeric"
@@ -130,16 +132,17 @@ export default function RuleEditor() {
                     />
                 </View>
             </View>
-            <Text className="text-zinc-500 text-xs mt-2">Set how many of each special tile type to place around the board. Properties will be placed in the remaining slots.</Text>
+            <Text className="text-zinc-500 text-xs mt-2">{t('specialTilesDesc')}</Text>
         </View>
 
         <TouchableOpacity 
           className="w-full bg-emerald-500 py-4 rounded-xl items-center shadow-lg shadow-emerald-500/30 mt-4 mb-10"
           onPress={handleSave}
         >
-            <Text className="text-white font-bold text-lg">Save Rules</Text>
+            <Text className="text-white font-bold text-lg">{t('saveRules')}</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>
   );
 }
+

@@ -2,10 +2,12 @@ import { View, Text, TextInput, ScrollView, TouchableOpacity } from 'react-nativ
 import { useGameStore, Card } from '../store/gameStore';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
+import { useTranslation } from '../utils/i18n';
 
 export default function CardEditor() {
   const router = useRouter();
   const { cards, addCard } = useGameStore();
+  const { t } = useTranslation();
   const [text, setText] = useState('');
   const [amount, setAmount] = useState('50');
   const [type, setType] = useState<'chance' | 'community'>('chance');
@@ -29,58 +31,59 @@ export default function CardEditor() {
   return (
     <View className="flex-1 bg-zinc-900 pt-16">
       <View className="flex-row justify-between items-center px-6 pb-4 border-b border-zinc-800">
-        <Text className="text-white text-2xl font-black tracking-tight">Card Editor</Text>
+        <Text className="text-white text-2xl font-black tracking-tight">{t('cardEditor')}</Text>
         <TouchableOpacity onPress={() => router.back()} className="bg-emerald-500/20 px-4 py-2 rounded-lg">
-          <Text className="text-emerald-500 font-bold">Save & Back</Text>
+          <Text className="text-emerald-500 font-bold">{t('saveAndBack')}</Text>
         </TouchableOpacity>
       </View>
       <ScrollView className="flex-1 px-4 py-4" contentContainerStyle={{ paddingBottom: 40 }}>
         
         <View className="bg-zinc-800 p-5 rounded-2xl mb-8 border border-zinc-700/50 shadow-sm">
-            <Text className="text-white font-black text-xl mb-6">Create New Card</Text>
+            <Text className="text-white font-black text-xl mb-6">{t('createNewCard')}</Text>
             
-            <Text className="text-zinc-400 mb-1.5 text-xs font-bold uppercase tracking-wider">Type</Text>
+            <Text className="text-zinc-400 mb-1.5 text-xs font-bold uppercase tracking-wider">{t('type')}</Text>
             <View className="flex-row gap-2 mb-4">
               <TouchableOpacity onPress={() => setType('chance')} className={`flex-1 py-2 rounded-lg items-center ${type === 'chance' ? 'bg-orange-500' : 'bg-zinc-700'}`}>
-                <Text className="text-white font-bold">Chance</Text>
+                <Text className="text-white font-bold">{t('chance')}</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => setType('community')} className={`flex-1 py-2 rounded-lg items-center ${type === 'community' ? 'bg-blue-500' : 'bg-zinc-700'}`}>
-                <Text className="text-white font-bold">Community</Text>
+                <Text className="text-white font-bold">{t('community')}</Text>
               </TouchableOpacity>
             </View>
 
-            <Text className="text-zinc-400 mb-1.5 text-xs font-bold uppercase tracking-wider">Behavior</Text>
+
+            <Text className="text-zinc-400 mb-1.5 text-xs font-bold uppercase tracking-wider">{t('behavior')}</Text>
             <View className="flex-row gap-2 mb-4">
               <TouchableOpacity onPress={() => setBehavior('instant')} className={`flex-1 py-2 rounded-lg items-center ${behavior === 'instant' ? 'bg-red-500' : 'bg-zinc-700'}`}>
-                <Text className="text-white font-bold">Instant</Text>
+                <Text className="text-white font-bold">{t('instant')}</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => setBehavior('keepable')} className={`flex-1 py-2 rounded-lg items-center ${behavior === 'keepable' ? 'bg-purple-500' : 'bg-zinc-700'}`}>
-                <Text className="text-white font-bold">Keepable</Text>
+                <Text className="text-white font-bold">{t('keepable')}</Text>
               </TouchableOpacity>
             </View>
 
-            <Text className="text-zinc-400 mb-1.5 text-xs font-bold uppercase tracking-wider">Action</Text>
+            <Text className="text-zinc-400 mb-1.5 text-xs font-bold uppercase tracking-wider">{t('action')}</Text>
             <View className="flex-row gap-2 mb-4">
               <TouchableOpacity onPress={() => setAction('receive')} className={`flex-1 py-2 rounded-lg items-center ${action === 'receive' ? 'bg-emerald-500' : 'bg-zinc-700'}`}>
-                <Text className="text-white font-bold">Receive</Text>
+                <Text className="text-white font-bold">{t('receive')}</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => setAction('pay')} className={`flex-1 py-2 rounded-lg items-center ${action === 'pay' ? 'bg-red-500' : 'bg-zinc-700'}`}>
-                <Text className="text-white font-bold">Pay</Text>
+                <Text className="text-white font-bold">{t('pay')}</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => setAction('move')} className={`flex-1 py-2 rounded-lg items-center ${action === 'move' ? 'bg-indigo-500' : 'bg-zinc-700'}`}>
-                <Text className="text-white font-bold">Move</Text>
+                <Text className="text-white font-bold">{t('move')}</Text>
               </TouchableOpacity>
             </View>
 
-            <Text className="text-zinc-400 mb-1.5 text-xs font-bold uppercase tracking-wider">Card Text</Text>
+            <Text className="text-zinc-400 mb-1.5 text-xs font-bold uppercase tracking-wider">{t('cardText')}</Text>
             <TextInput 
               className="bg-zinc-900 text-white p-4 rounded-xl mb-4 border border-zinc-700 font-medium text-base"
               value={text}
               onChangeText={setText}
-              placeholder="e.g. Bank error in your favor"
+              placeholder={t('cardTextPlaceholder')}
               placeholderTextColor="#52525b"
             />
-            <Text className="text-zinc-400 mb-1.5 text-xs font-bold uppercase tracking-wider">Amount / Tile Index</Text>
+            <Text className="text-zinc-400 mb-1.5 text-xs font-bold uppercase tracking-wider">{t('amountTileIndex')}</Text>
             <TextInput 
               className="bg-zinc-900 text-white p-4 rounded-xl mb-6 border border-zinc-700 font-bold text-base"
               value={amount}
@@ -88,11 +91,11 @@ export default function CardEditor() {
               onChangeText={setAmount}
             />
             <TouchableOpacity onPress={handleAddCard} className="bg-emerald-500 py-4 rounded-xl items-center shadow-lg shadow-emerald-500/20">
-                <Text className="text-white font-bold text-base">Add Card</Text>
+                <Text className="text-white font-bold text-base">{t('addCard')}</Text>
             </TouchableOpacity>
         </View>
 
-        <Text className="text-zinc-500 font-bold mb-4 ml-2 uppercase tracking-widest">Existing Cards ({cards.length})</Text>
+        <Text className="text-zinc-500 font-bold mb-4 ml-2 uppercase tracking-widest">{t('existingCards', { count: cards.length })}</Text>
         {cards.map((card) => (
           <View key={card.id} className="bg-zinc-800 p-4 rounded-2xl mb-4 border border-zinc-700/30 flex-row items-center justify-between">
             <View className="flex-1 pr-4">
@@ -113,3 +116,4 @@ export default function CardEditor() {
     </View>
   );
 }
+

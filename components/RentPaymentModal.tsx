@@ -2,9 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Modal, TextInput } from 'react-native';
 import { socket } from '../utils/socket';
 import { useGameStore } from '../store/gameStore';
+import { CustomAlert } from '../utils/alert';
+import { useTranslation } from '../utils/i18n';
 
 export default function RentPaymentModal({ visible, onClose, property, ownerId, fullRentAmount, myPlayerId, lobbyCode }: any) {
     const [customAmount, setCustomAmount] = useState(fullRentAmount?.toString() || '0');
+    const { t } = useTranslation();
 
     useEffect(() => {
         if (visible) {
@@ -31,7 +34,7 @@ export default function RentPaymentModal({ visible, onClose, property, ownerId, 
             offeredAmount: amount, 
             originalAmount: fullRentAmount 
         });
-        alert('Offer sent to the property owner!');
+        CustomAlert.alert(t('sent'), t('offerSentOwner'));
         onClose();
     };
 
@@ -39,24 +42,23 @@ export default function RentPaymentModal({ visible, onClose, property, ownerId, 
         <Modal visible={visible} transparent animationType="fade">
             <View className="flex-1 bg-zinc-900/90 justify-center items-center p-4">
                 <View className="bg-zinc-800 rounded-3xl p-6 border border-zinc-700 w-full max-w-sm">
-                    <Text className="text-white text-2xl font-black mb-2 text-center">Rent Due!</Text>
+                    <Text className="text-white text-2xl font-black mb-2 text-center">{t('rentDue')}</Text>
                     <Text className="text-zinc-400 text-center mb-6">
-                        You landed on <Text className="text-white font-bold">{property.name}</Text>. 
-                        It is owned by <Text className="text-white font-bold">{owner?.name}</Text>.
+                        {t('landedOnOwned', { property: property.name, owner: owner?.name || '' })}
                     </Text>
 
                     <View className="bg-zinc-900 rounded-xl p-4 border border-zinc-700 mb-6">
-                        <Text className="text-zinc-500 font-bold uppercase text-xs mb-1">Standard Rent</Text>
+                        <Text className="text-zinc-500 font-bold uppercase text-xs mb-1">{t('standardRent')}</Text>
                         <Text className="text-red-400 text-3xl font-black">${fullRentAmount}</Text>
                     </View>
 
-                    <Text className="text-zinc-400 font-bold mb-2">Want to negotiate?</Text>
+                    <Text className="text-zinc-400 font-bold mb-2">{t('wantToNegotiate')}</Text>
                     <TextInput 
                         className="bg-zinc-900 text-white p-4 rounded-xl border border-zinc-700 mb-4 font-bold text-lg"
                         keyboardType="numeric"
                         value={customAmount}
                         onChangeText={setCustomAmount}
-                        placeholder="Enter custom amount"
+                        placeholder={t('enterCustomAmount')}
                         placeholderTextColor="#71717a"
                     />
 
@@ -65,14 +67,14 @@ export default function RentPaymentModal({ visible, onClose, property, ownerId, 
                             onPress={handleProposeCustom}
                             className="flex-1 bg-zinc-700 py-3 rounded-xl items-center border border-zinc-600"
                         >
-                            <Text className="text-white font-bold">Ask Discount</Text>
+                            <Text className="text-white font-bold">{t('askDiscount')}</Text>
                         </TouchableOpacity>
                         
                         <TouchableOpacity 
                             onPress={handlePayFull}
                             className="flex-1 bg-red-500 py-3 rounded-xl items-center shadow-lg shadow-red-500/30"
                         >
-                            <Text className="text-white font-black">Pay Full</Text>
+                            <Text className="text-white font-black">{t('payFull')}</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -80,3 +82,4 @@ export default function RentPaymentModal({ visible, onClose, property, ownerId, 
         </Modal>
     );
 }
+

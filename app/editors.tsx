@@ -1,15 +1,17 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from '../utils/i18n';
 
 export default function EditorsMenu() {
   const router = useRouter();
+  const { t } = useTranslation();
 
   return (
     <View className="flex-1 bg-zinc-900 pt-16 px-6">
       <View className="flex-row justify-between items-center mb-8">
-        <Text className="text-white text-3xl font-black">Editors</Text>
+        <Text className="text-white text-3xl font-black">{t('editors')}</Text>
         <TouchableOpacity onPress={() => router.back()} className="bg-zinc-800 px-4 py-2 rounded-lg">
-          <Text className="text-zinc-400 font-bold">Back</Text>
+          <Text className="text-zinc-400 font-bold">{t('back')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -20,8 +22,8 @@ export default function EditorsMenu() {
           onPress={() => router.push('/card-editor')}
         >
           <View>
-              <Text className="text-white font-bold text-xl mb-1">Card Editor</Text>
-              <Text className="text-zinc-500 text-sm">Create Chance and Community Chest cards</Text>
+              <Text className="text-white font-bold text-xl mb-1">{t('cardEditor')}</Text>
+              <Text className="text-zinc-500 text-sm">{t('createChanceCommunity')}</Text>
           </View>
         </TouchableOpacity>
 
@@ -30,11 +32,12 @@ export default function EditorsMenu() {
           onPress={() => router.push('/rule-editor')}
         >
           <View>
-              <Text className="text-white font-bold text-xl mb-1">Game Settings & Board</Text>
-              <Text className="text-zinc-500 text-sm">Change board generation and game rules</Text>
+              <Text className="text-white font-bold text-xl mb-1">{t('gameSettingsBoard')}</Text>
+              <Text className="text-zinc-500 text-sm">{t('changeBoardGen')}</Text>
           </View>
         </TouchableOpacity>
       </View>
     </View>
   );
 }
+
