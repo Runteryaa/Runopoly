@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Modal, ScrollView } from 'react-native';
 import { useGameStore } from '../store/gameStore';
-import { useTranslation } from '../utils/i18n';
+import { useTranslation, getTranslatedCardText, getTranslatedTileName } from '../utils/i18n';
+
 
 interface InventoryModalProps {
     visible: boolean;
@@ -65,8 +66,9 @@ export default function InventoryModal({ visible, onClose }: InventoryModalProps
                                     <View className="flex-row items-center gap-3">
                                         <View style={{ backgroundColor: prop.color }} className="w-4 h-4 rounded-full border border-zinc-600" />
                                         <View>
-                                            <Text className="text-white font-bold text-lg">{prop.name}</Text>
+                                            <Text className="text-white font-bold text-lg">{getTranslatedTileName(prop.name)}</Text>
                                             <Text className="text-zinc-500 text-[10px] font-bold">
+
                                                 {t('housesHotels', { houses: prop.houses || 0, hotels: prop.hotels || 0 })}
                                             </Text>
                                         </View>
@@ -221,7 +223,8 @@ export default function InventoryModal({ visible, onClose }: InventoryModalProps
                                                         <Text className="text-white/50 font-bold text-[10px] uppercase">{card.behavior || 'instant'}</Text>
                                                     </View>
                                                 </View>
-                                                <Text className="text-white font-bold text-sm leading-tight">{card.text}</Text>
+                                                <Text className="text-white font-bold text-sm leading-tight">{getTranslatedCardText(card)}</Text>
+
                                             </View>
                                             <View className="flex-col gap-2">
                                                 <TouchableOpacity 

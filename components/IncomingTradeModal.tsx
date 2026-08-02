@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, Modal } from 'react-native';
 import { useGameStore, TradeData } from '../store/gameStore';
 import { socket } from '../utils/socket';
-import { useTranslation } from '../utils/i18n';
+import { useTranslation, getTranslatedTileName } from '../utils/i18n';
 
 interface IncomingTradeModalProps {
     trade: TradeData | null;
@@ -18,8 +18,9 @@ export default function IncomingTradeModal({ trade, onClose }: IncomingTradeModa
     const fromPlayer = gamePlayers.find(p => p.id === trade.fromId);
     
     const getPropNames = (ids: string[]) => {
-        return ids.map(id => properties.find(p => p.id === id)?.name).join(', ');
+        return ids.map(id => getTranslatedTileName(properties.find(p => p.id === id)?.name)).join(', ');
     };
+
 
     const handleAccept = () => {
         socket.emit('respond_trade', { lobbyCode, trade, accepted: true });

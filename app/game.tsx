@@ -15,7 +15,8 @@ import BankruptcyModal from '../components/BankruptcyModal';
 import VictoryModal from '../components/VictoryModal';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Platform } from 'react-native';
-import { useTranslation } from '../utils/i18n';
+import { useTranslation, getTranslatedCardText, getTranslatedTileName } from '../utils/i18n';
+
 
 const BoardWrapper = ({ children }: { children: React.ReactNode }) => {
     if (Platform.OS === 'web') {
@@ -203,11 +204,12 @@ export default function GameBoard() {
     socket.on('card_executed', ({ playerId, card }) => {
       if (card.action === 'show') {
           const player = useGameStore.getState().gamePlayers.find(p => p.id === playerId);
-          CustomAlert.alert(t('cardRevealed'), t('cardRevealedDesc', { name: player?.name, text: card.text }), [{ text: 'OK' }]);
+          CustomAlert.alert(t('cardRevealed'), t('cardRevealedDesc', { name: player?.name, text: getTranslatedCardText(card) }), [{ text: 'OK' }]);
       } else {
           useGameStore.getState().executeCard(playerId, card);
       }
     });
+
 
     socket.on('went_to_jail', (playerId) => {
       useGameStore.getState().setJailStatus(playerId, true);
@@ -389,15 +391,16 @@ export default function GameBoard() {
       
       if (card.behavior === 'instant') {
           socket.emit('execute_card', { lobbyCode, playerId: myPlayer.id, card });
-          CustomAlert.alert(t('cardDrawn'), t('cardDrawnAppliedDesc', { type: type.toUpperCase(), text: card.text }), [{ text: 'OK' }]);
+          CustomAlert.alert(t('cardDrawn'), t('cardDrawnAppliedDesc', { type: type.toUpperCase(), text: getTranslatedCardText(card) }), [{ text: 'OK' }]);
       } else {
           socket.emit('update_player_stats', { 
               lobbyCode, 
               playerId: myPlayer.id, 
               updates: { inventoryCards: [...(myPlayer.inventoryCards || []), card] } 
           });
-          CustomAlert.alert(t('cardDrawn'), t('cardDrawnInventoryDesc', { type: type.toUpperCase(), text: card.text }), [{ text: 'OK' }]);
+          CustomAlert.alert(t('cardDrawn'), t('cardDrawnInventoryDesc', { type: type.toUpperCase(), text: getTranslatedCardText(card) }), [{ text: 'OK' }]);
       }
+
   };
 
   const handleRollDice = () => {
@@ -495,8 +498,9 @@ export default function GameBoard() {
         const landedProperty = properties[newPosition];
 
         setTimeout(() => {
-            setLandingMessage(t('landedOn', { name: landedProperty.name }));
+            setLandingMessage(t('landedOn', { name: getTranslatedTileName(landedProperty.name) }));
             setTimeout(() => setLandingMessage(null), 3000);
+
 
             if (newPosition === s * 3) {
                 CustomAlert.alert(t('arrested'), t('arrestedDesc', { amount: rules.goSalary }), [{ text: 'OK' }], { cancelable: false });
@@ -790,10 +794,11 @@ export default function GameBoard() {
                             {!isCorner && <View style={{ backgroundColor: prop.color }} className="w-full h-4 rounded-sm" />}
                             
                             {isCorner ? (
-                                <Text className={`text-xs font-black uppercase text-center mt-2 ${i === 0 ? 'text-emerald-400' : i === s ? 'text-orange-400' : i === s * 3 ? 'text-red-400' : 'text-blue-400'}`}>{prop.name}</Text>
+                                <Text className={`text-xs font-black uppercase text-center mt-2 ${i === 0 ? 'text-emerald-400' : i === s ? 'text-orange-400' : i === s * 3 ? 'text-red-400' : 'text-blue-400'}`}>{getTranslatedTileName(prop.name)}</Text>
                             ) : (
-                                <Text className="text-white text-[10px] text-center font-bold numberOfLines={2}">{prop.name}</Text>
+                                <Text className="text-white text-[10px] text-center font-bold numberOfLines={2}">{getTranslatedTileName(prop.name)}</Text>
                             )}
+
                             
                             <View className="flex-row gap-1 flex-wrap justify-center w-full px-1 z-10 absolute bottom-6">
                                 {playersOnTile.map(p => (

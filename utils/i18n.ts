@@ -329,8 +329,39 @@ export const translations = {
     reactions: "Reactions",
     inventory: "Inventory",
     myProperties: "My Properties",
+
+    cards: {
+      chance_1: "Advance to GO. Collect $200.",
+      chance_2: "Bank pays you dividend of $50.",
+      chance_3: "Go directly to Jail. Do not pass GO, do not collect $200.",
+      chance_4: "Pay poor tax of $15.",
+      chance_5: "Get out of Jail Free. Keep until needed.",
+      chance_6: "Elected Chairman of the Board. Pay each player $50.",
+      chance_7: "Your building loan matures. Collect $150.",
+      comm_1: "Advance to GO. Collect $200.",
+      comm_2: "Bank error in your favor. Collect $200.",
+      comm_3: "Doctor's fee. Pay $50.",
+      comm_4: "Get out of Jail Free. Keep until needed.",
+      comm_5: "Income tax refund. Collect $20.",
+      comm_6: "Life insurance matures. Collect $100.",
+      comm_7: "Pay hospital fees of $100.",
+      comm_8: "Won second prize in beauty contest. Collect $10.",
+      comm_9: "You inherit $100."
+    },
+    tileNames: {
+      "GO": "GO",
+      "JAIL": "JAIL",
+      "PARKING": "FREE PARKING",
+      "GO TO JAIL": "GO TO JAIL",
+      "CHANCE": "CHANCE",
+      "COMMUNITY CHEST": "COMMUNITY CHEST",
+      "TAX": "TAX",
+      "STATION": "STATION",
+      "UTILITY": "UTILITY"
+    }
   },
   tr: {
+
     // index.tsx
     updateRequired: "Güncelleme Gerekli",
     updateRequiredDesc: "Bu güncelleme temel özellikleri içeriyor. Sürümünüz çok eski. Lütfen devam etmek için en güncel sürümü indirin.",
@@ -659,14 +690,63 @@ export const translations = {
     reactions: "Tepkiler",
     inventory: "Envanter",
     myProperties: "Mülklerim",
+
+    cards: {
+      chance_1: "Başlangıç noktasına ilerle. $200 al.",
+      chance_2: "Banka size $50 kar payı ödedi.",
+      chance_3: "Doğrudan Hapishaneye git. Başlangıçtan geçme, $200 alma.",
+      chance_4: "Yoksulluk vergisini öde: $15.",
+      chance_5: "Hapishaneden Ücretsiz Çıkış Kartı. İhtiyaç anına kadar sakla.",
+      chance_6: "Yönetim Kurulu Başkanı seçildiniz. Her oyuncuya $50 ödeyin.",
+      chance_7: "İnşaat kredinizin vadesi doldu. $150 al.",
+      comm_1: "Başlangıç noktasına ilerle. $200 al.",
+      comm_2: "Banka hatası lehinize. $200 al.",
+      comm_3: "Doktor ücreti. $50 öde.",
+      comm_4: "Hapishaneden Ücretsiz Çıkış Kartı. İhtiyaç anına kadar sakla.",
+      comm_5: "Gelir vergisi iadesi. $20 al.",
+      comm_6: "Hayat sigortanızın vadesi doldu. $100 al.",
+      comm_7: "Hastane masraflarını öde: $100.",
+      comm_8: "Güzellik yarışmasında ikinci oldunuz. $10 al.",
+      comm_9: "$100 mirasa kondu."
+    },
+    tileNames: {
+      "GO": "BAŞLANGIÇ",
+      "JAIL": "HAPİSHANE",
+      "PARKING": "ÜCRETSİZ OTOPARK",
+      "GO TO JAIL": "HAPSE GİT",
+      "CHANCE": "ŞANS",
+      "COMMUNITY CHEST": "KAMU FONU",
+      "TAX": "VERGİ",
+      "STATION": "İSTASYON",
+      "UTILITY": "ELEKTRİK / SU"
+    }
   }
 };
+
+export function getTranslatedCardText(card?: { id?: string; text: string } | null): string {
+    if (!card) return '';
+    const lang = (useSettingsStore.getState().language || 'tr') as 'tr' | 'en';
+    if (card.id && (translations[lang]?.cards as any)?.[card.id]) {
+        return (translations[lang].cards as any)[card.id];
+    }
+    return card.text;
+}
+
+export function getTranslatedTileName(name?: string | null): string {
+    if (!name) return '';
+    const lang = (useSettingsStore.getState().language || 'tr') as 'tr' | 'en';
+    if ((translations[lang]?.tileNames as any)?.[name]) {
+        return (translations[lang].tileNames as any)[name];
+    }
+    return name;
+}
 
 export function useTranslation() {
     const language = useSettingsStore(state => state.language);
     
     const t = (key: keyof typeof translations['en'], params?: Record<string, string | number>) => {
-        let str = translations[language]?.[key] || translations['en'][key] || key;
+        let val = translations[language]?.[key] || translations['en'][key] || key;
+        let str = typeof val === 'string' ? val : (key as string);
         if (params) {
             Object.entries(params).forEach(([k, v]) => {
                 str = str.replace(new RegExp(`%\\{${k}\\}`, 'g'), String(v));
@@ -677,3 +757,5 @@ export function useTranslation() {
 
     return { t, language };
 }
+
+

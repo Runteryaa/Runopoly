@@ -3,7 +3,8 @@ import { View, Text, TouchableOpacity, Modal } from 'react-native';
 import { useGameStore, Property } from '../store/gameStore';
 
 import { socket } from '../utils/socket';
-import { useTranslation } from '../utils/i18n';
+import { useTranslation, getTranslatedTileName } from '../utils/i18n';
+
 
 interface PropertyInfoModalProps {
     propertyId: string | null;
@@ -110,16 +111,17 @@ export default function PropertyInfoModal({ propertyId, onClose, onTradePress, m
                         <View style={{ backgroundColor: property.color }} className="w-full py-4 items-center border-b border-black/20">
                             <Text className="text-black/50 font-black text-[10px] uppercase tracking-widest mb-1">{t('titleDeed')}</Text>
                             <Text className="text-white font-black text-2xl text-center px-4" style={{ textShadowColor: 'rgba(0,0,0,0.3)', textShadowOffset: {width: 0, height: 1}, textShadowRadius: 2 }}>
-                                {property.name}
+                                {getTranslatedTileName(property.name)}
                             </Text>
                         </View>
                     )}
 
                     {isSpecial && (
                         <View className="w-full py-6 items-center bg-zinc-700 border-b border-black/20">
-                            <Text className="text-white font-black text-2xl text-center px-4">{property.name}</Text>
+                            <Text className="text-white font-black text-2xl text-center px-4">{getTranslatedTileName(property.name)}</Text>
                         </View>
                     )}
+
 
                     <View className="p-6">
                         {!isSpecial ? (

@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, Modal, TextInput } from 'react-native';
 import { socket } from '../utils/socket';
 import { useGameStore } from '../store/gameStore';
 import { CustomAlert } from '../utils/alert';
-import { useTranslation } from '../utils/i18n';
+import { useTranslation, getTranslatedTileName } from '../utils/i18n';
 
 export default function RentPaymentModal({ visible, onClose, property, ownerId, fullRentAmount, myPlayerId, lobbyCode }: any) {
     const [customAmount, setCustomAmount] = useState(fullRentAmount?.toString() || '0');
@@ -44,8 +44,9 @@ export default function RentPaymentModal({ visible, onClose, property, ownerId, 
                 <View className="bg-zinc-800 rounded-3xl p-6 border border-zinc-700 w-full max-w-sm">
                     <Text className="text-white text-2xl font-black mb-2 text-center">{t('rentDue')}</Text>
                     <Text className="text-zinc-400 text-center mb-6">
-                        {t('landedOnOwned', { property: property.name, owner: owner?.name || '' })}
+                        {t('landedOnOwned', { property: getTranslatedTileName(property.name), owner: owner?.name || '' })}
                     </Text>
+
 
                     <View className="bg-zinc-900 rounded-xl p-4 border border-zinc-700 mb-6">
                         <Text className="text-zinc-500 font-bold uppercase text-xs mb-1">{t('standardRent')}</Text>
