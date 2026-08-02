@@ -805,9 +805,23 @@ export default function GameBoard() {
                             {!isCorner && <View style={{ backgroundColor: prop.color }} className="w-full h-4 rounded-sm" />}
                             
                             {isCorner ? (
-                                <Text className={`text-xs font-black uppercase text-center mt-2 ${i === 0 ? 'text-emerald-400' : i === s ? 'text-orange-400' : i === s * 3 ? 'text-red-400' : 'text-blue-400'}`}>{getTranslatedTileName(prop.name)}</Text>
+                                <Text
+                                    numberOfLines={2}
+                                    adjustsFontSizeToFit
+                                    minimumFontScale={0.6}
+                                    className={`text-xs font-black uppercase text-center mt-2 px-1 ${i === 0 ? 'text-emerald-400' : i === s ? 'text-orange-400' : i === s * 3 ? 'text-red-400' : 'text-blue-400'}`}
+                                >
+                                    {getTranslatedTileName(prop.name)}
+                                </Text>
                             ) : (
-                                <Text className="text-white text-[10px] text-center font-bold numberOfLines={2}">{getTranslatedTileName(prop.name)}</Text>
+                                <Text
+                                    numberOfLines={2}
+                                    adjustsFontSizeToFit
+                                    minimumFontScale={0.55}
+                                    className="text-white text-[10px] text-center font-bold leading-tight px-0.5"
+                                >
+                                    {getTranslatedTileName(prop.name)}
+                                </Text>
                             )}
 
                             
