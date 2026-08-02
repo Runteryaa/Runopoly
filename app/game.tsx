@@ -13,7 +13,7 @@ import AuctionModal from '../components/AuctionModal';
 import PropertyInfoModal from '../components/PropertyInfoModal';
 import BankruptcyModal from '../components/BankruptcyModal';
 import VictoryModal from '../components/VictoryModal';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import DiceFace from '../components/DiceFace';
 import { Platform } from 'react-native';
 import { useTranslation, getTranslatedCardText, getTranslatedTileName } from '../utils/i18n';
 
@@ -72,18 +72,6 @@ export default function GameBoard() {
   const [currentDice, setCurrentDice] = useState<{ d1: number; d2: number } | null>({ d1: 1, d2: 1 });
   const [isRolling, setIsRolling] = useState(false);
 
-
-  const getDiceIcon = (num: number) => {
-    switch (num) {
-      case 1: return 'dice-1';
-      case 2: return 'dice-2';
-      case 3: return 'dice-3';
-      case 4: return 'dice-4';
-      case 5: return 'dice-5';
-      case 6: return 'dice-6';
-      default: return 'dice-1';
-    }
-  };
 
   const animatePlayerSteps = (playerId: string, totalSteps: number, onFinish?: () => void) => {
       let currentStep = 0;
@@ -737,10 +725,12 @@ export default function GameBoard() {
 
       <BoardWrapper>
             <View style={{ width: boardSize, height: boardSize }} className="bg-zinc-800 m-4 rounded-xl overflow-hidden border-4 border-zinc-700 relative">
-                {/* Center of the board */}
-                <View className="absolute top-[68px] left-[68px] right-[68px] bottom-[68px] bg-zinc-900 items-center justify-center p-8">
+{/* Center of the board */}
+                    <View className="absolute top-[68px] left-[68px] right-[68px] bottom-[68px] bg-zinc-900 items-center justify-center p-8">
 
-                    <Text className="text-zinc-700 text-5xl font-black text-center opacity-30 transform -rotate-45 mb-2">RUNOPOLY</Text>
+                    <View className="absolute inset-0 items-center justify-center pointer-events-none z-0">
+                        <Text className="text-zinc-700 text-5xl font-black text-center opacity-20 transform -rotate-45">RUNOPOLY</Text>
+                    </View>
                     
                     <View className="absolute top-4 left-4 flex-row gap-4 z-30">
                         <TouchableOpacity 
@@ -773,14 +763,14 @@ export default function GameBoard() {
 
                     {/* Persistent In-Center Dice Display */}
                     {currentDice && (
-                      <View className="flex-row gap-3 my-2 bg-zinc-800/90 border border-zinc-700/80 px-4 py-2 rounded-2xl items-center shadow-2xl">
-                          <MaterialCommunityIcons name={getDiceIcon(currentDice.d1) as any} size={44} color="#10b981" />
-                          <MaterialCommunityIcons name={getDiceIcon(currentDice.d2) as any} size={44} color="#10b981" />
+                      <View className="flex-row gap-3 bg-zinc-800/90 border border-zinc-700/80 px-5 py-3 rounded-2xl items-center shadow-2xl z-10">
+                          <DiceFace value={currentDice.d1} size={44} color="#ffffff" dotColor="#10b981" />
+                          <DiceFace value={currentDice.d2} size={44} color="#ffffff" dotColor="#10b981" />
                       </View>
                     )}
 
                     {lastRoll && (
-                      <Text className="text-zinc-300 font-bold text-xs bg-zinc-800/90 px-3 py-1 rounded-full border border-zinc-700">{t('rolled', { amount: lastRoll })}</Text>
+                      <Text className="text-zinc-300 font-bold text-xs bg-zinc-800/90 px-3 py-1 rounded-full border border-zinc-700 z-10">{t('rolled', { amount: lastRoll })}</Text>
                     )}
 
                     {landingMessage && (
@@ -900,7 +890,7 @@ export default function GameBoard() {
                 onPress={() => setReactionPickerOpen(!reactionPickerOpen)}
                 className={`w-12 h-12 rounded-2xl border items-center justify-center shadow-xl active:scale-95 ${reactionPickerOpen ? 'bg-amber-500/20 border-amber-400' : 'bg-zinc-900/95 border-zinc-700/80'}`}
               >
-                  <MaterialCommunityIcons name="emoticon-happy-outline" size={26} color={reactionPickerOpen ? '#f59e0b' : '#a1a1aa'} />
+                  <Text style={{ fontSize: 22 }} allowFontScaling={false}>{reactionPickerOpen ? '😀' : '🙂'}</Text>
               </TouchableOpacity>
           </View>
 

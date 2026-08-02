@@ -8,7 +8,6 @@ import { CustomAlert } from '../utils/alert';
 import Constants from 'expo-constants';
 import SettingsModal from '../components/SettingsModal';
 import { useTranslation } from '../utils/i18n';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
 const APP_VERSION = Constants.expoConfig?.version || '1.0.0';
 
@@ -123,7 +122,7 @@ export default function Home() {
                 className="bg-zinc-800 p-3 rounded-xl border border-zinc-700 items-center justify-center self-end"
                 onPress={() => setSettingsVisible(true)}
             >
-                <MaterialCommunityIcons name="cog" size={24} color="#a1a1aa" />
+                <Text style={{ fontSize: 24 }} allowFontScaling={false}>⚙️</Text>
             </TouchableOpacity>
         </View>
 
@@ -168,7 +167,7 @@ export default function Home() {
               className="bg-zinc-800 p-3 rounded-xl border border-zinc-700 items-center justify-center self-end"
               onPress={() => setSettingsVisible(true)}
           >
-              <MaterialCommunityIcons name="cog" size={24} color="#a1a1aa" />
+              <Text style={{ fontSize: 24 }} allowFontScaling={false}>⚙️</Text>
           </TouchableOpacity>
       </View>
       
