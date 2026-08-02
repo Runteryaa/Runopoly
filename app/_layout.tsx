@@ -5,10 +5,12 @@ import { useEffect } from "react";
 import { socket } from "../utils/socket";
 import { CustomAlert } from "../utils/alert";
 import { useFonts } from "expo-font";
+import { View } from "react-native";
 
 export default function RootLayout() {
   // Load vector icon fonts explicitly — required for web
-  useFonts({
+  // Without this, icons render as squares on web before fonts load
+  const [fontsLoaded] = useFonts({
     MaterialCommunityIcons: require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialCommunityIcons.ttf"),
   });
 
@@ -20,6 +22,11 @@ export default function RootLayout() {
       socket.off('server_message');
     };
   }, []);
+
+  // Block rendering until fonts are ready — prevents icon squares on web
+  if (!fontsLoaded) {
+    return <View style={{ flex: 1, backgroundColor: '#18181b' }} />;
+  }
 
   return (
     <>
