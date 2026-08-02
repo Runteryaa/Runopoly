@@ -564,43 +564,54 @@ export default function GameBoard() {
   return (
     <View className="flex-1 bg-zinc-950 items-center justify-center relative">
       {/* Top Header Navigation Bar */}
-      <View className="absolute top-0 left-0 right-0 z-40 bg-zinc-900/95 border-b border-zinc-800/80 px-4 pt-10 pb-3 flex-row justify-between items-center shadow-2xl">
-          <View className="flex-row items-center gap-3">
+      <View className="absolute top-0 left-0 right-0 z-40 bg-zinc-900/95 border-b border-zinc-800 px-4 pt-10 pb-3 flex-row justify-between items-center shadow-xl">
+          {/* Top Left: RUNOPOLY + Turn & Timer underneath */}
+          <View>
              <Text className="text-white text-xl font-black tracking-widest">RUN<Text className="text-emerald-500">OPOLY</Text></Text>
-             <View className="bg-zinc-800/90 border border-zinc-700/80 px-3 py-1 rounded-full flex-row items-center gap-1.5">
-                 <View className="w-2 h-2 rounded-full bg-emerald-500" />
-                 <Text className="text-zinc-300 font-bold text-xs">{activePlayer?.name || '...'}</Text>
+             <View className="flex-row items-center mt-0.5 gap-1.5">
+                 <Text className="text-zinc-400 font-semibold text-xs">{activePlayer?.name || '...'}</Text>
                  {turnTimeLeft !== null && (
-                     <Text className="text-red-400 font-black text-xs ml-1">⏱️ {turnTimeLeft}s</Text>
+                     <Text className="text-red-400 font-bold text-xs">({turnTimeLeft}s)</Text>
                  )}
              </View>
           </View>
           
-          <View className="flex-row items-center gap-2">
-             <TouchableOpacity 
-                onPress={() => setInventoryVisible(true)}
-                className="bg-emerald-500/10 border border-emerald-500/40 px-3 py-1.5 rounded-full flex-row items-center gap-1"
-             >
-                 <Text className="text-emerald-400 font-black text-sm">${myPlayer?.money}</Text>
-             </TouchableOpacity>
-
+          {/* Top Right: Takas (Left of Money) -> Money -> Oyuncular -> Mülklerim (Right of Money) */}
+          <View className="flex-row items-center gap-1.5">
+             {/* Takas - Paranın Solunda */}
              <TouchableOpacity 
                 onPress={() => setTradeModalVisible(true)} 
-                className="bg-zinc-800 border border-zinc-700 px-3 py-1.5 rounded-full flex-row items-center gap-1"
+                className="bg-zinc-800 border border-zinc-700 px-2.5 py-1.5 rounded-lg"
              >
-                 <Text className="text-xs">🤝</Text>
                  <Text className="text-zinc-300 font-bold text-xs">{t('trade')}</Text>
              </TouchableOpacity>
 
+             {/* Para ($) */}
+             <TouchableOpacity 
+                onPress={() => setInventoryVisible(true)}
+                className="bg-zinc-800 border border-emerald-500/50 px-2.5 py-1.5 rounded-lg"
+             >
+                 <Text className="text-emerald-400 font-black text-xs">${myPlayer?.money}</Text>
+             </TouchableOpacity>
+
+             {/* Oyuncular - Paranın Sağında */}
              <TouchableOpacity 
                 onPress={() => setPlayersModalVisible(true)} 
-                className="bg-zinc-800 border border-zinc-700 px-3 py-1.5 rounded-full flex-row items-center gap-1"
+                className="bg-zinc-800 border border-zinc-700 px-2.5 py-1.5 rounded-lg"
              >
-                 <Text className="text-xs">👥</Text>
                  <Text className="text-zinc-300 font-bold text-xs">{t('players')}</Text>
+             </TouchableOpacity>
+
+             {/* Mülklerim - Paranın Sağında */}
+             <TouchableOpacity 
+                onPress={() => setInventoryVisible(true)} 
+                className="bg-zinc-800 border border-zinc-700 px-2.5 py-1.5 rounded-lg"
+             >
+                 <Text className="text-zinc-300 font-bold text-xs">{t('myProperties')}</Text>
              </TouchableOpacity>
           </View>
       </View>
+
 
       {/* Players Modal */}
       {playersModalVisible && (
@@ -778,33 +789,34 @@ export default function GameBoard() {
             hasRolled ? (
                 (myPlayer?.money ?? 0) >= 0 && (
                     <TouchableOpacity 
-                      className="bg-rose-500 border border-rose-400/50 px-8 py-3.5 rounded-2xl shadow-xl shadow-rose-500/30 flex-row items-center gap-2"
+                      className="bg-rose-600 border border-rose-500/50 px-8 py-3.5 rounded-xl shadow-xl flex-row items-center gap-2"
                       onPress={() => socket.emit('end_turn', { lobbyCode })}
                     >
-                      <Text className="text-white font-black text-lg">{t('endTurn')} ⏭️</Text>
+                      <Text className="text-white font-black text-base uppercase tracking-wider">{t('endTurn')}</Text>
                     </TouchableOpacity>
                 )
             ) : (
                 <TouchableOpacity 
-                  className="bg-emerald-500 border border-emerald-400/50 px-8 py-3.5 rounded-2xl shadow-xl shadow-emerald-500/30 flex-row items-center gap-2"
+                  className="bg-emerald-600 border border-emerald-500/50 px-8 py-3.5 rounded-xl shadow-xl flex-row items-center gap-2"
                   onPress={handleRollDice}
                 >
-                  <Text className="text-white font-black text-lg">{t('rollDice')} 🎲</Text>
+                  <Text className="text-white font-black text-base uppercase tracking-wider">{t('rollDice')}</Text>
                 </TouchableOpacity>
             )
           ) : (
-            <View className="bg-zinc-900/95 border border-zinc-800 px-6 py-3 rounded-2xl flex-row items-center gap-2 shadow-xl">
-               <Text className="text-zinc-400 font-bold text-sm">⏳ {t('waitingFor', { name: activePlayer?.name })}</Text>
+            <View className="bg-zinc-900/95 border border-zinc-800 px-6 py-3 rounded-xl flex-row items-center gap-2 shadow-xl">
+               <Text className="text-zinc-400 font-bold text-sm">{t('waitingFor', { name: activePlayer?.name })}</Text>
                {myPlayer?.isHost && (
                    <TouchableOpacity 
                      onPress={() => socket.emit('end_turn', { lobbyCode })}
-                     className="ml-2 bg-orange-500/20 border border-orange-500/50 px-3 py-1 rounded-xl"
+                     className="ml-2 bg-orange-500/20 border border-orange-500/50 px-3 py-1 rounded-lg"
                    >
                        <Text className="text-orange-400 font-bold text-xs uppercase">{t('forceEndTurn')}</Text>
                    </TouchableOpacity>
                )}
             </View>
           )}
+
 
           {myPlayer?.debts && myPlayer.debts.length > 0 && (
               <TouchableOpacity 
