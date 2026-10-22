@@ -1,8 +1,39 @@
-import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
+import React, { useEffect } from "react";
+import { View, Text, StyleSheet, ScrollView } from "react-native";
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from "react-native-reanimated";
 import { useGameStore } from "../../store/gameStore";
 import { getTokenMeta } from "../../data/tokens";
 import { Player } from "../../types";
+import { BouncyPressable } from "../ui/BouncyPressable";
+
+function ActiveGlow() {
+  const pulse = useSharedValue(0);
+
+  useEffect(() => {
+    pulse.value = withRepeat(
+      withTiming(1, { duration: 1200, easing: Easing.inOut(Easing.quad) }),
+      -1,
+      true
+    );
+  }, [pulse]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: 0.3 + pulse.value * 0.55,
+  }));
+
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[styles.activeGlow, animatedStyle]}
+    />
+  );
+}
 
 export const PlayerListBar: React.FC = () => {
   const gameState = useGameStore((s) => s.gameState);
@@ -25,8 +56,9 @@ export const PlayerListBar: React.FC = () => {
           const isMe = p.id === myPlayerId;
 
           return (
-            <TouchableOpacity
+            <BouncyPressable
               key={p.id}
+              pressedScale={0.97}
               style={[
                 styles.playerCard,
                 isActive && styles.activeCard,
@@ -38,6 +70,7 @@ export const PlayerListBar: React.FC = () => {
                 }
               }}
             >
+              {isActive && <ActiveGlow />}
               <View style={[styles.avatar, { backgroundColor: meta.color }]}>
                 <Text style={styles.avatarEmoji}>{meta.emoji}</Text>
               </View>
@@ -57,7 +90,7 @@ export const PlayerListBar: React.FC = () => {
                   <Text style={styles.cash}>${p.cash}</Text>
                 )}
               </View>
-            </TouchableOpacity>
+            </BouncyPressable>
           );
         })}
       </ScrollView>
@@ -90,6 +123,21 @@ const styles = StyleSheet.create({
   activeCard: {
     borderColor: "#fbbf24",
     backgroundColor: "#1e293b",
+  },
+  activeGlow: {
+    position: "absolute",
+    top: -3,
+    left: -3,
+    right: -3,
+    bottom: -3,
+    borderRadius: 15,
+    borderWidth: 2,
+    borderColor: "#fbbf24",
+    shadowColor: "#fbbf24",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 8,
+    elevation: 6,
   },
   bankruptCard: {
     opacity: 0.5,

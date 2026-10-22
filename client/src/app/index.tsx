@@ -3,6 +3,7 @@ import { StyleSheet } from "react-native";
 import { Redirect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LobbyScreen } from "../../components/lobby/LobbyScreen";
+import { ScreenFade } from "../../components/ui/ScreenFade";
 import { useGameStore } from "../../store/gameStore";
 
 export default function WelcomeRoute() {
@@ -18,7 +19,9 @@ export default function WelcomeRoute() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
-      <LobbyScreen />
+      <ScreenFade>
+        <LobbyScreen />
+      </ScreenFade>
     </SafeAreaView>
   );
 }

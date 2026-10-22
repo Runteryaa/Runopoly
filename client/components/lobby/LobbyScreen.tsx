@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
   StyleSheet,
   TextInput,
-  TouchableOpacity,
   ScrollView,
   Switch,
   ActivityIndicator,
@@ -14,6 +13,9 @@ import { useGameStore } from "../../store/gameStore";
 import { TOKENS } from "../../data/tokens";
 import { socketService } from "../../services/socketService";
 import { PlayerToken, GameRulesConfig } from "../../types";
+import { BouncyPressable } from "../ui/BouncyPressable";
+import { Floating } from "../ui/Floating";
+import { PulseDot } from "../ui/PulseDot";
 
 interface PublicRoomItem {
   code: string;
@@ -47,13 +49,7 @@ export const LobbyScreen: React.FC = () => {
   const [doubleGoBonus, setDoubleGoBonus] = useState(false);
   const [auctionsEnabled, setAuctionsEnabled] = useState(true);
 
-  // Auto connect socket on mount
-  useEffect(() => {
-    socketService.connect(serverUrl);
-    fetchPublicRooms();
-  }, [serverUrl]);
-
-  const fetchPublicRooms = async () => {
+  const fetchPublicRooms = useCallback(async () => {
     try {
       setIsLoadingRooms(true);
       const res = await fetch(`${serverUrl}/api/rooms`);
@@ -66,7 +62,14 @@ export const LobbyScreen: React.FC = () => {
     } finally {
       setIsLoadingRooms(false);
     }
-  };
+  }, [serverUrl]);
+
+  // Auto connect socket on mount
+  useEffect(() => {
+    socketService.connect(serverUrl);
+    const timeout = setTimeout(fetchPublicRooms, 0);
+    return () => clearTimeout(timeout);
+  }, [serverUrl, fetchPublicRooms]);
 
   const handleUpdateProfile = (newToken: PlayerToken) => {
     setSelectedToken(newToken);
@@ -118,10 +121,12 @@ export const LobbyScreen: React.FC = () => {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Title & Tagline */}
       <View style={styles.branding}>
-        <Text style={styles.brandTitle}>🎲 RUNOPOLY</Text>
+        <Floating distance={6} duration={2200}>
+          <Text style={styles.brandTitle}>🎲 RUNOPOLY</Text>
+        </Floating>
         <Text style={styles.brandSubtitle}>Real-Time Online Classic Board Game</Text>
         <View style={styles.connectionStatus}>
-          <Text style={[styles.statusDot, isConnected ? styles.dotGreen : styles.dotRed]}>●</Text>
+          <PulseDot color={isConnected ? "#22c55e" : "#ef4444"} size={8} />
           <Text style={styles.statusText}>{isConnected ? "Server Connected" : "Connecting to Server..."}</Text>
         </View>
       </View>
@@ -153,7 +158,7 @@ export const LobbyScreen: React.FC = () => {
           {TOKENS.map((t) => {
             const isSelected = selectedToken === t.id;
             return (
-              <TouchableOpacity
+              <BouncyPressable
                 key={t.id}
                 style={[
                   styles.tokenCard,
@@ -164,7 +169,7 @@ export const LobbyScreen: React.FC = () => {
               >
                 <Text style={styles.tokenEmoji}>{t.emoji}</Text>
                 <Text style={styles.tokenName}>{t.name}</Text>
-              </TouchableOpacity>
+              </BouncyPressable>
             );
           })}
         </ScrollView>
@@ -183,9 +188,9 @@ export const LobbyScreen: React.FC = () => {
             value={joinCode}
             onChangeText={setJoinCode}
           />
-          <TouchableOpacity style={styles.joinBtn} onPress={() => handleJoinRoom()}>
+          <BouncyPressable style={styles.joinBtn} onPress={() => handleJoinRoom()}>
             <Text style={styles.joinBtnText}>JOIN MATCH</Text>
-          </TouchableOpacity>
+          </BouncyPressable>
         </View>
       </View>
 
@@ -201,13 +206,13 @@ export const LobbyScreen: React.FC = () => {
             </View>
             <View style={styles.timerOptions}>
               {[30, 60, 90, 0].map((sec) => (
-                <TouchableOpacity
+                <BouncyPressable
                   key={`timer-${sec}`}
                   style={[styles.timerChip, turnTimerSeconds === sec && styles.timerChipActive]}
                   onPress={() => setTurnTimerSeconds(sec)}
                 >
                   <Text style={styles.timerChipText}>{sec === 0 ? "∞" : `${sec}s`}</Text>
-                </TouchableOpacity>
+                </BouncyPressable>
               ))}
             </View>
           </View>
@@ -249,18 +254,18 @@ export const LobbyScreen: React.FC = () => {
           </View>
         </View>
 
-        <TouchableOpacity style={styles.createBtn} onPress={handleCreateRoom}>
+        <BouncyPressable style={styles.createBtn} onPress={handleCreateRoom}>
           <Text style={styles.createBtnText}>✨ CREATE GAME ROOM</Text>
-        </TouchableOpacity>
+        </BouncyPressable>
       </View>
 
       {/* Public Rooms Browser */}
       <View style={styles.card}>
         <View style={styles.browserHeader}>
           <Text style={styles.cardTitle}>4. PUBLIC ROOMS BROWSER</Text>
-          <TouchableOpacity onPress={fetchPublicRooms}>
+          <BouncyPressable onPress={fetchPublicRooms}>
             <Text style={styles.refreshText}>{isLoadingRooms ? "Refreshing..." : "↻ Refresh"}</Text>
-          </TouchableOpacity>
+          </BouncyPressable>
         </View>
 
         {isLoadingRooms ? (
@@ -274,9 +279,9 @@ export const LobbyScreen: React.FC = () => {
                 <Text style={styles.roomCodeText}>ROOM {rm.code}</Text>
                 <Text style={styles.roomHostText}>Host: {rm.hostName} • {rm.playerCount}/{rm.maxPlayers} Players</Text>
               </View>
-              <TouchableOpacity style={styles.quickJoinBtn} onPress={() => handleJoinRoom(rm.code)}>
+              <BouncyPressable style={styles.quickJoinBtn} onPress={() => handleJoinRoom(rm.code)}>
                 <Text style={styles.quickJoinText}>QUICK JOIN</Text>
-              </TouchableOpacity>
+              </BouncyPressable>
             </View>
           ))
         )}
@@ -293,12 +298,12 @@ export const LobbyScreen: React.FC = () => {
           onChangeText={setServerUrlInput}
           onSubmitEditing={() => setServerUrl(serverUrlInput.trim())}
         />
-        <TouchableOpacity
+        <BouncyPressable
           style={styles.updateUrlBtn}
           onPress={() => setServerUrl(serverUrlInput.trim())}
         >
           <Text style={styles.updateUrlText}>UPDATE SERVER URL</Text>
-        </TouchableOpacity>
+        </BouncyPressable>
       </View>
     </ScrollView>
   );

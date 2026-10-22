@@ -1,161 +1,60 @@
-import React from "react";
-import { View, StyleSheet, TouchableOpacity, Text, Dimensions } from "react-native";
+import React, { useEffect } from "react";
+import { View, StyleSheet, Text, Dimensions } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
 import Svg, {
   Rect,
   Text as SvgText,
   G,
-  Circle,
   Path,
   Defs,
   LinearGradient,
   Stop,
 } from "react-native-svg";
 import { BOARD_SPACES, COLOR_GROUP_COLORS } from "../../data/boardData";
-import { getTokenMeta } from "../../data/tokens";
 import { useGameStore } from "../../store/gameStore";
 import { BoardSpace, Player } from "../../types";
-
-const BOARD_SIZE = 1000;
-const CORNER_SIZE = 130;
-const TILE_WIDTH = (BOARD_SIZE - CORNER_SIZE * 2) / 9; // 740 / 9 = ~82.22
-
-export interface TileBounds {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  rotation: number;
-  centerX: number;
-  centerY: number;
-}
-
-export function getTileBounds(id: number): TileBounds {
-  if (id === 0) {
-    // GO (bottom right)
-    return {
-      x: BOARD_SIZE - CORNER_SIZE,
-      y: BOARD_SIZE - CORNER_SIZE,
-      width: CORNER_SIZE,
-      height: CORNER_SIZE,
-      rotation: 0,
-      centerX: BOARD_SIZE - CORNER_SIZE / 2,
-      centerY: BOARD_SIZE - CORNER_SIZE / 2,
-    };
-  }
-  if (id > 0 && id < 10) {
-    // Bottom edge (1..9, right to left)
-    const offset = 9 - id;
-    const x = CORNER_SIZE + offset * TILE_WIDTH;
-    const y = BOARD_SIZE - CORNER_SIZE;
-    return {
-      x,
-      y,
-      width: TILE_WIDTH,
-      height: CORNER_SIZE,
-      rotation: 0,
-      centerX: x + TILE_WIDTH / 2,
-      centerY: y + CORNER_SIZE / 2,
-    };
-  }
-  if (id === 10) {
-    // Jail (bottom left)
-    return {
-      x: 0,
-      y: BOARD_SIZE - CORNER_SIZE,
-      width: CORNER_SIZE,
-      height: CORNER_SIZE,
-      rotation: 0,
-      centerX: CORNER_SIZE / 2,
-      centerY: BOARD_SIZE - CORNER_SIZE / 2,
-    };
-  }
-  if (id > 10 && id < 20) {
-    // Left edge (11..19, bottom to top)
-    const offset = 19 - id;
-    const x = 0;
-    const y = CORNER_SIZE + offset * TILE_WIDTH;
-    return {
-      x,
-      y,
-      width: CORNER_SIZE,
-      height: TILE_WIDTH,
-      rotation: 90,
-      centerX: CORNER_SIZE / 2,
-      centerY: y + TILE_WIDTH / 2,
-    };
-  }
-  if (id === 20) {
-    // Free Parking (top left)
-    return {
-      x: 0,
-      y: 0,
-      width: CORNER_SIZE,
-      height: CORNER_SIZE,
-      rotation: 0,
-      centerX: CORNER_SIZE / 2,
-      centerY: CORNER_SIZE / 2,
-    };
-  }
-  if (id > 20 && id < 30) {
-    // Top edge (21..29, left to right)
-    const offset = id - 21;
-    const x = CORNER_SIZE + offset * TILE_WIDTH;
-    const y = 0;
-    return {
-      x,
-      y,
-      width: TILE_WIDTH,
-      height: CORNER_SIZE,
-      rotation: 180,
-      centerX: x + TILE_WIDTH / 2,
-      centerY: CORNER_SIZE / 2,
-    };
-  }
-  if (id === 30) {
-    // Go To Jail (top right)
-    return {
-      x: BOARD_SIZE - CORNER_SIZE,
-      y: 0,
-      width: CORNER_SIZE,
-      height: CORNER_SIZE,
-      rotation: 0,
-      centerX: BOARD_SIZE - CORNER_SIZE / 2,
-      centerY: CORNER_SIZE / 2,
-    };
-  }
-  // Right edge (31..39, top to bottom)
-  const offset = id - 31;
-  const x = BOARD_SIZE - CORNER_SIZE;
-  const y = CORNER_SIZE + offset * TILE_WIDTH;
-  return {
-    x,
-    y,
-    width: CORNER_SIZE,
-    height: TILE_WIDTH,
-    rotation: 270,
-    centerX: BOARD_SIZE - CORNER_SIZE / 2,
-    centerY: y + TILE_WIDTH / 2,
-  };
-}
+import { BOARD_SIZE, CORNER_SIZE, getTileBounds } from "./boardGeometry";
+import { BoardTilePressLayer } from "./BoardTilePressLayer";
+import { TokenLayer } from "./TokenLayer";
+import { DiceOverlay } from "./DiceOverlay";
+import { BouncyPressable } from "../ui/BouncyPressable";
 
 export const BoardView: React.FC = () => {
   const gameState = useGameStore((s) => s.gameState);
-  const setActiveModal = useGameStore((s) => s.setActiveModal);
-  const [zoomLevel, setZoomLevel] = React.useState(1);
 
   const players: Player[] = gameState ? Object.values(gameState.players) : [];
   const properties = gameState?.properties || {};
 
-  // Group players by current position for pawn layout
-  const playersByPosition: Record<number, Player[]> = {};
-  for (const p of players) {
-    if (!p.isBankrupt) {
-      if (!playersByPosition[p.position]) {
-        playersByPosition[p.position] = [];
-      }
-      playersByPosition[p.position]!.push(p);
-    }
-  }
+  const zoom = useSharedValue(1);
+  const entrance = useSharedValue(0);
+
+  useEffect(() => {
+    entrance.value = withSpring(1, { damping: 15, stiffness: 150, mass: 0.8 });
+  }, [entrance]);
+
+  const boardAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: entrance.value,
+    transform: [
+      { scale: zoom.value * (0.94 + entrance.value * 0.06) },
+      { perspective: 900 },
+      { rotateX: "10deg" },
+    ],
+  }));
+
+  const activePlayerId = gameState
+    ? gameState.playerOrder[gameState.activePlayerIndex]
+    : undefined;
+  const activePlayer = activePlayerId
+    ? gameState?.players[activePlayerId]
+    : undefined;
+  const dice = gameState?.lastDiceRoll?.dice ?? null;
+  const diceTriggerKey = gameState?.lastDiceRoll
+    ? `${activePlayer?.id ?? "none"}:${gameState.lastDiceRoll.dice[0]}-${gameState.lastDiceRoll.dice[1]}:${gameState.lastDiceRoll.consecutiveDoubles}`
+    : null;
 
   const renderTile = (space: BoardSpace) => {
     const b = getTileBounds(space.id);
@@ -167,10 +66,7 @@ export const BoardView: React.FC = () => {
     let stripeHeight = 24;
 
     return (
-      <G
-        key={`tile-${space.id}`}
-        onPress={() => setActiveModal("deed", space.id)}
-      >
+      <G key={`tile-${space.id}`}>
         {/* Tile base */}
         <Rect
           x={b.x}
@@ -307,84 +203,48 @@ export const BoardView: React.FC = () => {
     );
   };
 
-  const renderPlayerTokens = (spaceId: number) => {
-    const occupants = playersByPosition[spaceId] || [];
-    if (occupants.length === 0) return null;
-
-    const b = getTileBounds(spaceId);
-
-    return (
-      <G key={`pawns-${spaceId}`}>
-        {occupants.map((player, idx) => {
-          const meta = getTokenMeta(player.token);
-          const offsetX = occupants.length === 1 ? 0 : (idx % 2 === 0 ? -12 : 12);
-          const offsetY = occupants.length <= 2 ? 0 : (idx < 2 ? -10 : 10);
-          const px = b.centerX + offsetX;
-          const py = b.centerY + offsetY + (b.height > b.width ? 18 : 6);
-
-          return (
-            <G key={`pawn-${player.id}`}>
-              <Circle
-                cx={px}
-                cy={py}
-                r="13"
-                fill={meta.color}
-                stroke="#ffffff"
-                strokeWidth="2"
-              />
-              <SvgText
-                x={px}
-                y={py + 1}
-                fontSize="12"
-                textAnchor="middle"
-                alignmentBaseline="middle"
-              >
-                {meta.emoji}
-              </SvgText>
-            </G>
-          );
-        })}
-      </G>
-    );
-  };
-
   return (
     <View style={styles.container}>
       {/* Zoom controls */}
       <View style={styles.zoomBar}>
-        <TouchableOpacity
+        <BouncyPressable
           style={styles.zoomButton}
-          onPress={() => setZoomLevel((z) => Math.min(1.4, z + 0.1))}
+          onPress={() => {
+            zoom.set(
+              withSpring(Math.min(1.4, zoom.get() + 0.1), {
+                damping: 16,
+                stiffness: 220,
+              })
+            );
+          }}
         >
           <Text style={styles.zoomText}>＋</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
+        </BouncyPressable>
+        <BouncyPressable
           style={styles.zoomButton}
-          onPress={() => setZoomLevel((z) => Math.max(0.6, z - 0.1))}
+          onPress={() => {
+            zoom.set(
+              withSpring(Math.max(0.6, zoom.get() - 0.1), {
+                damping: 16,
+                stiffness: 220,
+              })
+            );
+          }}
         >
           <Text style={styles.zoomText}>－</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
+        </BouncyPressable>
+        <BouncyPressable
           style={styles.zoomButton}
-          onPress={() => setZoomLevel(1)}
+          onPress={() => {
+            zoom.set(withSpring(1, { damping: 16, stiffness: 220 }));
+          }}
         >
           <Text style={styles.zoomText}>Reset</Text>
-        </TouchableOpacity>
+        </BouncyPressable>
       </View>
 
-      {/* SVG Board */}
-      <View
-        style={[
-          styles.boardWrapper,
-          {
-            transform: [
-              { scale: zoomLevel },
-              { perspective: 900 },
-              { rotateX: "10deg" },
-            ],
-          },
-        ]}
-      >
+      {/* 2.5D board with animated pawns and dice */}
+      <Animated.View style={[styles.boardWrapper, boardAnimatedStyle]}>
         <Svg
           width="100%"
           height="100%"
@@ -528,9 +388,16 @@ export const BoardView: React.FC = () => {
           </G>
 
           {BOARD_SPACES.map(renderTile)}
-          {BOARD_SPACES.map((space) => renderPlayerTokens(space.id))}
         </Svg>
-      </View>
+
+        <BoardTilePressLayer boardSize={boardPixelSize} />
+        <TokenLayer players={players} boardSize={boardPixelSize} />
+        <DiceOverlay
+          dice={dice}
+          triggerKey={diceTriggerKey}
+          boardSize={boardPixelSize}
+        />
+      </Animated.View>
     </View>
   );
 };

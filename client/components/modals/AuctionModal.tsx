@@ -1,8 +1,10 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, Modal, TouchableOpacity, TextInput } from "react-native";
+import { View, Text, StyleSheet, Modal, TextInput } from "react-native";
 import { useGameStore } from "../../store/gameStore";
 import { getSpace, COLOR_GROUP_COLORS } from "../../data/boardData";
 import { socketService } from "../../services/socketService";
+import { BouncyPressable } from "../ui/BouncyPressable";
+import { PopIn } from "../ui/PopIn";
 
 export const AuctionModal: React.FC = () => {
   const gameState = useGameStore((s) => s.gameState);
@@ -36,9 +38,9 @@ export const AuctionModal: React.FC = () => {
   };
 
   return (
-    <Modal visible transparent animationType="slide">
+    <Modal visible transparent animationType="fade">
       <View style={styles.backdrop}>
-        <View style={styles.card}>
+        <PopIn style={styles.card}>
           <View style={[styles.header, { backgroundColor: color }]}>
             <Text style={styles.subTitle}>PUBLIC AUCTION</Text>
             <Text style={styles.propertyName}>{space.name}</Text>
@@ -62,24 +64,24 @@ export const AuctionModal: React.FC = () => {
                 <Text style={styles.myCash}>Your Cash: ${myPlayer?.cash || 0}</Text>
 
                 <View style={styles.quickRow}>
-                  <TouchableOpacity
+                  <BouncyPressable
                     style={styles.quickBtn}
                     onPress={() => handleQuickBid(10)}
                   >
                     <Text style={styles.quickText}>+$10</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
+                  </BouncyPressable>
+                  <BouncyPressable
                     style={styles.quickBtn}
                     onPress={() => handleQuickBid(50)}
                   >
                     <Text style={styles.quickText}>+$50</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
+                  </BouncyPressable>
+                  <BouncyPressable
                     style={styles.quickBtn}
                     onPress={() => handleQuickBid(100)}
                   >
                     <Text style={styles.quickText}>+$100</Text>
-                  </TouchableOpacity>
+                  </BouncyPressable>
                 </View>
 
                 <View style={styles.customRow}>
@@ -91,17 +93,17 @@ export const AuctionModal: React.FC = () => {
                     value={customBid}
                     onChangeText={setCustomBid}
                   />
-                  <TouchableOpacity style={styles.customBtn} onPress={handleCustomBid}>
+                  <BouncyPressable style={styles.customBtn} onPress={handleCustomBid}>
                     <Text style={styles.customBtnText}>BID</Text>
-                  </TouchableOpacity>
+                  </BouncyPressable>
                 </View>
 
-                <TouchableOpacity
+                <BouncyPressable
                   style={styles.foldBtn}
                   onPress={() => socketService.auctionFold()}
                 >
                   <Text style={styles.foldText}>FOLD / PASS</Text>
-                </TouchableOpacity>
+                </BouncyPressable>
               </View>
             ) : (
               <View style={styles.foldedNotice}>
@@ -111,7 +113,7 @@ export const AuctionModal: React.FC = () => {
               </View>
             )}
           </View>
-        </View>
+        </PopIn>
       </View>
     </Modal>
   );

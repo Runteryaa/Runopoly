@@ -1,7 +1,10 @@
 import React from "react";
-import { View, Text, StyleSheet, Modal, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, Modal } from "react-native";
 import { useGameStore } from "../../store/gameStore";
 import { getTokenMeta } from "../../data/tokens";
+import { BouncyPressable } from "../ui/BouncyPressable";
+import { Floating } from "../ui/Floating";
+import { PopIn } from "../ui/PopIn";
 
 export const GameOverBanner: React.FC = () => {
   const gameState = useGameStore((s) => s.gameState);
@@ -17,8 +20,10 @@ export const GameOverBanner: React.FC = () => {
   return (
     <Modal visible transparent animationType="fade">
       <View style={styles.backdrop}>
-        <View style={styles.card}>
-          <Text style={styles.trophy}>🏆</Text>
+        <PopIn style={styles.card}>
+          <Floating distance={9} duration={1400}>
+            <Text style={styles.trophy}>🏆</Text>
+          </Floating>
           <Text style={styles.title}>VICTORY!</Text>
           <Text style={styles.winnerName}>{winner.nickname} WINS!</Text>
           <Text style={styles.winnerSub}>The ultimate tycoon of RunoPoly</Text>
@@ -31,10 +36,10 @@ export const GameOverBanner: React.FC = () => {
             Final Net Worth: ${winner.cash}
           </Text>
 
-          <TouchableOpacity style={styles.returnBtn} onPress={resetGame}>
+          <BouncyPressable style={styles.returnBtn} onPress={resetGame}>
             <Text style={styles.returnBtnText}>RETURN TO LOBBY</Text>
-          </TouchableOpacity>
-        </View>
+          </BouncyPressable>
+        </PopIn>
       </View>
     </Modal>
   );

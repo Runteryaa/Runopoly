@@ -3,6 +3,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { Redirect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { WaitingRoom } from "../../components/lobby/WaitingRoom";
+import { ScreenFade } from "../../components/ui/ScreenFade";
 import { useGameStore } from "../../store/gameStore";
 
 export default function LobbyRoute() {
@@ -19,14 +20,16 @@ export default function LobbyRoute() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
-      {gameState ? (
-        <WaitingRoom />
-      ) : (
-        <View style={styles.loading}>
-          <ActivityIndicator size="large" color="#38bdf8" />
-          <Text style={styles.loadingText}>Joining room {roomCode}...</Text>
-        </View>
-      )}
+      <ScreenFade>
+        {gameState ? (
+          <WaitingRoom />
+        ) : (
+          <View style={styles.loading}>
+            <ActivityIndicator size="large" color="#38bdf8" />
+            <Text style={styles.loadingText}>Joining room {roomCode}...</Text>
+          </View>
+        )}
+      </ScreenFade>
     </SafeAreaView>
   );
 }

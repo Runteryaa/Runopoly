@@ -1,8 +1,10 @@
 import React from "react";
-import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView } from "react-native";
+import { View, Text, StyleSheet, Modal, ScrollView } from "react-native";
 import { useGameStore } from "../../store/gameStore";
 import { getSpace, COLOR_GROUP_COLORS } from "../../data/boardData";
 import { socketService } from "../../services/socketService";
+import { BouncyPressable } from "../ui/BouncyPressable";
+import { PopIn } from "../ui/PopIn";
 
 export const DeedModal: React.FC = () => {
   const activeModal = useGameStore((s) => s.activeModal);
@@ -22,7 +24,7 @@ export const DeedModal: React.FC = () => {
   return (
     <Modal visible transparent animationType="fade" onRequestClose={() => setActiveModal(null)}>
       <View style={styles.backdrop}>
-        <View style={styles.card}>
+        <PopIn style={styles.card}>
           {/* Header Color Strip */}
           <View style={[styles.header, { backgroundColor: color }]}>
             <Text style={styles.titleDeed}>TITLE DEED</Text>
@@ -112,48 +114,48 @@ export const DeedModal: React.FC = () => {
               <View style={styles.actionsBox}>
                 {space.type === "property" && (
                   <View style={styles.actionRow}>
-                    <TouchableOpacity
+                    <BouncyPressable
                       style={[styles.actionBtn, styles.btnGreen]}
                       onPress={() => socketService.buildHouse(space.id)}
                     >
                       <Text style={styles.actionBtnText}>+ Build House (${space.houseCost})</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
+                    </BouncyPressable>
+                    <BouncyPressable
                       style={[styles.actionBtn, styles.btnOrange]}
                       onPress={() => socketService.sellHouse(space.id)}
                     >
                       <Text style={styles.actionBtnText}>- Sell House</Text>
-                    </TouchableOpacity>
+                    </BouncyPressable>
                   </View>
                 )}
 
                 <View style={styles.actionRow}>
                   {!prop?.isMortgaged ? (
-                    <TouchableOpacity
+                    <BouncyPressable
                       style={[styles.actionBtn, styles.btnRed]}
                       onPress={() => socketService.mortgageProperty(space.id)}
                     >
                       <Text style={styles.actionBtnText}>Mortgage (+${space.mortgageValue})</Text>
-                    </TouchableOpacity>
+                    </BouncyPressable>
                   ) : (
-                    <TouchableOpacity
+                    <BouncyPressable
                       style={[styles.actionBtn, styles.btnBlue]}
                       onPress={() => socketService.unmortgageProperty(space.id)}
                     >
                       <Text style={styles.actionBtnText}>
                         Unmortgage (-${Math.round(space.mortgageValue * 1.1)})
                       </Text>
-                    </TouchableOpacity>
+                    </BouncyPressable>
                   )}
                 </View>
               </View>
             )}
           </ScrollView>
 
-          <TouchableOpacity style={styles.closeBtn} onPress={() => setActiveModal(null)}>
+          <BouncyPressable style={styles.closeBtn} onPress={() => setActiveModal(null)}>
             <Text style={styles.closeBtnText}>CLOSE</Text>
-          </TouchableOpacity>
-        </View>
+          </BouncyPressable>
+        </PopIn>
       </View>
     </Modal>
   );

@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, TextInput } from "react-native";
+import { View, Text, StyleSheet, Modal, ScrollView, TextInput } from "react-native";
 import { useGameStore } from "../../store/gameStore";
 import { socketService } from "../../services/socketService";
+import { BouncyPressable } from "../ui/BouncyPressable";
 
 const QUICK_EMOJIS = ["🎩", "💸", "🎲", "😢", "🔥", "🏆", "👍", "👎"];
 
@@ -40,26 +41,26 @@ export const ChatModal: React.FC = () => {
         <View style={styles.card}>
           <View style={styles.header}>
             <Text style={styles.title}>MATCH CHAT & REACTIONS</Text>
-            <TouchableOpacity
+            <BouncyPressable
               onPress={() => {
                 markChatRead();
                 setActiveModal(null);
               }}
             >
               <Text style={styles.closeIcon}>✕</Text>
-            </TouchableOpacity>
+            </BouncyPressable>
           </View>
 
           {/* Quick Reaction Emojis */}
           <View style={styles.emojiRow}>
             {QUICK_EMOJIS.map((emoji) => (
-              <TouchableOpacity
+              <BouncyPressable
                 key={`emoji-${emoji}`}
                 style={styles.emojiBtn}
                 onPress={() => handleSendEmoji(emoji)}
               >
                 <Text style={styles.emojiText}>{emoji}</Text>
-              </TouchableOpacity>
+              </BouncyPressable>
             ))}
           </View>
 
@@ -93,9 +94,9 @@ export const ChatModal: React.FC = () => {
               onChangeText={setInputText}
               onSubmitEditing={handleSendText}
             />
-            <TouchableOpacity style={styles.sendBtn} onPress={handleSendText}>
+            <BouncyPressable style={styles.sendBtn} onPress={handleSendText}>
               <Text style={styles.sendBtnText}>SEND</Text>
-            </TouchableOpacity>
+            </BouncyPressable>
           </View>
         </View>
       </View>

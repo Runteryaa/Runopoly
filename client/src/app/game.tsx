@@ -10,6 +10,7 @@ import { PlayerListBar } from "../../components/hud/PlayerListBar";
 import { AuctionModal } from "../../components/modals/AuctionModal";
 import { DeedModal } from "../../components/modals/DeedModal";
 import { TradeModal } from "../../components/modals/TradeModal";
+import { ScreenFade } from "../../components/ui/ScreenFade";
 import { useGameStore } from "../../store/gameStore";
 
 export default function GameRoute() {
@@ -26,24 +27,26 @@ export default function GameRoute() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
-      <View style={styles.gameContainer}>
-        <PlayerListBar />
+      <ScreenFade>
+        <View style={styles.gameContainer}>
+          <PlayerListBar />
 
-        <ScrollView
-          contentContainerStyle={styles.boardScroll}
-          showsVerticalScrollIndicator={false}
-        >
-          <BoardView />
-        </ScrollView>
+          <ScrollView
+            contentContainerStyle={styles.boardScroll}
+            showsVerticalScrollIndicator={false}
+          >
+            <BoardView />
+          </ScrollView>
 
-        <ActionBar />
+          <ActionBar />
 
-        <DeedModal />
-        <TradeModal />
-        <AuctionModal />
-        <ChatModal />
-        <GameOverBanner />
-      </View>
+          <DeedModal />
+          <TradeModal />
+          <AuctionModal />
+          <ChatModal />
+          <GameOverBanner />
+        </View>
+      </ScreenFade>
     </SafeAreaView>
   );
 }

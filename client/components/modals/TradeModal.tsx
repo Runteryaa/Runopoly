@@ -1,9 +1,11 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, TextInput } from "react-native";
+import { View, Text, StyleSheet, Modal, ScrollView, TextInput } from "react-native";
 import { useGameStore } from "../../store/gameStore";
 import { getSpace } from "../../data/boardData";
 import { socketService } from "../../services/socketService";
 import { Player } from "../../types";
+import { BouncyPressable } from "../ui/BouncyPressable";
+import { PopIn } from "../ui/PopIn";
 
 export const TradeModal: React.FC = () => {
   const activeModal = useGameStore((s) => s.activeModal);
@@ -76,14 +78,14 @@ export const TradeModal: React.FC = () => {
   };
 
   return (
-    <Modal visible transparent animationType="slide" onRequestClose={() => setActiveModal(null)}>
+    <Modal visible transparent animationType="fade" onRequestClose={() => setActiveModal(null)}>
       <View style={styles.backdrop}>
-        <View style={styles.card}>
+        <PopIn style={styles.card}>
           <View style={styles.header}>
             <Text style={styles.headerTitle}>TRADE PROPOSAL</Text>
-            <TouchableOpacity onPress={() => setActiveModal(null)}>
+            <BouncyPressable onPress={() => setActiveModal(null)}>
               <Text style={styles.closeIcon}>✕</Text>
-            </TouchableOpacity>
+            </BouncyPressable>
           </View>
 
           {incomingTrade && (
@@ -98,18 +100,18 @@ export const TradeModal: React.FC = () => {
                 Demanded: ${incomingTrade.requestedCash} + {incomingTrade.requestedProperties.length} properties
               </Text>
               <View style={styles.incomingButtons}>
-                <TouchableOpacity
+                <BouncyPressable
                   style={[styles.smallBtn, styles.btnGreen]}
                   onPress={() => socketService.respondTrade(incomingTrade.id, true)}
                 >
                   <Text style={styles.btnText}>ACCEPT</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
+                </BouncyPressable>
+                <BouncyPressable
                   style={[styles.smallBtn, styles.btnRed]}
                   onPress={() => socketService.respondTrade(incomingTrade.id, false)}
                 >
                   <Text style={styles.btnText}>DECLINE</Text>
-                </TouchableOpacity>
+                </BouncyPressable>
               </View>
             </View>
           )}
@@ -118,7 +120,7 @@ export const TradeModal: React.FC = () => {
             <Text style={styles.sectionLabel}>Select Opponent:</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.playerPicker}>
               {players.map((p) => (
-                <TouchableOpacity
+                <BouncyPressable
                   key={p.id}
                   style={[styles.pickerTab, currentTargetId === p.id && styles.pickerTabActive]}
                   onPress={() => {
@@ -129,7 +131,7 @@ export const TradeModal: React.FC = () => {
                   <Text style={[styles.pickerText, currentTargetId === p.id && styles.pickerTextActive]}>
                     {p.nickname} (${p.cash})
                   </Text>
-                </TouchableOpacity>
+                </BouncyPressable>
               ))}
             </ScrollView>
 
@@ -150,7 +152,7 @@ export const TradeModal: React.FC = () => {
                     const space = getSpace(id);
                     const isSelected = selectedOfferProps.includes(id);
                     return (
-                      <TouchableOpacity
+                      <BouncyPressable
                         key={`my-prop-${id}`}
                         style={[styles.propItem, isSelected && styles.propItemOffer]}
                         onPress={() => toggleOfferProp(id)}
@@ -158,7 +160,7 @@ export const TradeModal: React.FC = () => {
                         <Text style={styles.propName} numberOfLines={1}>
                           {space.name}
                         </Text>
-                      </TouchableOpacity>
+                      </BouncyPressable>
                     );
                   })}
                 </View>
@@ -180,7 +182,7 @@ export const TradeModal: React.FC = () => {
                     const space = getSpace(id);
                     const isSelected = selectedReqProps.includes(id);
                     return (
-                      <TouchableOpacity
+                      <BouncyPressable
                         key={`target-prop-${id}`}
                         style={[styles.propItem, isSelected && styles.propItemReq]}
                         onPress={() => toggleReqProp(id)}
@@ -188,18 +190,18 @@ export const TradeModal: React.FC = () => {
                         <Text style={styles.propName} numberOfLines={1}>
                           {space.name}
                         </Text>
-                      </TouchableOpacity>
+                      </BouncyPressable>
                     );
                   })}
                 </View>
               </View>
             </View>
 
-            <TouchableOpacity style={styles.sendBtn} onPress={handleSendProposal}>
+            <BouncyPressable style={styles.sendBtn} onPress={handleSendProposal}>
               <Text style={styles.sendBtnText}>PROPOSE TRADE OFFER</Text>
-            </TouchableOpacity>
+            </BouncyPressable>
           </ScrollView>
-        </View>
+        </PopIn>
       </View>
     </Modal>
   );

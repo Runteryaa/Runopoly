@@ -1,9 +1,11 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
+import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { useGameStore } from "../../store/gameStore";
 import { getTokenMeta } from "../../data/tokens";
 import { socketService } from "../../services/socketService";
 import { Player } from "../../types";
+import { BouncyPressable } from "../ui/BouncyPressable";
+import { PopIn } from "../ui/PopIn";
 
 export const WaitingRoom: React.FC = () => {
   const gameState = useGameStore((s) => s.gameState);
@@ -25,7 +27,7 @@ export const WaitingRoom: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.card}>
+      <PopIn style={styles.card}>
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>MATCH LOBBY</Text>
@@ -48,7 +50,7 @@ export const WaitingRoom: React.FC = () => {
             const isRoomHost = p.id === gameState.hostId;
 
             return (
-              <View key={p.id} style={styles.playerRow}>
+              <PopIn key={p.id} from="bottom" style={styles.playerRow}>
                 <View style={[styles.tokenCircle, { backgroundColor: meta.color }]}>
                   <Text style={styles.tokenEmoji}>{meta.emoji}</Text>
                 </View>
@@ -63,7 +65,7 @@ export const WaitingRoom: React.FC = () => {
                 <View style={[styles.readyPill, p.isReady ? styles.pillReady : styles.pillWaiting]}>
                   <Text style={styles.readyText}>{p.isReady ? "READY" : "WAITING"}</Text>
                 </View>
-              </View>
+              </PopIn>
             );
           })}
         </ScrollView>
@@ -71,18 +73,18 @@ export const WaitingRoom: React.FC = () => {
         {/* Action Controls */}
         <View style={styles.actions}>
           {!isHost && (
-            <TouchableOpacity
+            <BouncyPressable
               style={[styles.btn, myPlayer?.isReady ? styles.btnNotReady : styles.btnReady]}
               onPress={handleToggleReady}
             >
               <Text style={styles.btnText}>
                 {myPlayer?.isReady ? "SET NOT READY" : "I'M READY!"}
               </Text>
-            </TouchableOpacity>
+            </BouncyPressable>
           )}
 
           {isHost && (
-            <TouchableOpacity
+            <BouncyPressable
               style={[styles.btn, canStart ? styles.btnStart : styles.btnDisabled]}
               disabled={!canStart}
               onPress={() => socketService.startGame()}
@@ -90,14 +92,14 @@ export const WaitingRoom: React.FC = () => {
               <Text style={styles.btnText}>
                 {players.length < 2 ? "WAITING FOR 2+ PLAYERS..." : "🚀 START GAME"}
               </Text>
-            </TouchableOpacity>
+            </BouncyPressable>
           )}
 
-          <TouchableOpacity style={styles.leaveBtn} onPress={resetGame}>
+          <BouncyPressable style={styles.leaveBtn} onPress={resetGame}>
             <Text style={styles.leaveText}>LEAVE LOBBY</Text>
-          </TouchableOpacity>
+          </BouncyPressable>
         </View>
-      </View>
+      </PopIn>
     </View>
   );
 };
