@@ -27,6 +27,11 @@ A modern, cross-platform real-time multiplayer Monopoly game engine and interact
 ```text
 RunoPoly/
 ├── client/                     # Expo React Native App (iOS, Android, Web)
+│   ├── src/app/                # Expo Router file-based routes
+│   │   ├── _layout.tsx         # Root Stack layout, theme & safe areas
+│   │   ├── index.tsx           # Welcome screen (create/join room)
+│   │   ├── lobby.tsx           # Waiting room & ready-up flow
+│   │   └── game.tsx            # Board, HUD, modals & chat
 │   ├── components/
 │   │   ├── board/              # 2.5D SVG Board with tiles, pawns, center emblem
 │   │   ├── hud/                # Player list bar, action dock, game over screen
@@ -37,7 +42,7 @@ RunoPoly/
 │   ├── store/                  # Zustand reactive client state store
 │   ├── services/               # Socket.io client service
 │   ├── types/                  # Shared game contracts
-│   └── App.tsx                 # Root application
+│   └── app.json                # Expo config (Expo Router, typed routes)
 │
 ├── server/                     # Node.js + Express + Socket.io Server
 │   ├── src/

@@ -9,6 +9,7 @@ import {
   Switch,
   ActivityIndicator,
 } from "react-native";
+import { useRouter } from "expo-router";
 import { useGameStore } from "../../store/gameStore";
 import { TOKENS } from "../../data/tokens";
 import { socketService } from "../../services/socketService";
@@ -23,6 +24,7 @@ interface PublicRoomItem {
 }
 
 export const LobbyScreen: React.FC = () => {
+  const router = useRouter();
   const serverUrl = useGameStore((s) => s.serverUrl);
   const setServerUrl = useGameStore((s) => s.setServerUrl);
   const nickname = useGameStore((s) => s.nickname);
@@ -85,6 +87,7 @@ export const LobbyScreen: React.FC = () => {
     socketService.createRoom(nick, selectedToken, rules, (res) => {
       if (res.success && res.roomCode && res.playerId) {
         setSession(res.playerId, res.roomCode);
+        router.replace("/lobby");
       } else {
         setErrorMessage(res.error || "Failed to create room.");
       }
@@ -104,6 +107,7 @@ export const LobbyScreen: React.FC = () => {
     socketService.joinRoom(code, nick, selectedToken, undefined, (res) => {
       if (res.success && res.playerId) {
         setSession(res.playerId, code);
+        router.replace("/lobby");
       } else {
         setErrorMessage(res.error || "Failed to join room.");
       }
