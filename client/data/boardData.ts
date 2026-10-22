@@ -1,0 +1,62 @@
+import { BoardSpace, ColorGroup } from "../types/index.js";
+
+export const COLOR_GROUP_COLORS: Record<ColorGroup, string> = {
+  brown: "#92400e",
+  light_blue: "#38bdf8",
+  pink: "#f472b6",
+  orange: "#fb923c",
+  red: "#ef4444",
+  yellow: "#fbbf24",
+  green: "#22c55e",
+  dark_blue: "#2563eb",
+  railroad: "#475569",
+  utility: "#a855f7",
+  special: "#334155",
+};
+
+export const BOARD_SPACES: BoardSpace[] = [
+  { id: 0, name: "GO", type: "go", group: "special", cost: 0, rent: [], houseCost: 0, mortgageValue: 0 },
+  { id: 1, name: "Mediterranean Ave", type: "property", group: "brown", cost: 60, rent: [2, 10, 30, 90, 160, 250], houseCost: 50, mortgageValue: 30 },
+  { id: 2, name: "Community Chest", type: "community_chest", group: "special", cost: 0, rent: [], houseCost: 0, mortgageValue: 0 },
+  { id: 3, name: "Baltic Ave", type: "property", group: "brown", cost: 60, rent: [4, 20, 60, 180, 320, 450], houseCost: 50, mortgageValue: 30 },
+  { id: 4, name: "Income Tax", type: "tax", group: "special", cost: 0, rent: [], houseCost: 0, mortgageValue: 0, taxAmount: 200 },
+  { id: 5, name: "Reading Railroad", type: "railroad", group: "railroad", cost: 200, rent: [25, 50, 100, 200], houseCost: 0, mortgageValue: 100 },
+  { id: 6, name: "Oriental Ave", type: "property", group: "light_blue", cost: 100, rent: [6, 30, 90, 270, 400, 550], houseCost: 50, mortgageValue: 50 },
+  { id: 7, name: "Chance", type: "chance", group: "special", cost: 0, rent: [], houseCost: 0, mortgageValue: 0 },
+  { id: 8, name: "Vermont Ave", type: "property", group: "light_blue", cost: 100, rent: [6, 30, 90, 270, 400, 550], houseCost: 50, mortgageValue: 50 },
+  { id: 9, name: "Connecticut Ave", type: "property", group: "light_blue", cost: 120, rent: [8, 40, 100, 300, 450, 600], houseCost: 50, mortgageValue: 60 },
+  { id: 10, name: "Jail / Visiting", type: "jail", group: "special", cost: 0, rent: [], houseCost: 0, mortgageValue: 0 },
+  { id: 11, name: "St. Charles Place", type: "property", group: "pink", cost: 140, rent: [10, 50, 150, 450, 625, 750], houseCost: 100, mortgageValue: 70 },
+  { id: 12, name: "Electric Company", type: "utility", group: "utility", cost: 150, rent: [], houseCost: 0, mortgageValue: 75 },
+  { id: 13, name: "States Ave", type: "property", group: "pink", cost: 140, rent: [10, 50, 150, 450, 625, 750], houseCost: 100, mortgageValue: 70 },
+  { id: 14, name: "Virginia Ave", type: "property", group: "pink", cost: 160, rent: [12, 60, 180, 500, 700, 900], houseCost: 100, mortgageValue: 80 },
+  { id: 15, name: "Pennsylvania Railroad", type: "railroad", group: "railroad", cost: 200, rent: [25, 50, 100, 200], houseCost: 0, mortgageValue: 100 },
+  { id: 16, name: "St. James Place", type: "property", group: "orange", cost: 180, rent: [14, 70, 200, 550, 750, 950], houseCost: 100, mortgageValue: 90 },
+  { id: 17, name: "Community Chest", type: "community_chest", group: "special", cost: 0, rent: [], houseCost: 0, mortgageValue: 0 },
+  { id: 18, name: "Tennessee Ave", type: "property", group: "orange", cost: 180, rent: [14, 70, 200, 550, 750, 950], houseCost: 100, mortgageValue: 90 },
+  { id: 19, name: "New York Ave", type: "property", group: "orange", cost: 200, rent: [16, 80, 220, 600, 800, 1000], houseCost: 100, mortgageValue: 100 },
+  { id: 20, name: "Free Parking", type: "free_parking", group: "special", cost: 0, rent: [], houseCost: 0, mortgageValue: 0 },
+  { id: 21, name: "Kentucky Ave", type: "property", group: "red", cost: 220, rent: [18, 90, 250, 700, 875, 1050], houseCost: 150, mortgageValue: 110 },
+  { id: 22, name: "Chance", type: "chance", group: "special", cost: 0, rent: [], houseCost: 0, mortgageValue: 0 },
+  { id: 23, name: "Indiana Ave", type: "property", group: "red", cost: 220, rent: [18, 90, 250, 700, 875, 1050], houseCost: 150, mortgageValue: 110 },
+  { id: 24, name: "Illinois Ave", type: "property", group: "red", cost: 240, rent: [20, 100, 300, 750, 925, 1100], houseCost: 150, mortgageValue: 120 },
+  { id: 25, name: "B. & O. Railroad", type: "railroad", group: "railroad", cost: 200, rent: [25, 50, 100, 200], houseCost: 0, mortgageValue: 100 },
+  { id: 26, name: "Atlantic Ave", type: "property", group: "yellow", cost: 260, rent: [22, 110, 330, 800, 975, 1150], houseCost: 150, mortgageValue: 130 },
+  { id: 27, name: "Ventnor Ave", type: "property", group: "yellow", cost: 260, rent: [22, 110, 330, 800, 975, 1150], houseCost: 150, mortgageValue: 130 },
+  { id: 28, name: "Water Works", type: "utility", group: "utility", cost: 150, rent: [], houseCost: 0, mortgageValue: 75 },
+  { id: 29, name: "Marvin Gardens", type: "property", group: "yellow", cost: 280, rent: [24, 120, 360, 850, 1025, 1200], houseCost: 150, mortgageValue: 140 },
+  { id: 30, name: "Go To Jail", type: "go_to_jail", group: "special", cost: 0, rent: [], houseCost: 0, mortgageValue: 0 },
+  { id: 31, name: "Pacific Ave", type: "property", group: "green", cost: 300, rent: [26, 130, 390, 900, 1100, 1275], houseCost: 200, mortgageValue: 150 },
+  { id: 32, name: "North Carolina Ave", type: "property", group: "green", cost: 300, rent: [26, 130, 390, 900, 1100, 1275], houseCost: 200, mortgageValue: 150 },
+  { id: 33, name: "Community Chest", type: "community_chest", group: "special", cost: 0, rent: [], houseCost: 0, mortgageValue: 0 },
+  { id: 34, name: "Pennsylvania Ave", type: "property", group: "green", cost: 320, rent: [28, 150, 450, 1000, 1200, 1400], houseCost: 200, mortgageValue: 160 },
+  { id: 35, name: "Short Line Railroad", type: "railroad", group: "railroad", cost: 200, rent: [25, 50, 100, 200], houseCost: 0, mortgageValue: 100 },
+  { id: 36, name: "Chance", type: "chance", group: "special", cost: 0, rent: [], houseCost: 0, mortgageValue: 0 },
+  { id: 37, name: "Park Place", type: "property", group: "dark_blue", cost: 350, rent: [35, 175, 500, 1100, 1300, 1500], houseCost: 200, mortgageValue: 175 },
+  { id: 38, name: "Luxury Tax", type: "tax", group: "special", cost: 0, rent: [], houseCost: 0, mortgageValue: 0, taxAmount: 100 },
+  { id: 39, name: "Boardwalk", type: "property", group: "dark_blue", cost: 400, rent: [50, 200, 600, 1400, 1700, 2000], houseCost: 200, mortgageValue: 200 },
+];
+
+export function getSpace(id: number): BoardSpace {
+  return BOARD_SPACES[id] || BOARD_SPACES[0]!;
+}
