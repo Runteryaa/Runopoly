@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Request, Response } from "express";
 import http from "http";
 import cors from "cors";
 import { Server } from "socket.io";
@@ -22,7 +22,7 @@ const io = new Server(server, {
 });
 
 // Render.com health check endpoint
-app.get("/healthz", (req, res) => {
+app.get("/healthz", (req: Request, res: Response) => {
   res.status(200).json({
     status: "ok",
     service: "runopoly-server",
@@ -32,7 +32,7 @@ app.get("/healthz", (req, res) => {
 });
 
 // API endpoint for public room browser
-app.get("/api/rooms", (req, res) => {
+app.get("/api/rooms", (req: Request, res: Response) => {
   res.status(200).json({
     rooms: roomManager.getPublicRooms(),
   });
