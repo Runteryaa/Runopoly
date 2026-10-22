@@ -1,4 +1,4 @@
-import { PlayerToken } from "../types/index.js";
+import { PlayerToken } from "../types";
 
 export interface TokenMeta {
   id: PlayerToken;

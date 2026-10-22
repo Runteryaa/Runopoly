@@ -1,4 +1,4 @@
-import { BoardSpace, ColorGroup } from "../types/index.js";
+import { BoardSpace, ColorGroup } from "../types";
 
 export const COLOR_GROUP_COLORS: Record<ColorGroup, string> = {
   brown: "#92400e",

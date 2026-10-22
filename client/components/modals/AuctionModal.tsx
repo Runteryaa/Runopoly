@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, Modal, TouchableOpacity, TextInput } from "react-native";
-import { useGameStore } from "../../store/gameStore.js";
-import { getSpace, COLOR_GROUP_COLORS } from "../../data/boardData.js";
-import { socketService } from "../../services/socketService.js";
+import { useGameStore } from "../../store/gameStore";
+import { getSpace, COLOR_GROUP_COLORS } from "../../data/boardData";
+import { socketService } from "../../services/socketService";
 
 export const AuctionModal: React.FC = () => {
   const gameState = useGameStore((s) => s.gameState);
@@ -39,14 +39,12 @@ export const AuctionModal: React.FC = () => {
     <Modal visible transparent animationType="slide">
       <View style={styles.backdrop}>
         <View style={styles.card}>
-          {/* Header */}
           <View style={[styles.header, { backgroundColor: color }]}>
             <Text style={styles.subTitle}>PUBLIC AUCTION</Text>
             <Text style={styles.propertyName}>{space.name}</Text>
           </View>
 
           <View style={styles.body}>
-            {/* Bid info */}
             <View style={styles.bidCard}>
               <Text style={styles.bidLabel}>CURRENT HIGHEST BID</Text>
               <Text style={styles.bidAmount}>
@@ -59,7 +57,6 @@ export const AuctionModal: React.FC = () => {
               </Text>
             </View>
 
-            {/* Bidder action controls */}
             {isActiveBidder ? (
               <View style={styles.bidActions}>
                 <Text style={styles.myCash}>Your Cash: ${myPlayer?.cash || 0}</Text>
@@ -85,7 +82,6 @@ export const AuctionModal: React.FC = () => {
                   </TouchableOpacity>
                 </View>
 
-                {/* Custom Bid Row */}
                 <View style={styles.customRow}>
                   <TextInput
                     style={styles.input}
@@ -100,7 +96,6 @@ export const AuctionModal: React.FC = () => {
                   </TouchableOpacity>
                 </View>
 
-                {/* Fold button */}
                 <TouchableOpacity
                   style={styles.foldBtn}
                   onPress={() => socketService.auctionFold()}

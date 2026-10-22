@@ -10,10 +10,10 @@ import Svg, {
   LinearGradient,
   Stop,
 } from "react-native-svg";
-import { BOARD_SPACES, COLOR_GROUP_COLORS } from "../../data/boardData.js";
-import { getTokenMeta } from "../../data/tokens.js";
-import { useGameStore } from "../../store/gameStore.js";
-import { BoardSpace, Player } from "../../types/index.js";
+import { BOARD_SPACES, COLOR_GROUP_COLORS } from "../../data/boardData";
+import { getTokenMeta } from "../../data/tokens";
+import { useGameStore } from "../../store/gameStore";
+import { BoardSpace, Player } from "../../types";
 
 const BOARD_SIZE = 1000;
 const CORNER_SIZE = 130;
@@ -317,7 +317,6 @@ export const BoardView: React.FC = () => {
       <G key={`pawns-${spaceId}`}>
         {occupants.map((player, idx) => {
           const meta = getTokenMeta(player.token);
-          // Distribute multi-token offsets neatly
           const offsetX = occupants.length === 1 ? 0 : (idx % 2 === 0 ? -12 : 12);
           const offsetY = occupants.length <= 2 ? 0 : (idx < 2 ? -10 : 10);
           const px = b.centerX + offsetX;
@@ -381,7 +380,7 @@ export const BoardView: React.FC = () => {
             transform: [
               { scale: zoomLevel },
               { perspective: 900 },
-              { rotateX: "10deg" }, // 2.5D perspective angle!
+              { rotateX: "10deg" },
             ],
           },
         ]}
@@ -429,7 +428,6 @@ export const BoardView: React.FC = () => {
 
           {/* Center Brand Emblem */}
           <G transform="translate(500, 470)">
-            {/* Diamond Frame */}
             <Path
               d="M 0 -140 L 190 0 L 0 140 L -190 0 Z"
               fill="rgba(15, 23, 42, 0.85)"
@@ -459,7 +457,6 @@ export const BoardView: React.FC = () => {
               CLASSIC MONOPOLY EDITION
             </SvgText>
 
-            {/* Free parking pot banner if house rule enabled */}
             {gameState?.freeParkingPot && gameState.freeParkingPot > 0 ? (
               <G transform="translate(0, 80)">
                 <Rect
@@ -483,7 +480,6 @@ export const BoardView: React.FC = () => {
               </G>
             ) : null}
 
-            {/* Active dice display in center if rolled */}
             {gameState?.lastDiceRoll && (
               <G transform="translate(0, 150)">
                 <Rect
@@ -531,10 +527,7 @@ export const BoardView: React.FC = () => {
             )}
           </G>
 
-          {/* Render all 40 tiles */}
           {BOARD_SPACES.map(renderTile)}
-
-          {/* Render player pawns */}
           {BOARD_SPACES.map((space) => renderPlayerTokens(space.id))}
         </Svg>
       </View>

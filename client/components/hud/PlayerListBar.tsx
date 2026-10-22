@@ -1,8 +1,8 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
-import { useGameStore } from "../../store/gameStore.js";
-import { getTokenMeta } from "../../data/tokens.js";
-import { Player } from "../../types/index.js";
+import { useGameStore } from "../../store/gameStore";
+import { getTokenMeta } from "../../data/tokens";
+import { Player } from "../../types";
 
 export const PlayerListBar: React.FC = () => {
   const gameState = useGameStore((s) => s.gameState);

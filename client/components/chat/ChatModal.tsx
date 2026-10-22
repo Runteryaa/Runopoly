@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, TextInput } from "react-native";
-import { useGameStore } from "../../store/gameStore.js";
-import { socketService } from "../../services/socketService.js";
+import { useGameStore } from "../../store/gameStore";
+import { socketService } from "../../services/socketService";
 
 const QUICK_EMOJIS = ["🎩", "💸", "🎲", "😢", "🔥", "🏆", "👍", "👎"];
 

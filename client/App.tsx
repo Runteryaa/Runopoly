@@ -1,17 +1,17 @@
 import React from "react";
 import { StatusBar } from "expo-status-bar";
 import { StyleSheet, View, SafeAreaView, ScrollView } from "react-native";
-import { useGameStore } from "./store/gameStore.js";
-import { LobbyScreen } from "./components/lobby/LobbyScreen.js";
-import { WaitingRoom } from "./components/lobby/WaitingRoom.js";
-import { BoardView } from "./components/board/BoardView.js";
-import { PlayerListBar } from "./components/hud/PlayerListBar.js";
-import { ActionBar } from "./components/hud/ActionBar.js";
-import { DeedModal } from "./components/modals/DeedModal.js";
-import { TradeModal } from "./components/modals/TradeModal.js";
-import { AuctionModal } from "./components/modals/AuctionModal.js";
-import { ChatModal } from "./components/chat/ChatModal.js";
-import { GameOverBanner } from "./components/hud/GameOverBanner.js";
+import { useGameStore } from "./store/gameStore";
+import { LobbyScreen } from "./components/lobby/LobbyScreen";
+import { WaitingRoom } from "./components/lobby/WaitingRoom";
+import { BoardView } from "./components/board/BoardView";
+import { PlayerListBar } from "./components/hud/PlayerListBar";
+import { ActionBar } from "./components/hud/ActionBar";
+import { DeedModal } from "./components/modals/DeedModal";
+import { TradeModal } from "./components/modals/TradeModal";
+import { AuctionModal } from "./components/modals/AuctionModal";
+import { ChatModal } from "./components/chat/ChatModal";
+import { GameOverBanner } from "./components/hud/GameOverBanner";
 
 export default function App() {
   const gameState = useGameStore((s) => s.gameState);

@@ -1,8 +1,8 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { useGameStore } from "../../store/gameStore.js";
-import { socketService } from "../../services/socketService.js";
-import { getSpace } from "../../data/boardData.js";
+import { useGameStore } from "../../store/gameStore";
+import { socketService } from "../../services/socketService";
+import { getSpace } from "../../data/boardData";
 
 export const ActionBar: React.FC = () => {
   const gameState = useGameStore((s) => s.gameState);
@@ -44,7 +44,6 @@ export const ActionBar: React.FC = () => {
 
       {/* Main Action Buttons */}
       <View style={styles.buttonsRow}>
-        {/* Roll Dice Button */}
         {isMyTurn && gameState.turnPhase === "START_TURN" && (
           <TouchableOpacity
             style={[styles.btn, styles.btnRoll]}
@@ -54,7 +53,6 @@ export const ActionBar: React.FC = () => {
           </TouchableOpacity>
         )}
 
-        {/* Buy Property Decision */}
         {isMyTurn && gameState.turnPhase === "BUY_DECISION" && currentSpace && (
           <>
             <TouchableOpacity
@@ -73,7 +71,6 @@ export const ActionBar: React.FC = () => {
           </>
         )}
 
-        {/* Jail Decisions */}
         {isMyTurn && myPlayer?.inJail && gameState.turnPhase === "START_TURN" && (
           <>
             {myPlayer.cash >= 50 && (
@@ -96,7 +93,6 @@ export const ActionBar: React.FC = () => {
           </>
         )}
 
-        {/* End Turn */}
         {isMyTurn && gameState.turnPhase === "END_TURN" && (
           <TouchableOpacity
             style={[styles.btn, styles.btnEndTurn]}
@@ -106,7 +102,6 @@ export const ActionBar: React.FC = () => {
           </TouchableOpacity>
         )}
 
-        {/* Universal Utility Buttons */}
         <TouchableOpacity
           style={[styles.btn, styles.btnUtility]}
           onPress={() => setActiveModal("trade")}

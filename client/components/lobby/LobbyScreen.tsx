@@ -8,12 +8,11 @@ import {
   ScrollView,
   Switch,
   ActivityIndicator,
-  Alert,
 } from "react-native";
-import { useGameStore } from "../../store/gameStore.js";
-import { TOKENS } from "../../data/tokens.js";
-import { socketService } from "../../services/socketService.js";
-import { PlayerToken, GameRulesConfig } from "../../types/index.js";
+import { useGameStore } from "../../store/gameStore";
+import { TOKENS } from "../../data/tokens";
+import { socketService } from "../../services/socketService";
+import { PlayerToken, GameRulesConfig } from "../../types";
 
 interface PublicRoomItem {
   code: string;

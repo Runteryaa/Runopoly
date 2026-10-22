@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { GameState, PlayerToken, ChatMessage } from "../types/index.js";
+import { GameState, PlayerToken, ChatMessage } from "../types";
 
 export type ModalType =
   | "trade"
@@ -40,7 +40,7 @@ interface GameStoreState {
 }
 
 export const useGameStore = create<GameStoreState>((set) => ({
-  serverUrl: "http://localhost:4000",
+  serverUrl: "https://runopoly.onrender.com",
   sessionToken: null,
   playerId: null,
   nickname: "Player",
@@ -61,7 +61,6 @@ export const useGameStore = create<GameStoreState>((set) => ({
   setConnected: (isConnected) => set({ isConnected }),
   setGameState: (gameState) =>
     set((prev) => {
-      // Auto open auction modal if auction begins
       let activeModal = prev.activeModal;
       if (gameState?.turnPhase === "AUCTION" && gameState.currentAuction) {
         activeModal = "auction";

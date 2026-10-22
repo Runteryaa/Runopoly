@@ -1,6 +1,6 @@
 import { io, Socket } from "socket.io-client";
-import { useGameStore } from "../store/gameStore.js";
-import { GameRulesConfig, PlayerToken, TradeOffer } from "../types/index.js";
+import { useGameStore } from "../store/gameStore";
+import { GameRulesConfig, PlayerToken, TradeOffer } from "../types";
 
 class SocketService {
   public socket: Socket | null = null;

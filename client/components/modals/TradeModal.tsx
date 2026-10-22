@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, TextInput } from "react-native";
-import { useGameStore } from "../../store/gameStore.js";
-import { getSpace } from "../../data/boardData.js";
-import { socketService } from "../../services/socketService.js";
-import { Player } from "../../types/index.js";
+import { useGameStore } from "../../store/gameStore";
+import { getSpace } from "../../data/boardData";
+import { socketService } from "../../services/socketService";
+import { Player } from "../../types";
 
 export const TradeModal: React.FC = () => {
   const activeModal = useGameStore((s) => s.activeModal);
@@ -24,11 +24,9 @@ export const TradeModal: React.FC = () => {
   );
   const myPlayer = myPlayerId ? gameState.players[myPlayerId] : null;
 
-  // Selected target opponent or default to first
   const currentTargetId = targetPlayerId || (players[0]?.id ?? null);
   const targetPlayer = currentTargetId ? gameState.players[currentTargetId] : null;
 
-  // Get my owned properties
   const myProperties: number[] = [];
   const targetProperties: number[] = [];
 
@@ -41,7 +39,6 @@ export const TradeModal: React.FC = () => {
     }
   }
 
-  // Check if there is an incoming pending trade for me
   const incomingTrade =
     gameState.pendingTrade &&
     gameState.pendingTrade.toPlayerId === myPlayerId &&
@@ -89,7 +86,6 @@ export const TradeModal: React.FC = () => {
             </TouchableOpacity>
           </View>
 
-          {/* Incoming Trade Banner */}
           {incomingTrade && (
             <View style={styles.incomingBanner}>
               <Text style={styles.incomingTitle}>
@@ -119,7 +115,6 @@ export const TradeModal: React.FC = () => {
           )}
 
           <ScrollView style={styles.body}>
-            {/* Target Opponent Selector */}
             <Text style={styles.sectionLabel}>Select Opponent:</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.playerPicker}>
               {players.map((p) => (
@@ -139,7 +134,6 @@ export const TradeModal: React.FC = () => {
             </ScrollView>
 
             <View style={styles.tradeColumns}>
-              {/* Left Column: What You Offer */}
               <View style={styles.column}>
                 <Text style={styles.colTitle}>YOU OFFER</Text>
                 <TextInput
@@ -170,7 +164,6 @@ export const TradeModal: React.FC = () => {
                 </View>
               </View>
 
-              {/* Right Column: What You Request */}
               <View style={styles.column}>
                 <Text style={styles.colTitle}>YOU REQUEST</Text>
                 <TextInput
@@ -202,7 +195,6 @@ export const TradeModal: React.FC = () => {
               </View>
             </View>
 
-            {/* Propose Button */}
             <TouchableOpacity style={styles.sendBtn} onPress={handleSendProposal}>
               <Text style={styles.sendBtnText}>PROPOSE TRADE OFFER</Text>
             </TouchableOpacity>

@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet, Modal, TouchableOpacity } from "react-native";
-import { useGameStore } from "../../store/gameStore.js";
-import { getTokenMeta } from "../../data/tokens.js";
+import { useGameStore } from "../../store/gameStore";
+import { getTokenMeta } from "../../data/tokens";
 
 export const GameOverBanner: React.FC = () => {
   const gameState = useGameStore((s) => s.gameState);

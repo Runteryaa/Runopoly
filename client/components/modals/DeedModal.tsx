@@ -1,8 +1,8 @@
 import React from "react";
 import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView } from "react-native";
-import { useGameStore } from "../../store/gameStore.js";
-import { getSpace, COLOR_GROUP_COLORS } from "../../data/boardData.js";
-import { socketService } from "../../services/socketService.js";
+import { useGameStore } from "../../store/gameStore";
+import { getSpace, COLOR_GROUP_COLORS } from "../../data/boardData";
+import { socketService } from "../../services/socketService";
 
 export const DeedModal: React.FC = () => {
   const activeModal = useGameStore((s) => s.activeModal);
@@ -38,7 +38,7 @@ export const DeedModal: React.FC = () => {
                 </View>
                 <View style={styles.rentRow}>
                   <Text style={styles.rentLabel}>With Color Group (Monopoly)</Text>
-                  <Text style={styles.rentVal}>${space.rent[0]! * 2}</Text>
+                  <Text style={styles.rentVal}>${(space.rent[0] ?? 0) * 2}</Text>
                 </View>
                 <View style={styles.rentRow}>
                   <Text style={styles.rentLabel}>With 1 House</Text>
@@ -89,7 +89,6 @@ export const DeedModal: React.FC = () => {
 
             <View style={styles.divider} />
 
-            {/* Ownership & Status */}
             <View style={styles.statusBox}>
               <Text style={styles.statusLine}>
                 Owner:{" "}
@@ -109,7 +108,6 @@ export const DeedModal: React.FC = () => {
               ) : null}
             </View>
 
-            {/* Management Actions for Owner */}
             {isMine && gameState?.status === "PLAYING" && (
               <View style={styles.actionsBox}>
                 {space.type === "property" && (
@@ -152,7 +150,6 @@ export const DeedModal: React.FC = () => {
             )}
           </ScrollView>
 
-          {/* Close button */}
           <TouchableOpacity style={styles.closeBtn} onPress={() => setActiveModal(null)}>
             <Text style={styles.closeBtnText}>CLOSE</Text>
           </TouchableOpacity>

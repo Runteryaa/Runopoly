@@ -1,9 +1,9 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
-import { useGameStore } from "../../store/gameStore.js";
-import { getTokenMeta } from "../../data/tokens.js";
-import { socketService } from "../../services/socketService.js";
-import { Player } from "../../types/index.js";
+import { useGameStore } from "../../store/gameStore";
+import { getTokenMeta } from "../../data/tokens";
+import { socketService } from "../../services/socketService";
+import { Player } from "../../types";
 
 export const WaitingRoom: React.FC = () => {
   const gameState = useGameStore((s) => s.gameState);
